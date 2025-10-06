@@ -142,7 +142,7 @@ export default function BrowseScreen() {
           accessibilityRole="text"
           accessibilityLiveRegion="polite"
         >
-          Caricamento...
+          Loading...
         </Text>
       </View>
     );
@@ -158,16 +158,16 @@ export default function BrowseScreen() {
             style={[styles.message, { color: Colors.text }]}
             accessibilityRole="header"
           >
-            Effettua l&apos;accesso per iniziare
+            Sign in to get started
           </Text>
           <TouchableOpacity 
             style={styles.completeProfileButton}
             onPress={() => router.push('/login')}
             accessibilityRole="button"
-            accessibilityLabel="Vai alla pagina di login"
-            accessibilityHint="Tocca per accedere al tuo account"
+            accessibilityLabel="Go to sign in page"
+            accessibilityHint="Double tap to sign in to your account"
           >
-            <Text style={styles.completeProfileButtonText}>Vai al Login</Text>
+            <Text style={styles.completeProfileButtonText}>Go to sign in</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -179,28 +179,28 @@ export default function BrowseScreen() {
       <View
         style={[styles.container, { paddingTop: insets.top, backgroundColor: '#FFFFFF' }]}
       >
-        <Stack.Screen options={{ title: 'Sfoglia' }} />
+        <Stack.Screen options={{ title: 'Browse' }} />
         <View style={styles.emptyContainer}>
           <Text 
             style={[styles.emptyTitle, { color: Colors.text }]}
             accessibilityRole="header"
           >
-            Completa il tuo profilo
+            Complete your profile
           </Text>
           <Text 
             style={[styles.emptyText, { color: Colors.textSecondary }]}
             accessibilityRole="text"
           >
-            Prima di iniziare a sfogliare gli immobili, completa il tuo profilo con foto, professione, interessi e budget.
+            Before you start browsing, complete your profile with photos, profession, interests, and budget.
           </Text>
           <TouchableOpacity 
             style={styles.completeProfileButton}
             onPress={() => router.push('/profile-setup')}
             accessibilityRole="button"
-            accessibilityLabel="Completa il tuo profilo"
-            accessibilityHint="Tocca per aggiungere le tue informazioni personali"
+            accessibilityLabel="Complete your profile"
+            accessibilityHint="Double tap to add your personal information"
           >
-            <Text style={styles.completeProfileButtonText}>Completa profilo</Text>
+            <Text style={styles.completeProfileButtonText}>Complete profile</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -210,18 +210,18 @@ export default function BrowseScreen() {
   const getEmptyMessage = () => {
     if (user?.current_mode === 'tenant') {
       return {
-        title: 'Nessun altro immobile',
-        text: 'Hai visto tutti gli immobili disponibili. Come inquilino, vedi le proprietà pubblicate dai proprietari. Torna più tardi per nuove opportunità!'
+        title: 'No more properties',
+        text: 'You\'ve seen all available properties. As a tenant, you see properties posted by landlords. Check back later for new opportunities!'
       };
     } else if (user?.current_mode === 'landlord') {
       return {
-        title: 'Nessun altro inquilino',
-        text: 'Hai visto tutti gli inquilini disponibili. Come proprietario, vedi i profili di persone che cercano casa. Torna più tardi per nuovi profili!'
+        title: 'No more tenants',
+        text: 'You\'ve seen all available tenants. As a landlord, you see profiles of people looking for housing. Check back later for new profiles!'
       };
     } else {
       return {
-        title: 'Nessun altro coinquilino',
-        text: 'Hai visto tutti i coinquilini disponibili. Come coinquilino, vedi altri che cercano coinquilini. Torna più tardi per nuovi profili!'
+        title: 'No more roommates',
+        text: 'You\'ve seen all available roommates. As a roommate, you see others looking for roommates. Check back later for new profiles!'
       };
     }
   };
@@ -238,7 +238,7 @@ export default function BrowseScreen() {
       <View
         style={[styles.container, { paddingTop: insets.top, backgroundColor: '#FFFFFF' }]}
       >
-        <Stack.Screen options={{ title: 'Sfoglia' }} />
+        <Stack.Screen options={{ title: 'Browse' }} />
         <View style={styles.emptyContainer}>
           <Text 
             style={[styles.emptyTitle, { color: Colors.text }]}
@@ -259,11 +259,11 @@ export default function BrowseScreen() {
 
   const getModeTitle = () => {
     if (user?.current_mode === 'tenant') {
-      return 'Sfoglia - Immobili';
+      return 'Browse - Properties';
     } else if (user?.current_mode === 'landlord') {
-      return 'Sfoglia - Inquilini';
+      return 'Browse - Tenants';
     } else {
-      return 'Sfoglia - Coinquilini';
+      return 'Browse - Roommates';
     }
   };
 

@@ -154,20 +154,20 @@ export default function LoginScreen() {
       case 'tenant':
         return {
           icon: Home,
-          title: 'Inquilino',
-          description: 'Cerco una casa in affitto - Vedrò annunci di proprietari'
+          title: 'Tenant',
+          description: 'Looking for a place to rent'
         };
       case 'landlord':
         return {
           icon: Key,
-          title: 'Proprietario',
-          description: 'Affitto la mia proprietà - Vedrò profili di inquilini'
+          title: 'Landlord',
+          description: 'Renting out your property'
         };
       case 'roommate':
         return {
           icon: Users,
-          title: 'Coinquilino',
-          description: 'Cerco coinquilini - Vedrò altri che cercano coinquilini'
+          title: 'Roommate',
+          description: 'Looking for roommates'
         };
     }
   };
@@ -185,8 +185,8 @@ export default function LoginScreen() {
               </View>
 
               {/* Title */}
-              <Text style={styles.title}>Seleziona il tuo ruolo</Text>
-              <Text style={styles.subtitle}>Come vuoi utilizzare Tenant?</Text>
+              <Text style={styles.title}>Choose your role</Text>
+              <Text style={styles.subtitle}>How do you want to use Tenant?</Text>
 
               {/* Status Message */}
               {loginStatus ? (
@@ -215,7 +215,7 @@ export default function LoginScreen() {
                         selected: isSelected,
                         disabled: isLoading 
                       }}
-                      accessibilityHint="Tocca due volte per selezionare questo ruolo"
+                      accessibilityHint="Double tap to select this role"
                     >
                       <View style={[
                         styles.userTypeIcon,
@@ -250,15 +250,15 @@ export default function LoginScreen() {
                 onPress={completeSignIn}
                 disabled={isLoading}
                 accessibilityRole="button"
-                accessibilityLabel="Continua con il ruolo selezionato"
-                accessibilityHint="Tocca due volte per completare la registrazione"
+                accessibilityLabel="Continue with selected role"
+                accessibilityHint="Double tap to complete registration"
                 accessibilityState={{ disabled: isLoading }}
               >
                 <Text 
                   style={styles.continueButtonText}
                   maxFontSizeMultiplier={1.5}
                 >
-                  Continua
+                  Continue
                 </Text>
               </TouchableOpacity>
 
@@ -272,7 +272,7 @@ export default function LoginScreen() {
                 }}
                 disabled={isLoading}
               >
-                <Text style={styles.backButtonText}>Indietro</Text>
+                <Text style={styles.backButtonText}>Back</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -298,13 +298,13 @@ export default function LoginScreen() {
               accessibilityRole="header"
               maxFontSizeMultiplier={1.5}
             >
-              Benvenuto su Tenant
+              Welcome to Tenant
             </Text>
             <Text 
               style={styles.subtitle}
               maxFontSizeMultiplier={2.0}
             >
-              Trova la tua corrispondenza perfetta nel mercato degli affitti
+              Find your perfect rental match
             </Text>
 
             {/* Status Message */}
@@ -320,7 +320,7 @@ export default function LoginScreen() {
             ) : null}
 
             {/* Login Options */}
-            <Text style={styles.loginLabel}>Accedi con:</Text>
+            <Text style={styles.loginLabel}>Sign in with</Text>
 
             {isAppleSignInAvailable && (
               <AppleAuthentication.AppleAuthenticationButton
@@ -337,46 +337,46 @@ export default function LoginScreen() {
               onPress={handleGoogleLogin}
               disabled={isLoading}
               accessibilityRole="button"
-              accessibilityLabel="Accedi con Google Account"
-              accessibilityHint="Tocca per accedere utilizzando il tuo account Google"
+              accessibilityLabel="Sign in with Google"
+              accessibilityHint="Double tap to sign in with your Google account"
               accessibilityState={{ disabled: isLoading }}
             >
               <View style={styles.googleIconContainer}>
                 <Text style={styles.googleG}>G</Text>
               </View>
-              <Text style={styles.googleButtonText}>Accedi con Google Account</Text>
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
             {/* Existing Account */}
-            <Text style={styles.sectionLabel}>Hai già un account?</Text>
+            <Text style={styles.sectionLabel}>Already have an account?</Text>
 
             <TouchableOpacity 
               style={styles.authButton} 
               onPress={handleExistingAccount}
               disabled={isLoading}
               accessibilityRole="button"
-              accessibilityLabel="Accedi al tuo account"
-              accessibilityHint="Tocca per accedere con le tue credenziali esistenti"
+              accessibilityLabel="Sign in to your account"
+              accessibilityHint="Double tap to sign in with existing credentials"
               accessibilityState={{ disabled: isLoading }}
             >
               <User size={20} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.buttonText}>Accedi al tuo account</Text>
+              <Text style={styles.buttonText}>Sign in</Text>
             </TouchableOpacity>
 
             {/* Create Account */}
-            <Text style={styles.sectionLabel}>Oppure registrati:</Text>
+            <Text style={styles.sectionLabel}>New to Tenant?</Text>
 
             <TouchableOpacity 
               style={styles.authButton} 
               onPress={handleCreateAccount}
               disabled={isLoading}
               accessibilityRole="button"
-              accessibilityLabel="Crea un nuovo account"
-              accessibilityHint="Tocca per registrarti e creare un nuovo account"
+              accessibilityLabel="Create a new account"
+              accessibilityHint="Double tap to create a new account"
               accessibilityState={{ disabled: isLoading }}
             >
               <User size={20} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.buttonText}>Crea un nuovo account</Text>
+              <Text style={styles.buttonText}>Create account</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

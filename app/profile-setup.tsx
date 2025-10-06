@@ -910,7 +910,7 @@ export default function ProfileSetupScreen() {
           activeOpacity={0.7}
         >
           <Text style={styles.nextButtonText}>
-            {isLastStep ? 'Completa profilo' : 'Avanti'}
+            {isLastStep ? 'Complete profile' : 'Continue'}
           </Text>
         </TouchableOpacity>
       </View>

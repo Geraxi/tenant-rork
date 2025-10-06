@@ -13,7 +13,7 @@ interface EmptyStateProps {
 
 
 export default function EmptyState({ 
-  message = "Nessun altro annuncio!", 
+  message = "No more listings", 
   onReload, 
   onPreferences 
 }: EmptyStateProps) {
@@ -39,9 +39,9 @@ export default function EmptyState({
       <>
         <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
           <TenantLogo size={80} />
-          <Text style={styles.title}>Nessun altro annuncio!</Text>
+          <Text style={styles.title}>No more listings</Text>
           <Text style={styles.subtitle}>
-            Prova ad ampliare le tue preferenze per vedere più proprietà.
+            Try adjusting your preferences to see more properties.
           </Text>
 
           <View style={styles.buttonsContainer}>
@@ -49,12 +49,12 @@ export default function EmptyState({
               style={styles.button} 
               onPress={() => setShowFilterModal(true)}
             >
-              <Text style={styles.buttonText}>Cambia Preferenze</Text>
+              <Text style={styles.buttonText}>Change preferences</Text>
             </TouchableOpacity>
 
             {onReload && (
               <TouchableOpacity style={[styles.button, styles.reload]} onPress={onReload}>
-                <Text style={styles.buttonText}>Ricarica Annunci</Text>
+                <Text style={styles.buttonText}>Reload listings</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -77,7 +77,7 @@ export default function EmptyState({
 
       {onReload && (
         <TouchableOpacity style={styles.button} onPress={onReload}>
-          <Text style={styles.buttonText}>Ricarica Annunci</Text>
+          <Text style={styles.buttonText}>Reload listings</Text>
         </TouchableOpacity>
       )}
     </Animated.View>
