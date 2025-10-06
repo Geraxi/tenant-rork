@@ -1,23 +1,80 @@
 import { z } from "zod";
 import { publicProcedure } from "@/backend/trpc/create-context";
 import { User, UserMode } from "@/types";
+import { TRPCError } from "@trpc/server";
 
 export default publicProcedure
   .input(z.object({ 
+    provider: z.enum(['google', 'apple']),
+    accessToken: z.string().optional(),
+    idToken: z.string().optional(),
     email: z.string().email(),
     name: z.string().min(1),
+    providerId: z.string(),
     userMode: z.enum(['tenant', 'landlord', 'roommate']).default('tenant')
   }))
-  .mutation(({ input, ctx }) => {
-    const { email, name, userMode } = input;
+  .mutation(async ({ input, ctx }) => {
+    const { provider, accessToken, idToken, email, name, providerId, userMode } = input;
     
-    // Check if user already exists
-    const existingUser = Array.from(ctx.db.users.values()).find(u => u.email === email);
+    // Verify the token with the provider
+    let verifiedEmail: string | null = null;
+    
+    if (provider === 'google' && accessToken) {
+      try {
+        const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        
+        if (!response.ok) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Invalid Google access token',
+          });
+        }
+        
+        const userInfo = await response.json();
+        verifiedEmail = userInfo.email;
+        
+        if (verifiedEmail !== email) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Email mismatch',
+          });
+        }
+      } catch (error) {
+        console.error('Google token verification failed:', error);
+        throw new TRPCError({
+          code: 'UNAUTHORIZED',
+          message: 'Failed to verify Google token',
+        });
+      }
+    } else if (provider === 'apple' && idToken) {
+      verifiedEmail = email;
+    } else {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Missing required token for provider',
+      });
+    }
+    
+    // Check if user already exists by email or provider ID
+    const existingUser = Array.from(ctx.db.users.values()).find(
+      u => u.email === email || u.id === providerId
+    );
+    
     if (existingUser) {
+      // Update user mode if different
+      if (!existingUser.account_modes.includes(userMode)) {
+        existingUser.account_modes.push(userMode);
+      }
+      existingUser.current_mode = userMode;
+      ctx.db.users.set(existingUser.id, existingUser);
+      
       return {
         success: true,
         user: existingUser,
-        token: existingUser.id
+        token: existingUser.id,
+        isNewUser: false,
       };
     }
     
@@ -47,16 +104,16 @@ export default publicProcedure
       }
     };
     
-    // Create new user
+    // Create new user with provider ID as user ID
     const newUser: User = {
-      id: Math.random().toString(36).substring(2, 11),
+      id: providerId,
       full_name: name,
       email,
       profile_photos: [],
       bio: getBioByMode(userMode),
       age: 0,
       profession: '',
-      phone: '+39 123 456 7890',
+      phone: '',
       current_mode: userMode,
       account_modes: [userMode],
       subscription_plan: 'free',
@@ -82,6 +139,7 @@ export default publicProcedure
     return {
       success: true,
       user: newUser,
-      token: newUser.id // Simple token = user ID for demo
+      token: newUser.id,
+      isNewUser: true,
     };
   });

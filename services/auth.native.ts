@@ -5,23 +5,17 @@ import * as WebBrowser from 'expo-web-browser';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// IMPORTANT: Replace these with your actual Google OAuth Client IDs
-// Get them from: https://console.cloud.google.com/apis/credentials
-// 1. Create a new project or select existing one
-// 2. Enable Google+ API
-// 3. Create OAuth 2.0 Client IDs for:
-//    - Web application (for Expo web)
-//    - iOS (for iOS app)
-//    - Android (for Android app)
-const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
-const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
-const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
 
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
   provider: 'apple' | 'google';
+  accessToken?: string;
+  idToken?: string;
 }
 
 export const useGoogleAuth = () => {
@@ -35,10 +29,15 @@ export const useGoogleAuth = () => {
 };
 
 export class AuthService {
+  static isConfigured(): boolean {
+    const hasGoogleConfig = !!(GOOGLE_WEB_CLIENT_ID && GOOGLE_IOS_CLIENT_ID && GOOGLE_ANDROID_CLIENT_ID);
+    return hasGoogleConfig;
+  }
+
   static async signInWithApple(): Promise<AuthUser | null> {
     try {
       if (Platform.OS !== 'ios') {
-        throw new Error('Apple Sign-In è disponibile solo su iOS');
+        throw new Error('Apple Sign-In is only available on iOS');
       }
 
       const credential = await AppleAuthentication.signInAsync({
@@ -55,20 +54,21 @@ export class AuthService {
         
         const userName = fullName 
           ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() 
-          : 'Utente Apple';
+          : 'Apple User';
         
         return {
           id: user,
           email: email || `${user}@privaterelay.appleid.com`,
-          name: userName || 'Utente Apple',
+          name: userName || 'Apple User',
           provider: 'apple',
+          idToken: credential.identityToken,
         };
       }
       
       return null;
     } catch (error: any) {
       if (error.code === 'ERR_REQUEST_CANCELED') {
-        console.log('Apple Sign-In cancellato dall\'utente');
+        console.log('Apple Sign-In canceled by user');
         return null;
       }
       console.error('Apple Sign-In Error:', error);
@@ -78,20 +78,25 @@ export class AuthService {
 
   static async getUserInfoFromGoogle(accessToken: string): Promise<AuthUser> {
     const userInfoResponse = await fetch(
-      'https://www.googleapis.com/userinfo/v2/me',
+      'https://www.googleapis.com/oauth2/v3/userinfo',
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
 
+    if (!userInfoResponse.ok) {
+      throw new Error('Failed to fetch Google user info');
+    }
+
     const userInfo = await userInfoResponse.json();
     console.log('Google user info:', userInfo);
 
     return {
-      id: userInfo.id,
+      id: userInfo.sub,
       email: userInfo.email,
-      name: userInfo.name || 'Utente Google',
+      name: userInfo.name || 'Google User',
       provider: 'google',
+      accessToken,
     };
   }
 

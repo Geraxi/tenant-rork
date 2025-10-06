@@ -3,11 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { User, UserMode, SubscriptionPlan } from '@/types';
+import { trpcClient } from '@/lib/trpc';
 
 const STORAGE_KEY = 'tenant_user';
+const TOKEN_KEY = 'tenant_auth_token';
 
 export const [UserProvider, useUser] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -16,9 +19,17 @@ export const [UserProvider, useUser] = createContextHook(() => {
 
   const loadUser = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setUser(JSON.parse(stored));
+      const [storedUser, storedToken] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY),
+        AsyncStorage.getItem(TOKEN_KEY),
+      ]);
+      
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+      
+      if (storedToken) {
+        setAuthToken(storedToken);
       }
     } catch (error) {
       console.error('Error loading user:', error);
@@ -27,81 +38,64 @@ export const [UserProvider, useUser] = createContextHook(() => {
     }
   };
 
-  const saveUser = async (userData: User) => {
+  const saveUser = async (userData: User, token?: string) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
+      
+      if (token) {
+        await AsyncStorage.setItem(TOKEN_KEY, token);
+        setAuthToken(token);
+      }
     } catch (error) {
       console.error('Error saving user:', error);
     }
   };
 
-  const signIn = async (email: string, name: string, userMode: UserMode = 'tenant') => {
-    const getBioByMode = (mode: UserMode): string => {
-      switch (mode) {
-        case 'tenant':
-          return 'Ciao! Sto cercando il posto perfetto dove vivere.';
-        case 'landlord':
-          return 'Ciao! Sono un proprietario e affitto la mia proprieta.';
-        case 'roommate':
-          return 'Ciao! Sto cercando coinquilini fantastici!';
-        default:
-          return 'Ciao! Benvenuto su Tenant!';
+  const signIn = async (
+    provider: 'google' | 'apple',
+    providerId: string,
+    email: string,
+    name: string,
+    userMode: UserMode,
+    accessToken?: string,
+    idToken?: string
+  ) => {
+    try {
+      console.log('Signing in with backend...', { provider, email, userMode });
+      
+      const result = await trpcClient.auth.signin.mutate({
+        provider,
+        providerId,
+        email,
+        name,
+        userMode,
+        accessToken,
+        idToken,
+      });
+      
+      console.log('Backend sign-in result:', result);
+      
+      if (result.success && result.user && result.token) {
+        await saveUser(result.user, result.token);
+        return { success: true, isNewUser: result.isNewUser };
       }
-    };
-
-    const getTagsByMode = (mode: UserMode): string[] => {
-      switch (mode) {
-        case 'tenant':
-          return ['Non fumatore', 'Animali domestici OK', 'Studente'];
-        case 'landlord':
-          return ['Proprietario verificato', 'Risposta rapida', 'Flessibile'];
-        case 'roommate':
-          return ['Socievole', 'Pulito', 'Rispettoso'];
-        default:
-          return ['Nuovo utente'];
-      }
-    };
-
-    const newUser: User = {
-      id: Math.random().toString(36).substring(2, 11),
-      full_name: name,
-      email,
-      profile_photos: [],
-      bio: getBioByMode(userMode),
-      age: 0,
-      profession: '',
-      phone: '+39 123 456 7890',
-      current_mode: userMode,
-      account_modes: [userMode],
-      subscription_plan: 'free',
-      matches_used_today: 0,
-      last_match_date: new Date().toISOString().split('T')[0],
-      budget_min: 0,
-      budget_max: 0,
-      preferred_location: '',
-      lifestyle_tags: getTagsByMode(userMode),
-      interests: [],
-      work_contract_shared: false,
-      wants_roommate: false,
-      roommate_same_interests: false,
-      tenant_preferences: [],
-      profile_completed: false,
-      photos_count: 0,
-      verified: false,
-      verification_status: 'not_started' as 'not_started' | 'pending' | 'approved' | 'rejected',
-      verification_submitted_at: null as string | null,
-      background_check_completed: false,
-      virtual_tour_setup: false,
-    };
-    
-    await saveUser(newUser);
+      
+      throw new Error('Sign-in failed');
+    } catch (error) {
+      console.error('Sign-in error:', error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
     try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEY),
+        AsyncStorage.removeItem(TOKEN_KEY),
+      ]);
       setUser(null);
+      setAuthToken(null);
       router.replace('/login');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -110,8 +104,12 @@ export const [UserProvider, useUser] = createContextHook(() => {
 
   const deleteAccount = async () => {
     try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEY),
+        AsyncStorage.removeItem(TOKEN_KEY),
+      ]);
       setUser(null);
+      setAuthToken(null);
       router.replace('/login');
     } catch (error) {
       console.error('Error deleting account:', error);
@@ -234,6 +232,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
 
   return {
     user,
+    authToken,
     isLoading,
     signIn,
     signOut,

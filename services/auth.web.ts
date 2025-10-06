@@ -1,19 +1,14 @@
 import { useState } from 'react';
 
-// IMPORTANT: Replace this with your actual Google OAuth Web Client ID
-// Get it from: https://console.cloud.google.com/apis/credentials
-// 1. Create a new project or select existing one
-// 2. Enable Google+ API
-// 3. Create OAuth 2.0 Client ID for Web application
-// 4. Add authorized JavaScript origins: http://localhost:8081, https://yourdomain.com
-// 5. Add authorized redirect URIs: http://localhost:8081, https://yourdomain.com
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
 
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
   provider: 'apple' | 'google';
+  accessToken?: string;
+  idToken?: string;
 }
 
 interface GoogleAuthResponse {
@@ -52,6 +47,14 @@ export const useGoogleAuth = () => {
 
   const promptAsync = async () => {
     try {
+      if (!GOOGLE_CLIENT_ID) {
+        setResponse({
+          type: 'error',
+          error: 'Google Client ID not configured',
+        });
+        return;
+      }
+
       const redirectUri = window.location.origin + window.location.pathname;
       const scope = 'openid profile email';
       const responseType = 'token';
@@ -137,28 +140,35 @@ export const useGoogleAuth = () => {
 };
 
 export class AuthService {
+  static isConfigured(): boolean {
+    return !!GOOGLE_CLIENT_ID;
+  }
+
   static async signInWithApple(): Promise<AuthUser | null> {
-    console.log('Apple Sign-In not available on web');
-    alert('Apple Sign-In is not available on web. Please use the mobile app or sign in with email.');
-    return null;
+    throw new Error('Apple Sign-In is not available on web. Please use the mobile app.');
   }
 
   static async getUserInfoFromGoogle(accessToken: string): Promise<AuthUser> {
     const userInfoResponse = await fetch(
-      'https://www.googleapis.com/userinfo/v2/me',
+      'https://www.googleapis.com/oauth2/v3/userinfo',
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
     );
 
+    if (!userInfoResponse.ok) {
+      throw new Error('Failed to fetch Google user info');
+    }
+
     const userInfo = await userInfoResponse.json();
     console.log('Google user info:', userInfo);
 
     return {
-      id: userInfo.id,
+      id: userInfo.sub,
       email: userInfo.email,
-      name: userInfo.name || 'Utente Google',
+      name: userInfo.name || 'Google User',
       provider: 'google',
+      accessToken,
     };
   }
 

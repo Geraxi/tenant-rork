@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { Stack, router } from 'expo-router';
-import { User, Home, Users, Key } from 'lucide-react-native';
+import { Home, Users, Key } from 'lucide-react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useUser } from '@/store/user-store';
 import { AuthService, useGoogleAuth } from '@/services/auth';
@@ -15,7 +15,14 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState<string>('');
   const [showUserTypeSelection, setShowUserTypeSelection] = useState(false);
-  const [pendingAuthData, setPendingAuthData] = useState<{email: string, name: string} | null>(null);
+  const [pendingAuthData, setPendingAuthData] = useState<{
+    provider: 'google' | 'apple';
+    providerId: string;
+    email: string;
+    name: string;
+    accessToken?: string;
+    idToken?: string;
+  } | null>(null);
   const [selectedUserType, setSelectedUserType] = useState<UserMode>('tenant');
 
   useEffect(() => {
@@ -37,31 +44,39 @@ export default function LoginScreen() {
     if (googleResponse?.type === 'success') {
       try {
         setIsLoading(true);
-        setLoginStatus('Recupero informazioni account Google...');
+        setLoginStatus('Retrieving Google account information...');
         
         const { authentication } = googleResponse;
         if (authentication?.accessToken) {
           const user = await AuthService.getUserInfoFromGoogle(authentication.accessToken);
           
-          setLoginStatus('Seleziona il tuo ruolo');
-          setPendingAuthData({ email: user.email, name: user.name });
+          setLoginStatus('Select your role');
+          setPendingAuthData({
+            provider: 'google',
+            providerId: user.id,
+            email: user.email,
+            name: user.name,
+            accessToken: authentication.accessToken,
+          });
           setShowUserTypeSelection(true);
         }
       } catch (error: any) {
         console.error('Google user info error:', error);
-        const errorMessage = error?.message || 'Errore nel recupero delle informazioni';
+        const errorMessage = error?.message || 'Failed to retrieve account information';
         setLoginStatus(errorMessage);
+        Alert.alert('Error', errorMessage);
         setTimeout(() => setLoginStatus(''), 5000);
       } finally {
         setIsLoading(false);
       }
     } else if (googleResponse?.type === 'cancel') {
-      setLoginStatus('Accesso annullato');
+      setLoginStatus('Sign-in canceled');
       setTimeout(() => setLoginStatus(''), 3000);
     } else if (googleResponse?.type === 'error') {
       console.error('Google auth error:', googleResponse.error);
-      const errorMsg = googleResponse.error?.message || 'Errore durante l\'autenticazione';
+      const errorMsg = googleResponse.error?.message || 'Authentication error';
       setLoginStatus(errorMsg);
+      Alert.alert('Error', errorMsg);
       setTimeout(() => setLoginStatus(''), 5000);
     }
   };
@@ -69,25 +84,28 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      setLoginStatus('Verifica configurazione...');
+      setLoginStatus('Checking configuration...');
       
-      // Check if Google Client ID is configured
-      const isConfigured = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID && 
-                          !process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.includes('1234567890');
-      
-      if (!isConfigured) {
-        console.warn('Google Client ID not configured. Using demo mode.');
-        setLoginStatus('Per utilizzare Google Sign-In, configura le credenziali OAuth. Usa "Crea account" per provare l\'app.');
+      if (!AuthService.isConfigured()) {
+        const message = 'Google Sign-In is not configured. Please add your Google OAuth credentials to the .env file. See GOOGLE_OAUTH_SETUP.md for instructions.';
+        console.warn(message);
+        setLoginStatus(message);
+        Alert.alert(
+          'Configuration Required',
+          'Google Sign-In requires OAuth credentials. Please check the console for setup instructions.',
+          [{ text: 'OK' }]
+        );
         setTimeout(() => setLoginStatus(''), 6000);
         setIsLoading(false);
         return;
       }
       
-      setLoginStatus('Apertura Google Sign-In...');
+      setLoginStatus('Opening Google Sign-In...');
       await googlePromptAsync();
     } catch (error) {
       console.error('Google login error:', error);
-      setLoginStatus('Errore durante l\'apertura di Google Sign-In');
+      setLoginStatus('Error opening Google Sign-In');
+      Alert.alert('Error', 'Failed to open Google Sign-In');
       setTimeout(() => setLoginStatus(''), 3000);
       setIsLoading(false);
     }
@@ -96,46 +114,30 @@ export default function LoginScreen() {
   const handleAppleLogin = async () => {
     try {
       setIsLoading(true);
-      setLoginStatus('Connessione con Apple in corso...');
+      setLoginStatus('Connecting with Apple...');
       
       const user = await AuthService.signInWithApple();
       
       if (user) {
-        setLoginStatus('Seleziona il tuo ruolo');
-        setPendingAuthData({ email: user.email, name: user.name });
+        setLoginStatus('Select your role');
+        setPendingAuthData({
+          provider: 'apple',
+          providerId: user.id,
+          email: user.email,
+          name: user.name,
+          idToken: user.idToken,
+        });
         setShowUserTypeSelection(true);
       } else {
-        setLoginStatus('Accesso annullato dall\'utente');
+        setLoginStatus('Sign-in canceled by user');
         setTimeout(() => setLoginStatus(''), 3000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Apple login error:', error);
-      setLoginStatus('Apple Sign-In non disponibile su questa piattaforma');
+      const message = error?.message || 'Apple Sign-In is not available on this platform';
+      setLoginStatus(message);
+      Alert.alert('Error', message);
       setTimeout(() => setLoginStatus(''), 3000);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleExistingAccount = async () => {
-    try {
-      setIsLoading(true);
-      setLoginStatus('Seleziona il tuo ruolo');
-      
-      setPendingAuthData({ email: 'user@example.com', name: 'Marco Rossi' });
-      setShowUserTypeSelection(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreateAccount = async () => {
-    try {
-      setIsLoading(true);
-      setLoginStatus('Seleziona il tuo ruolo');
-      
-      setPendingAuthData({ email: 'newuser@example.com', name: 'Nuovo Utente' });
-      setShowUserTypeSelection(true);
     } finally {
       setIsLoading(false);
     }
@@ -146,19 +148,33 @@ export default function LoginScreen() {
     
     try {
       setIsLoading(true);
-      setLoginStatus('Completamento registrazione...');
+      setLoginStatus('Completing registration...');
       
-      await signIn(pendingAuthData.email, pendingAuthData.name, selectedUserType);
-      setLoginStatus('Accesso completato! Benvenuto!');
+      const result = await signIn(
+        pendingAuthData.provider,
+        pendingAuthData.providerId,
+        pendingAuthData.email,
+        pendingAuthData.name,
+        selectedUserType,
+        pendingAuthData.accessToken,
+        pendingAuthData.idToken
+      );
+      
+      setLoginStatus('Sign-in complete! Welcome!');
       
       setTimeout(() => {
-        // Check if profile is completed, if not redirect to profile setup
-        if (pendingAuthData && selectedUserType) {
+        if (result.isNewUser) {
           router.replace('/profile-setup');
         } else {
           router.replace('/(tabs)/dashboard');
         }
       }, 1000);
+    } catch (error: any) {
+      console.error('Complete sign-in error:', error);
+      const message = error?.message || 'Failed to complete sign-in';
+      setLoginStatus(message);
+      Alert.alert('Error', message);
+      setTimeout(() => setLoginStatus(''), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -194,21 +210,17 @@ export default function LoginScreen() {
         <SafeAreaView style={styles.safeArea}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <View style={styles.content}>
-              {/* Logo */}
               <View style={styles.logoContainer}>
                 <TenantLogo size={100} />
               </View>
 
-              {/* Title */}
               <Text style={styles.title}>Choose your role</Text>
               <Text style={styles.subtitle}>How do you want to use Tenant?</Text>
 
-              {/* Status Message */}
               {loginStatus ? (
                 <Text style={styles.statusMessage}>{loginStatus}</Text>
               ) : null}
 
-              {/* User Type Selection */}
               <View style={styles.userTypeContainer}>
                 {(['tenant', 'landlord', 'roommate'] as UserMode[]).map((type) => {
                   const info = getUserTypeInfo(type);
@@ -259,7 +271,6 @@ export default function LoginScreen() {
                 })}
               </View>
 
-              {/* Continue Button */}
               <TouchableOpacity 
                 style={[styles.continueButton, isLoading && styles.continueButtonDisabled]} 
                 onPress={completeSignIn}
@@ -277,7 +288,6 @@ export default function LoginScreen() {
                 </Text>
               </TouchableOpacity>
 
-              {/* Back Button */}
               <TouchableOpacity 
                 style={styles.backButton} 
                 onPress={() => {
@@ -302,12 +312,10 @@ export default function LoginScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            {/* Logo */}
             <View style={styles.logoContainer}>
               <TenantLogo size={120} />
             </View>
 
-            {/* Title */}
             <Text 
               style={styles.title}
               accessibilityRole="header"
@@ -322,7 +330,6 @@ export default function LoginScreen() {
               Find your perfect rental match
             </Text>
 
-            {/* Status Message */}
             {loginStatus ? (
               <Text 
                 style={styles.statusMessage}
@@ -334,37 +341,7 @@ export default function LoginScreen() {
               </Text>
             ) : null}
 
-            {/* Quick Demo Access */}
-            <View style={styles.demoSection}>
-              <View style={styles.demoBadge}>
-                <Text style={styles.demoBadgeText}>Demo Mode</Text>
-              </View>
-              <Text style={styles.demoTitle}>Try the app instantly</Text>
-              <Text style={styles.demoDescription}>No configuration required</Text>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.authButton, styles.demoButton]} 
-              onPress={handleCreateAccount}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Create demo account"
-              accessibilityHint="Double tap to try the app with a demo account"
-              accessibilityState={{ disabled: isLoading }}
-            >
-              <User size={20} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.buttonText}>Create Demo Account</Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Login Options */}
-            <Text style={styles.loginLabel}>Sign in with OAuth</Text>
+            <Text style={styles.loginLabel}>Sign in to continue</Text>
 
             {isAppleSignInAvailable && (
               <AppleAuthentication.AppleAuthenticationButton
@@ -391,21 +368,15 @@ export default function LoginScreen() {
               <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
-            {/* Existing Account */}
-            <Text style={styles.sectionLabel}>Already have an account?</Text>
-
-            <TouchableOpacity 
-              style={styles.authButton} 
-              onPress={handleExistingAccount}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Sign in to your account"
-              accessibilityHint="Double tap to sign in with existing credentials"
-              accessibilityState={{ disabled: isLoading }}
-            >
-              <User size={20} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.buttonText}>Sign in</Text>
-            </TouchableOpacity>
+            <View style={styles.infoSection}>
+              <Text style={styles.infoTitle}>Setup Required</Text>
+              <Text style={styles.infoText}>
+                To use Google or Apple Sign-In, you need to configure OAuth credentials.
+              </Text>
+              <Text style={styles.infoText}>
+                See GOOGLE_OAUTH_SETUP.md in the project root for detailed instructions.
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -456,13 +427,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     opacity: 0.95,
   },
-  sectionLabel: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginTop: 24,
-    marginBottom: 16,
-    opacity: 0.95,
-  },
   authButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 2,
@@ -478,11 +442,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 12,
     minHeight: 50,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
   },
   appleButton: {
     width: '100%',
@@ -520,7 +479,6 @@ const styles = StyleSheet.create({
     opacity: 0.95,
     fontWeight: '500',
   },
-  // User Type Selection Styles
   userTypeContainer: {
     width: '100%',
     maxWidth: 340,
@@ -600,56 +558,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     opacity: 0.8,
   },
-  demoSection: {
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-  },
-  demoBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  demoBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  demoTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 6,
-  },
-  demoDescription: {
-    fontSize: 15,
-    color: '#FFFFFF',
-    opacity: 0.9,
-  },
-  demoButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#FFFFFF',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  infoSection: {
+    marginTop: 30,
+    padding: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
     width: '100%',
     maxWidth: 340,
-    marginVertical: 24,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  dividerText: {
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 12,
+  },
+  infoText: {
     fontSize: 14,
-    marginHorizontal: 16,
-    opacity: 0.8,
+    color: '#FFFFFF',
+    opacity: 0.9,
+    lineHeight: 20,
+    marginBottom: 8,
   },
 });
