@@ -102,10 +102,19 @@ export const [UserProvider, useUser] = createContextHook(() => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY);
       setUser(null);
-      // Redirect to login page after logout
       router.replace('/login');
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      setUser(null);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Error deleting account:', error);
     }
   };
 
@@ -228,6 +237,7 @@ export const [UserProvider, useUser] = createContextHook(() => {
     isLoading,
     signIn,
     signOut,
+    deleteAccount,
     switchMode,
     updateSubscription,
     canSwipe,

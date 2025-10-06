@@ -1,16 +1,65 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal, Pressable } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Edit3, MapPin, Briefcase, Calendar, Settings, LogOut } from 'lucide-react-native';
+import { Edit3, MapPin, Briefcase, Calendar, LogOut, Shield, Trash2, ChevronRight, Database } from 'lucide-react-native';
 import { useUser } from '@/store/user-store';
 import { Colors, Typography, BorderRadius, Spacing } from '@/constants/theme';
 import AccountSwitcher from '@/components/AccountSwitcher';
 
 export default function ProfileScreen() {
-  const { user, signOut, switchMode } = useUser();
+  const { user, signOut, switchMode, deleteAccount } = useUser();
   const insets = useSafeAreaInsets();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  const handleSignOut = () => {
+    Alert.alert(
+      'Esci dall\'account',
+      'Sei sicuro di voler uscire? Potrai accedere nuovamente in qualsiasi momento.',
+      [
+        {
+          text: 'Annulla',
+          style: 'cancel',
+        },
+        {
+          text: 'Esci',
+          style: 'destructive',
+          onPress: signOut,
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Elimina account',
+      'Questa azione è permanente e non può essere annullata. Tutti i tuoi dati verranno eliminati definitivamente.',
+      [
+        {
+          text: 'Annulla',
+          style: 'cancel',
+          onPress: () => setShowDeleteModal(false),
+        },
+        {
+          text: 'Elimina',
+          style: 'destructive',
+          onPress: async () => {
+            setShowDeleteModal(false);
+            if (deleteAccount) {
+              await deleteAccount();
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (!user) {
     return (
@@ -158,26 +207,183 @@ export default function ProfileScreen() {
               accessibilityLabel="Modifica profilo"
               accessibilityHint="Tocca per modificare le informazioni del tuo profilo"
             >
-              <Settings size={20} color={Colors.textSecondary} />
-              <Text style={styles.actionButtonText}>Modifica Profilo</Text>
+              <Edit3 size={20} color={Colors.textSecondary} />
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonText}>Modifica Profilo</Text>
+                <Text style={styles.actionButtonSubtext}>Aggiorna le tue informazioni</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => setShowPrivacyModal(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Privacy e dati"
+              accessibilityHint="Tocca per gestire le impostazioni sulla privacy"
+            >
+              <Shield size={20} color={Colors.textSecondary} />
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonText}>Privacy e Dati</Text>
+                <Text style={styles.actionButtonSubtext}>Gestisci le tue informazioni</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/data-management')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Gestione dati"
+              accessibilityHint="Tocca per scaricare o eliminare i tuoi dati"
+            >
+              <Database size={20} color={Colors.textSecondary} />
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonText}>Gestione Dati</Text>
+                <Text style={styles.actionButtonSubtext}>Scarica o elimina i tuoi dati</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.actionButton} 
-              onPress={signOut}
+              onPress={handleSignOut}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Esci dall'account"
               accessibilityHint="Tocca per disconnetterti dall'applicazione"
             >
-              <LogOut size={20} color={Colors.error} />
-              <Text style={[styles.actionButtonText, { color: Colors.error }]}>
-                Esci
-              </Text>
+              <LogOut size={20} color={Colors.textSecondary} />
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonText}>Esci</Text>
+                <Text style={styles.actionButtonSubtext}>Disconnettiti dall&apos;app</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.deleteButton]} 
+              onPress={handleDeleteAccount}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Elimina account"
+              accessibilityHint="Tocca per eliminare permanentemente il tuo account"
+            >
+              <Trash2 size={20} color={Colors.error} />
+              <View style={styles.actionButtonContent}>
+                <Text style={[styles.actionButtonText, { color: Colors.error }]}>Elimina Account</Text>
+                <Text style={[styles.actionButtonSubtext, { color: Colors.error }]}>Azione permanente</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.error} />
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
+
+      {/* Privacy Modal */}
+      <Modal
+        visible={showPrivacyModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowPrivacyModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowPrivacyModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Shield size={32} color={Colors.primary} />
+              <Text style={styles.modalTitle}>Privacy e Dati</Text>
+              <Text style={styles.modalSubtitle}>Controlla le tue informazioni</Text>
+            </View>
+            
+            <View style={styles.privacySection}>
+              <Text style={styles.privacySectionTitle}>Dati memorizzati</Text>
+              <Text style={styles.privacyText}>• Informazioni del profilo</Text>
+              <Text style={styles.privacyText}>• Foto e documenti</Text>
+              <Text style={styles.privacyText}>• Preferenze e impostazioni</Text>
+              <Text style={styles.privacyText}>• Cronologia delle interazioni</Text>
+            </View>
+            
+            <View style={styles.privacySection}>
+              <Text style={styles.privacySectionTitle}>I tuoi diritti</Text>
+              <Text style={styles.privacyText}>• Accedere ai tuoi dati</Text>
+              <Text style={styles.privacyText}>• Correggere informazioni errate</Text>
+              <Text style={styles.privacyText}>• Scaricare i tuoi dati</Text>
+              <Text style={styles.privacyText}>• Eliminare il tuo account</Text>
+            </View>
+            
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowPrivacyModal(false);
+                router.push('/privacy-policy');
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalButtonText}>Leggi l&apos;informativa completa</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowPrivacyModal(false)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCloseButtonText}>Chiudi</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={styles.deleteModalContent}>
+            <View style={styles.deleteModalHeader}>
+              <Trash2 size={48} color={Colors.error} />
+              <Text style={styles.deleteModalTitle}>Elimina Account</Text>
+            </View>
+            
+            <Text style={styles.deleteModalText}>
+              Sei sicuro di voler eliminare il tuo account?
+            </Text>
+            
+            <View style={styles.deleteWarningBox}>
+              <Text style={styles.deleteWarningTitle}>Questa azione:</Text>
+              <Text style={styles.deleteWarningText}>• Eliminerà tutti i tuoi dati</Text>
+              <Text style={styles.deleteWarningText}>• Rimuoverà tutte le tue foto</Text>
+              <Text style={styles.deleteWarningText}>• Cancellerà le tue conversazioni</Text>
+              <Text style={styles.deleteWarningText}>• Non può essere annullata</Text>
+            </View>
+            
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={styles.deleteCancelButton}
+                onPress={() => setShowDeleteModal(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.deleteCancelButtonText}>Annulla</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.deleteConfirmButton}
+                onPress={confirmDeleteAccount}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.deleteConfirmButtonText}>Elimina</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -363,16 +569,177 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-    minHeight: 44,
+    minHeight: 60,
+  },
+  actionButtonContent: {
+    flex: 1,
   },
   actionButtonText: {
     ...Typography.body,
     color: Colors.text,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  actionButtonSubtext: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  deleteButton: {
+    borderBottomWidth: 0,
   },
   message: {
     ...Typography.body,
     textAlign: 'center',
     color: Colors.text,
     margin: Spacing.lg,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  modalTitle: {
+    ...Typography.h2,
+    color: Colors.text,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  modalSubtitle: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  privacySection: {
+    marginBottom: Spacing.xl,
+  },
+  privacySectionTitle: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: Spacing.md,
+  },
+  privacyText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+    lineHeight: 22,
+  },
+  modalButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    ...Typography.body,
+    color: Colors.background,
+    fontWeight: '600',
+  },
+  modalCloseButton: {
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  modalCloseButtonText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  deleteModalContent: {
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  deleteModalTitle: {
+    ...Typography.h2,
+    color: Colors.error,
+    marginTop: Spacing.md,
+  },
+  deleteModalText: {
+    ...Typography.body,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+    lineHeight: 24,
+  },
+  deleteWarningBox: {
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  deleteWarningTitle: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '600',
+    marginBottom: Spacing.md,
+  },
+  deleteWarningText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+    lineHeight: 22,
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  deleteCancelButton: {
+    flex: 1,
+    backgroundColor: Colors.backgroundSecondary,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  deleteCancelButtonText: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '600',
+  },
+  deleteConfirmButton: {
+    flex: 1,
+    backgroundColor: Colors.error,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  deleteConfirmButtonText: {
+    ...Typography.body,
+    color: Colors.background,
+    fontWeight: '600',
   },
 });

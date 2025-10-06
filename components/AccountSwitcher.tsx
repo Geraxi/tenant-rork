@@ -76,8 +76,8 @@ export default function AccountSwitcher({ currentMode, availableModes, onModeCha
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Cambia tipo di account</Text>
-              <Text style={styles.modalSubtitle}>Scegli come vuoi usare l'app</Text>
+              <Text style={styles.modalTitle}>Cambia Modalità</Text>
+              <Text style={styles.modalSubtitle}>Seleziona come vuoi utilizzare l&apos;app. Puoi cambiare in qualsiasi momento.</Text>
             </View>
             
             {Object.entries(modeConfig).map(([mode, config]) => {
@@ -114,8 +114,11 @@ export default function AccountSwitcher({ currentMode, availableModes, onModeCha
                       ]}>
                         {config.description}
                       </Text>
+                      {isSelected && (
+                        <Text style={styles.currentModeText}>Modalità attuale</Text>
+                      )}
                       {!isAvailable && (
-                        <Text style={styles.unavailableText}>Non ancora disponibile</Text>
+                        <Text style={styles.unavailableText}>Non disponibile</Text>
                       )}
                     </View>
                     {isSelected && (
@@ -257,11 +260,17 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textSecondary,
   },
+  currentModeText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginTop: 4,
+  },
   unavailableText: {
     ...Typography.caption,
     color: Colors.error,
     fontStyle: 'italic',
-    marginTop: 2,
+    marginTop: 4,
   },
   disabledText: {
     color: Colors.textSecondary,
