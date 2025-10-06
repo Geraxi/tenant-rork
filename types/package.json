@@ -1,0 +1,13 @@
+{
+  "name": "expo-app",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "bunx rork start -p wrxht03qfi8kspilf1bi1 --tunnel",
+    "start-web": "bunx rork start -p wrxht03qfi8kspilf1bi1 --web --tunnel",
+    "start-web-dev": "DEBUG=expo* bunx rork start -p wrxht03qfi8kspilf1bi1 --web --tunnel",
+    "lint": "expo lint",
+    "build": "npx expo export --platform web --output-dir web-build"
+  }
+}
