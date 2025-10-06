@@ -1,6 +1,13 @@
 import { useState } from 'react';
 
-const GOOGLE_CLIENT_ID = '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
+// IMPORTANT: Replace this with your actual Google OAuth Web Client ID
+// Get it from: https://console.cloud.google.com/apis/credentials
+// 1. Create a new project or select existing one
+// 2. Enable Google+ API
+// 3. Create OAuth 2.0 Client ID for Web application
+// 4. Add authorized JavaScript origins: http://localhost:8081, https://yourdomain.com
+// 5. Add authorized redirect URIs: http://localhost:8081, https://yourdomain.com
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
 
 export interface AuthUser {
   id: string;

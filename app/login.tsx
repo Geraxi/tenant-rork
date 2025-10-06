@@ -47,10 +47,11 @@ export default function LoginScreen() {
           setPendingAuthData({ email: user.email, name: user.name });
           setShowUserTypeSelection(true);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Google user info error:', error);
-        setLoginStatus('Errore nel recupero delle informazioni');
-        setTimeout(() => setLoginStatus(''), 3000);
+        const errorMessage = error?.message || 'Errore nel recupero delle informazioni';
+        setLoginStatus(errorMessage);
+        setTimeout(() => setLoginStatus(''), 5000);
       } finally {
         setIsLoading(false);
       }
@@ -59,8 +60,9 @@ export default function LoginScreen() {
       setTimeout(() => setLoginStatus(''), 3000);
     } else if (googleResponse?.type === 'error') {
       console.error('Google auth error:', googleResponse.error);
-      setLoginStatus('Errore durante l\'autenticazione');
-      setTimeout(() => setLoginStatus(''), 3000);
+      const errorMsg = googleResponse.error?.message || 'Errore durante l\'autenticazione';
+      setLoginStatus(errorMsg);
+      setTimeout(() => setLoginStatus(''), 5000);
     }
   };
 
@@ -68,6 +70,18 @@ export default function LoginScreen() {
     try {
       setIsLoading(true);
       setLoginStatus('Apertura Google Sign-In...');
+      
+      // Check if Google Client ID is configured
+      const isConfigured = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID && 
+                          !process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.includes('1234567890');
+      
+      if (!isConfigured) {
+        console.warn('Google Client ID not configured. Using demo mode.');
+        setLoginStatus('Google Sign-In non configurato. Usa "Crea account" per la demo.');
+        setTimeout(() => setLoginStatus(''), 5000);
+        setIsLoading(false);
+        return;
+      }
       
       await googlePromptAsync();
     } catch (error) {
