@@ -69,7 +69,7 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      setLoginStatus('Apertura Google Sign-In...');
+      setLoginStatus('Verifica configurazione...');
       
       // Check if Google Client ID is configured
       const isConfigured = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID && 
@@ -77,12 +77,13 @@ export default function LoginScreen() {
       
       if (!isConfigured) {
         console.warn('Google Client ID not configured. Using demo mode.');
-        setLoginStatus('Google Sign-In non configurato. Usa "Crea account" per la demo.');
-        setTimeout(() => setLoginStatus(''), 5000);
+        setLoginStatus('Per utilizzare Google Sign-In, configura le credenziali OAuth. Usa "Crea account" per provare l\'app.');
+        setTimeout(() => setLoginStatus(''), 6000);
         setIsLoading(false);
         return;
       }
       
+      setLoginStatus('Apertura Google Sign-In...');
       await googlePromptAsync();
     } catch (error) {
       console.error('Google login error:', error);
@@ -333,8 +334,37 @@ export default function LoginScreen() {
               </Text>
             ) : null}
 
+            {/* Quick Demo Access */}
+            <View style={styles.demoSection}>
+              <View style={styles.demoBadge}>
+                <Text style={styles.demoBadgeText}>Demo Mode</Text>
+              </View>
+              <Text style={styles.demoTitle}>Try the app instantly</Text>
+              <Text style={styles.demoDescription}>No configuration required</Text>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.authButton, styles.demoButton]} 
+              onPress={handleCreateAccount}
+              disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Create demo account"
+              accessibilityHint="Double tap to try the app with a demo account"
+              accessibilityState={{ disabled: isLoading }}
+            >
+              <User size={20} color="#FFFFFF" strokeWidth={2} />
+              <Text style={styles.buttonText}>Create Demo Account</Text>
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             {/* Login Options */}
-            <Text style={styles.loginLabel}>Sign in with</Text>
+            <Text style={styles.loginLabel}>Sign in with OAuth</Text>
 
             {isAppleSignInAvailable && (
               <AppleAuthentication.AppleAuthenticationButton
@@ -375,22 +405,6 @@ export default function LoginScreen() {
             >
               <User size={20} color="#FFFFFF" strokeWidth={2} />
               <Text style={styles.buttonText}>Sign in</Text>
-            </TouchableOpacity>
-
-            {/* Create Account */}
-            <Text style={styles.sectionLabel}>New to Tenant?</Text>
-
-            <TouchableOpacity 
-              style={styles.authButton} 
-              onPress={handleCreateAccount}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Create a new account"
-              accessibilityHint="Double tap to create a new account"
-              accessibilityState={{ disabled: isLoading }}
-            >
-              <User size={20} color="#FFFFFF" strokeWidth={2} />
-              <Text style={styles.buttonText}>Create account</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -584,6 +598,58 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
+    opacity: 0.8,
+  },
+  demoSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  demoBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
+  demoBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  demoTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  demoDescription: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    opacity: 0.9,
+  },
+  demoButton: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FFFFFF',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 340,
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  dividerText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginHorizontal: 16,
     opacity: 0.8,
   },
 });
