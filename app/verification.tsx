@@ -192,8 +192,16 @@ export default function VerificationScreen() {
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => setCurrentStep('document_type')}
+          accessibilityRole="button"
+          accessibilityLabel="Acconsento alla verifica dell'identità"
+          accessibilityHint="Tocca due volte per procedere con la verifica"
         >
-          <Text style={styles.primaryButtonText}>Acconsento alla Verifica</Text>
+          <Text 
+            style={styles.primaryButtonText}
+            maxFontSizeMultiplier={1.5}
+          >
+            Acconsento alla Verifica
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -203,8 +211,16 @@ export default function VerificationScreen() {
             // Otherwise just go back
             router.back();
           }}
+          accessibilityRole="button"
+          accessibilityLabel="Torna indietro"
+          accessibilityHint="Tocca due volte per tornare alla schermata precedente"
         >
-          <Text style={styles.secondaryButtonText}>Torna indietro</Text>
+          <Text 
+            style={styles.secondaryButtonText}
+            maxFontSizeMultiplier={1.5}
+          >
+            Torna indietro
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -230,6 +246,10 @@ export default function VerificationScreen() {
               documentType === doc.key && styles.documentOptionSelected,
             ]}
             onPress={() => setDocumentType(doc.key as DocumentType)}
+            accessibilityRole="radio"
+            accessibilityLabel={`${doc.label}: ${doc.description}`}
+            accessibilityState={{ selected: documentType === doc.key }}
+            accessibilityHint="Tocca due volte per selezionare questo tipo di documento"
           >
             <View style={styles.documentOptionContent}>
               <Text style={styles.documentOptionTitle}>{doc.label}</Text>
@@ -245,8 +265,16 @@ export default function VerificationScreen() {
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => setCurrentStep('document_capture')}
+          accessibilityRole="button"
+          accessibilityLabel="Continua con il documento selezionato"
+          accessibilityHint="Tocca due volte per procedere alla cattura del documento"
         >
-          <Text style={styles.primaryButtonText}>Continue</Text>
+          <Text 
+            style={styles.primaryButtonText}
+            maxFontSizeMultiplier={1.5}
+          >
+            Continue
+          </Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -524,6 +552,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5E7',
     marginBottom: 12,
+    minHeight: 60,
   },
   documentOptionSelected: {
     borderColor: '#007AFF',
@@ -584,6 +613,7 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
     backgroundColor: '#F0F8FF',
     gap: 8,
+    minHeight: 50,
   },
   captureButtonText: {
     fontSize: 16,
@@ -596,6 +626,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 20,
+    minHeight: 50,
+    justifyContent: 'center',
   },
   primaryButtonText: {
     color: '#fff',
@@ -607,6 +639,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 12,
+    minHeight: 50,
+    justifyContent: 'center',
   },
   secondaryButtonText: {
     color: '#666',

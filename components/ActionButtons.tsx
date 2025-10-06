@@ -11,8 +11,18 @@ interface ActionButtonsProps {
 
 export default function ActionButtons({ onNope, onLike }: ActionButtonsProps) {
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={onNope}>
+    <View 
+      style={styles.container}
+      accessibilityLabel="Azioni di swipe"
+    >
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={onNope}
+        accessibilityRole="button"
+        accessibilityLabel="Rifiuta"
+        accessibilityHint="Tocca due volte per rifiutare questa carta e passare alla successiva"
+        accessible={true}
+      >
         <LinearGradient
           colors={['#FFFFFF', '#F8F9FA']}
           style={[styles.buttonGradient, styles.nopeButton]}
@@ -21,7 +31,14 @@ export default function ActionButtons({ onNope, onLike }: ActionButtonsProps) {
         </LinearGradient>
       </TouchableOpacity>
       
-      <TouchableOpacity style={styles.button} onPress={onLike}>
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={onLike}
+        accessibilityRole="button"
+        accessibilityLabel="Mi piace"
+        accessibilityHint="Tocca due volte per mettere mi piace a questa carta e creare un match"
+        accessible={true}
+      >
         <LinearGradient
           colors={[Colors.primary, Colors.primaryLight]}
           style={[styles.buttonGradient, styles.likeButton]}

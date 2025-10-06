@@ -209,6 +209,13 @@ export default function LoginScreen() {
                       ]}
                       onPress={() => setSelectedUserType(type)}
                       disabled={isLoading}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${info.title}: ${info.description}`}
+                      accessibilityState={{ 
+                        selected: isSelected,
+                        disabled: isLoading 
+                      }}
+                      accessibilityHint="Tocca due volte per selezionare questo ruolo"
                     >
                       <View style={[
                         styles.userTypeIcon,
@@ -242,8 +249,17 @@ export default function LoginScreen() {
                 style={[styles.continueButton, isLoading && styles.continueButtonDisabled]} 
                 onPress={completeSignIn}
                 disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Continua con il ruolo selezionato"
+                accessibilityHint="Tocca due volte per completare la registrazione"
+                accessibilityState={{ disabled: isLoading }}
               >
-                <Text style={styles.continueButtonText}>Continua</Text>
+                <Text 
+                  style={styles.continueButtonText}
+                  maxFontSizeMultiplier={1.5}
+                >
+                  Continua
+                </Text>
               </TouchableOpacity>
 
               {/* Back Button */}
@@ -280,19 +296,27 @@ export default function LoginScreen() {
             <Text 
               style={styles.title}
               accessibilityRole="header"
+              maxFontSizeMultiplier={1.5}
             >
               Benvenuto su Tenant
             </Text>
             <Text 
               style={styles.subtitle}
-              accessibilityRole="text"
+              maxFontSizeMultiplier={2.0}
             >
               Trova la tua corrispondenza perfetta nel mercato degli affitti
             </Text>
 
             {/* Status Message */}
             {loginStatus ? (
-              <Text style={styles.statusMessage}>{loginStatus}</Text>
+              <Text 
+                style={styles.statusMessage}
+                accessibilityLiveRegion="polite"
+                accessibilityRole="alert"
+                maxFontSizeMultiplier={2.0}
+              >
+                {loginStatus}
+              </Text>
             ) : null}
 
             {/* Login Options */}

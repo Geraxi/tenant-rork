@@ -24,8 +24,10 @@ export default function PropertyCard({ property, testID }: PropertyCardProps) {
     <View 
       style={[styles.container, { width: cardWidth, height: cardHeight }]}
       testID={testID}
+      accessible={true}
       accessibilityRole="button"
-      accessibilityLabel={`Proprietà: ${property.title}, ${formatPrice(property.rent)} al mese, ${property.location}`}
+      accessibilityLabel={`Proprietà: ${property.title}, ${formatPrice(property.rent)} al mese, ${property.bedrooms} camere, ${property.bathrooms} bagni, ${property.location}`}
+      accessibilityHint="Tocca due volte per vedere i dettagli completi. Scorri a sinistra per rifiutare, scorri a destra per mettere mi piace"
     >
       <View style={[styles.imageContainer, { height: imageHeight }]}>
         <Image 
@@ -58,7 +60,7 @@ export default function PropertyCard({ property, testID }: PropertyCardProps) {
           style={styles.title} 
           numberOfLines={2}
           ellipsizeMode="tail"
-          accessibilityRole="header"
+          accessible={false}
           maxFontSizeMultiplier={1.5}
         >
           {property.title}
@@ -69,6 +71,7 @@ export default function PropertyCard({ property, testID }: PropertyCardProps) {
           <Text 
             style={styles.locationText}
             maxFontSizeMultiplier={2.0}
+            accessible={false}
           >
             {property.location}
           </Text>
@@ -109,6 +112,7 @@ export default function PropertyCard({ property, testID }: PropertyCardProps) {
           numberOfLines={3}
           ellipsizeMode="tail"
           maxFontSizeMultiplier={2.0}
+          accessible={false}
         >
           {property.description}
         </Text>
