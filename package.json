@@ -2,6 +2,7 @@
   "name": "expo-app",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
     "start": "bunx rork start -p wrxht03qfi8kspilf1bi1 --tunnel",
     "start-web": "bunx rork start -p wrxht03qfi8kspilf1bi1 --web --tunnel",
@@ -64,6 +65,5 @@
     "eslint": "^9.31.0",
     "eslint-config-expo": "^9.2.0",
     "typescript": "~5.8.3"
-  },
-  "private": true
+  }
 }
