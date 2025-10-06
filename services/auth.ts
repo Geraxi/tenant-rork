@@ -1,20 +1,13 @@
 import { Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import * as AuthSession from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Google OAuth configuration - using demo client ID for testing
-const GOOGLE_CLIENT_ID = Platform.select({
-  web: '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com', // Demo web client ID
-  default: '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com', // Demo mobile client ID
-});
-
-const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
-  scheme: 'tenant',
-  path: 'auth',
-});
+const GOOGLE_WEB_CLIENT_ID = '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
+const GOOGLE_IOS_CLIENT_ID = '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
+const GOOGLE_ANDROID_CLIENT_ID = '1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com';
 
 export interface AuthUser {
   id: string;
@@ -23,11 +16,21 @@ export interface AuthUser {
   provider: 'apple' | 'google';
 }
 
+export const useGoogleAuth = () => {
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+  });
+
+  return { request, response, promptAsync };
+};
+
 export class AuthService {
   static async signInWithApple(): Promise<AuthUser | null> {
     try {
       if (Platform.OS !== 'ios') {
-        throw new Error('Apple Sign-In is only available on iOS');
+        throw new Error('Apple Sign-In è disponibile solo su iOS');
       }
 
       const credential = await AppleAuthentication.signInAsync({
@@ -37,100 +40,51 @@ export class AuthService {
         ],
       });
 
+      console.log('Apple credential received:', credential);
+
       if (credential.identityToken) {
         const { user, email, fullName } = credential;
         
+        const userName = fullName 
+          ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() 
+          : 'Utente Apple';
+        
         return {
           id: user,
-          email: email || '',
-          name: fullName ? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() : 'Apple User',
+          email: email || `${user}@privaterelay.appleid.com`,
+          name: userName || 'Utente Apple',
           provider: 'apple',
         };
       }
       
       return null;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        console.log('Apple Sign-In cancellato dall\'utente');
+        return null;
+      }
       console.error('Apple Sign-In Error:', error);
       throw error;
     }
   }
 
-  static async signInWithGoogle(): Promise<AuthUser | null> {
-    try {
-      // For web platform, use redirect-based flow to avoid popup blocking
-      if (Platform.OS === 'web') {
-        return await this.signInWithGoogleWeb();
+  static async getUserInfoFromGoogle(accessToken: string): Promise<AuthUser> {
+    const userInfoResponse = await fetch(
+      'https://www.googleapis.com/userinfo/v2/me',
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
       }
+    );
 
-      // For mobile platforms, use AuthSession with proper configuration
-      const request = new AuthSession.AuthRequest({
-        clientId: GOOGLE_CLIENT_ID!,
-        scopes: ['openid', 'profile', 'email'],
-        redirectUri: GOOGLE_REDIRECT_URI,
-        responseType: AuthSession.ResponseType.Code,
-        prompt: AuthSession.Prompt.SelectAccount,
-      });
+    const userInfo = await userInfoResponse.json();
+    console.log('Google user info:', userInfo);
 
-      const result = await request.promptAsync({
-        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-      });
-
-      if (result.type === 'success') {
-        // For demo purposes, return mock user data
-        // In production, you would exchange the code for tokens
-        return {
-          id: 'google_' + Date.now(),
-          email: 'user@gmail.com',
-          name: 'Google User',
-          provider: 'google',
-        };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Google Sign-In Error:', error);
-      // For demo purposes, return mock user on error to ensure functionality
-      return {
-        id: 'google_demo_' + Date.now(),
-        email: 'demo@gmail.com',
-        name: 'Demo Google User',
-        provider: 'google',
-      };
-    }
-  }
-
-  private static async signInWithGoogleWeb(): Promise<AuthUser | null> {
-    try {
-      console.log('Starting Google Sign-In for web...');
-      
-      // For web, we'll simulate the auth flow to avoid popup issues
-      // In a real app, you would use the redirect flow or a proper OAuth library
-      console.log('Simulating successful Google authentication...');
-      
-      // Simulate network delay
-      await new Promise(resolve => {
-        if (resolve) {
-          setTimeout(resolve, 1500);
-        }
-      });
-      
-      // Return mock authenticated user
-      return {
-        id: 'google_web_' + Date.now(),
-        email: 'webuser@gmail.com',
-        name: 'Web Google User',
-        provider: 'google',
-      };
-    } catch (error) {
-      console.error('Google Web Sign-In Error:', error);
-      // Still return a demo user to ensure the app works
-      return {
-        id: 'google_web_fallback_' + Date.now(),
-        email: 'fallback@gmail.com',
-        name: 'Fallback Google User',
-        provider: 'google',
-      };
-    }
+    return {
+      id: userInfo.id,
+      email: userInfo.email,
+      name: userInfo.name || 'Utente Google',
+      provider: 'google',
+    };
   }
 
   static async isAppleSignInAvailable(): Promise<boolean> {

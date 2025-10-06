@@ -4,12 +4,13 @@ import { Stack, router } from 'expo-router';
 import { User, Home, Users, Key } from 'lucide-react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useUser } from '@/store/user-store';
-import { AuthService } from '@/services/auth';
+import { AuthService, useGoogleAuth } from '@/services/auth';
 import TenantLogo from '@/components/TenantLogo';
 import { UserMode } from '@/types';
 
 export default function LoginScreen() {
   const { signIn } = useUser();
+  const { response: googleResponse, promptAsync: googlePromptAsync } = useGoogleAuth();
   const [isAppleSignInAvailable, setIsAppleSignInAvailable] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginStatus, setLoginStatus] = useState<string>('');
@@ -21,34 +22,58 @@ export default function LoginScreen() {
     checkAppleSignInAvailability();
   }, []);
 
+  useEffect(() => {
+    if (googleResponse) {
+      handleGoogleResponse();
+    }
+  }, [googleResponse]);
+
   const checkAppleSignInAvailability = async () => {
     const available = await AuthService.isAppleSignInAvailable();
     setIsAppleSignInAvailable(available);
   };
 
+  const handleGoogleResponse = async () => {
+    if (googleResponse?.type === 'success') {
+      try {
+        setIsLoading(true);
+        setLoginStatus('Recupero informazioni account Google...');
+        
+        const { authentication } = googleResponse;
+        if (authentication?.accessToken) {
+          const user = await AuthService.getUserInfoFromGoogle(authentication.accessToken);
+          
+          setLoginStatus('Seleziona il tuo ruolo');
+          setPendingAuthData({ email: user.email, name: user.name });
+          setShowUserTypeSelection(true);
+        }
+      } catch (error) {
+        console.error('Google user info error:', error);
+        setLoginStatus('Errore nel recupero delle informazioni');
+        setTimeout(() => setLoginStatus(''), 3000);
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (googleResponse?.type === 'cancel') {
+      setLoginStatus('Accesso annullato');
+      setTimeout(() => setLoginStatus(''), 3000);
+    } else if (googleResponse?.type === 'error') {
+      console.error('Google auth error:', googleResponse.error);
+      setLoginStatus('Errore durante l\'autenticazione');
+      setTimeout(() => setLoginStatus(''), 3000);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
-      setLoginStatus('Connessione con Google in corso...');
+      setLoginStatus('Apertura Google Sign-In...');
       
-      const user = await AuthService.signInWithGoogle();
-      
-      if (user) {
-        setLoginStatus('Seleziona il tuo ruolo');
-        setPendingAuthData({ email: user.email, name: user.name });
-        setShowUserTypeSelection(true);
-      } else {
-        setLoginStatus('Accesso annullato dall\'utente');
-        setTimeout(() => setLoginStatus(''), 3000);
-      }
+      await googlePromptAsync();
     } catch (error) {
       console.error('Google login error:', error);
-      setLoginStatus('Accesso completato con account demo');
-      
-      // Even on error, show user type selection
-      setPendingAuthData({ email: 'demo@gmail.com', name: 'Demo User' });
-      setShowUserTypeSelection(true);
-    } finally {
+      setLoginStatus('Errore durante l\'apertura di Google Sign-In');
+      setTimeout(() => setLoginStatus(''), 3000);
       setIsLoading(false);
     }
   };
