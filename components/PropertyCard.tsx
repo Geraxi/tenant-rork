@@ -59,13 +59,19 @@ export default function PropertyCard({ property, testID }: PropertyCardProps) {
           numberOfLines={2}
           ellipsizeMode="tail"
           accessibilityRole="header"
+          maxFontSizeMultiplier={1.5}
         >
           {property.title}
         </Text>
         
         <View style={styles.location}>
           <MapPin size={14} color="rgba(255, 255, 255, 0.8)" />
-          <Text style={styles.locationText}>{property.location}</Text>
+          <Text 
+            style={styles.locationText}
+            maxFontSizeMultiplier={2.0}
+          >
+            {property.location}
+          </Text>
         </View>
         
         <View style={styles.details}>
@@ -102,6 +108,7 @@ export default function PropertyCard({ property, testID }: PropertyCardProps) {
           style={styles.description} 
           numberOfLines={3}
           ellipsizeMode="tail"
+          maxFontSizeMultiplier={2.0}
         >
           {property.description}
         </Text>

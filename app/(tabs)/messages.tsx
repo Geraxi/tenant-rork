@@ -239,12 +239,18 @@ export default function MessagesScreen() {
               <TouchableOpacity
                 style={styles.headerButton}
                 onPress={() => setShowSearch(!showSearch)}
+                accessibilityRole="button"
+                accessibilityLabel="Cerca conversazioni"
+                accessibilityHint="Tocca per aprire la barra di ricerca"
               >
                 <Search size={24} color={Colors.text} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.headerButton}
                 onPress={() => {}}
+                accessibilityRole="button"
+                accessibilityLabel="Filtra conversazioni"
+                accessibilityHint="Tocca per aprire i filtri"
               >
                 <Filter size={24} color={Colors.text} />
               </TouchableOpacity>
@@ -267,7 +273,11 @@ export default function MessagesScreen() {
               autoFocus
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity 
+                onPress={() => setSearchQuery('')}
+                accessibilityRole="button"
+                accessibilityLabel="Cancella ricerca"
+              >
                 <Text style={styles.clearSearch}>✕</Text>
               </TouchableOpacity>
             )}
@@ -302,6 +312,9 @@ export default function MessagesScreen() {
           <TouchableOpacity
             style={styles.viewUnreadButton}
             onPress={() => setActiveSection('unread')}
+            accessibilityRole="button"
+            accessibilityLabel="Visualizza messaggi non letti"
+            accessibilityHint="Tocca per vedere solo i messaggi non letti"
           >
             <Text style={styles.viewUnreadButtonText}>Visualizza</Text>
           </TouchableOpacity>
@@ -352,6 +365,9 @@ export default function MessagesScreen() {
               <TouchableOpacity
                 style={styles.browseButton}
                 onPress={() => router.push('/browse')}
+                accessibilityRole="button"
+                accessibilityLabel="Trova match"
+                accessibilityHint="Tocca per iniziare a cercare nuovi match"
               >
                 <Text style={styles.browseButtonText}>Trova match</Text>
               </TouchableOpacity>
@@ -496,6 +512,14 @@ function SwipeableConversation({ conversation, property, onDelete, onArchive, on
           style={styles.conversationCard}
           onPress={onPress}
           disabled={isDeleting}
+          accessibilityRole="button"
+          accessibilityLabel={`Conversazione con ${property.title}, ${conversation.unreadCount > 0 ? `${conversation.unreadCount} messaggi non letti` : 'nessun messaggio non letto'}`}
+          accessibilityHint="Tocca per aprire la conversazione. Scorri verso sinistra per vedere le azioni"
+          accessibilityActions={[
+            { name: 'favorite', label: 'Aggiungi ai preferiti' },
+            { name: 'archive', label: 'Archivia' },
+            { name: 'delete', label: 'Elimina' }
+          ]}
         >
           <Image
             source={{ uri: property.photos[0] }}
@@ -544,6 +568,10 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: Spacing.xs,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchContainer: {
     paddingHorizontal: Spacing.md,
@@ -779,6 +807,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
     borderRadius: BorderRadius.md,
+    minHeight: 44,
   },
   browseButtonText: {
     ...Typography.body,

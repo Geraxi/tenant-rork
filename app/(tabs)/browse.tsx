@@ -137,7 +137,13 @@ export default function BrowseScreen() {
       <View
         style={[styles.container, { paddingTop: insets.top, backgroundColor: '#FFFFFF' }]}
       >
-        <Text style={[styles.message, { color: Colors.text }]}>Caricamento...</Text>
+        <Text 
+          style={[styles.message, { color: Colors.text }]}
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+        >
+          Caricamento...
+        </Text>
       </View>
     );
   }
@@ -148,10 +154,18 @@ export default function BrowseScreen() {
         style={[styles.container, { paddingTop: insets.top, backgroundColor: '#FFFFFF' }]}
       >
         <View style={styles.emptyContainer}>
-          <Text style={[styles.message, { color: Colors.text }]}>Effettua l&apos;accesso per iniziare</Text>
+          <Text 
+            style={[styles.message, { color: Colors.text }]}
+            accessibilityRole="header"
+          >
+            Effettua l&apos;accesso per iniziare
+          </Text>
           <TouchableOpacity 
             style={styles.completeProfileButton}
             onPress={() => router.push('/login')}
+            accessibilityRole="button"
+            accessibilityLabel="Vai alla pagina di login"
+            accessibilityHint="Tocca per accedere al tuo account"
           >
             <Text style={styles.completeProfileButtonText}>Vai al Login</Text>
           </TouchableOpacity>
@@ -167,13 +181,24 @@ export default function BrowseScreen() {
       >
         <Stack.Screen options={{ title: 'Sfoglia' }} />
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyTitle, { color: Colors.text }]}>Completa il tuo profilo</Text>
-          <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>
+          <Text 
+            style={[styles.emptyTitle, { color: Colors.text }]}
+            accessibilityRole="header"
+          >
+            Completa il tuo profilo
+          </Text>
+          <Text 
+            style={[styles.emptyText, { color: Colors.textSecondary }]}
+            accessibilityRole="text"
+          >
             Prima di iniziare a sfogliare gli immobili, completa il tuo profilo con foto, professione, interessi e budget.
           </Text>
           <TouchableOpacity 
             style={styles.completeProfileButton}
             onPress={() => router.push('/profile-setup')}
+            accessibilityRole="button"
+            accessibilityLabel="Completa il tuo profilo"
+            accessibilityHint="Tocca per aggiungere le tue informazioni personali"
           >
             <Text style={styles.completeProfileButtonText}>Completa profilo</Text>
           </TouchableOpacity>
@@ -215,8 +240,16 @@ export default function BrowseScreen() {
       >
         <Stack.Screen options={{ title: 'Sfoglia' }} />
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyTitle, { color: Colors.text }]}>{emptyMessage.title}</Text>
-          <Text style={[styles.emptyText, { color: Colors.textSecondary }]}>
+          <Text 
+            style={[styles.emptyTitle, { color: Colors.text }]}
+            accessibilityRole="header"
+          >
+            {emptyMessage.title}
+          </Text>
+          <Text 
+            style={[styles.emptyText, { color: Colors.textSecondary }]}
+            accessibilityRole="text"
+          >
             {emptyMessage.text}
           </Text>
         </View>
@@ -313,6 +346,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     borderRadius: 25,
     alignItems: 'center',
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
   },
   completeProfileButtonText: {
     ...Typography.body,

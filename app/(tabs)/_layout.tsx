@@ -26,6 +26,7 @@ export default function TabLayout() {
         options={{
           title: 'Sfoglia',
           tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Sfoglia immobili',
         }}
       />
       <Tabs.Screen
@@ -33,6 +34,7 @@ export default function TabLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Dashboard principale',
         }}
       />
       <Tabs.Screen
@@ -40,6 +42,7 @@ export default function TabLayout() {
         options={{
           title: 'Match',
           tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
+          tabBarAccessibilityLabel: 'I tuoi match',
         }}
       />
       <Tabs.Screen
@@ -47,6 +50,7 @@ export default function TabLayout() {
         options={{
           title: 'Messaggi',
           tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Messaggi e conversazioni',
         }}
       />
       <Tabs.Screen
@@ -54,6 +58,7 @@ export default function TabLayout() {
         options={{
           title: 'Contratti',
           tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Gestione contratti',
         }}
       />
       <Tabs.Screen
@@ -61,6 +66,7 @@ export default function TabLayout() {
         options={{
           title: 'Profilo',
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarAccessibilityLabel: 'Il tuo profilo',
         }}
       />
     </Tabs>

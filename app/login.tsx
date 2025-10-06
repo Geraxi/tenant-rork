@@ -277,8 +277,18 @@ export default function LoginScreen() {
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>Benvenuto su Tenant</Text>
-            <Text style={styles.subtitle}>Trova la tua corrispondenza perfetta nel mercato degli affitti</Text>
+            <Text 
+              style={styles.title}
+              accessibilityRole="header"
+            >
+              Benvenuto su Tenant
+            </Text>
+            <Text 
+              style={styles.subtitle}
+              accessibilityRole="text"
+            >
+              Trova la tua corrispondenza perfetta nel mercato degli affitti
+            </Text>
 
             {/* Status Message */}
             {loginStatus ? (
@@ -302,6 +312,10 @@ export default function LoginScreen() {
               style={[styles.authButton, styles.googleButton]} 
               onPress={handleGoogleLogin}
               disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Accedi con Google Account"
+              accessibilityHint="Tocca per accedere utilizzando il tuo account Google"
+              accessibilityState={{ disabled: isLoading }}
             >
               <View style={styles.googleIconContainer}>
                 <Text style={styles.googleG}>G</Text>
@@ -316,6 +330,10 @@ export default function LoginScreen() {
               style={styles.authButton} 
               onPress={handleExistingAccount}
               disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Accedi al tuo account"
+              accessibilityHint="Tocca per accedere con le tue credenziali esistenti"
+              accessibilityState={{ disabled: isLoading }}
             >
               <User size={20} color="#FFFFFF" strokeWidth={2} />
               <Text style={styles.buttonText}>Accedi al tuo account</Text>
@@ -328,6 +346,10 @@ export default function LoginScreen() {
               style={styles.authButton} 
               onPress={handleCreateAccount}
               disabled={isLoading}
+              accessibilityRole="button"
+              accessibilityLabel="Crea un nuovo account"
+              accessibilityHint="Tocca per registrarti e creare un nuovo account"
+              accessibilityState={{ disabled: isLoading }}
             >
               <User size={20} color="#FFFFFF" strokeWidth={2} />
               <Text style={styles.buttonText}>Crea un nuovo account</Text>
@@ -403,6 +425,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
     gap: 12,
+    minHeight: 50,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -506,6 +529,7 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     alignItems: 'center',
     marginBottom: 16,
+    minHeight: 50,
   },
   continueButtonDisabled: {
     opacity: 0.6,

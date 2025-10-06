@@ -62,13 +62,26 @@ export default function ProfileScreen() {
               style={styles.editImageButton}
               onPress={() => router.push('/edit-profile')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Modifica foto profilo"
+              accessibilityHint="Tocca per cambiare la tua foto del profilo"
             >
               <Edit3 size={16} color={Colors.textLight} />
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.name}>{user.full_name}</Text>
-          <Text style={styles.email}>{user.email}</Text>
+          <Text 
+            style={styles.name}
+            accessibilityRole="header"
+          >
+            {user.full_name}
+          </Text>
+          <Text 
+            style={styles.email}
+            accessibilityRole="text"
+          >
+            {user.email}
+          </Text>
           
           <View style={styles.subscriptionBadge}>
             <Text style={styles.subscriptionText}>
@@ -85,12 +98,25 @@ export default function ProfileScreen() {
           />
           
           <View style={styles.bioSection}>
-            <Text style={styles.sectionTitle}>Bio</Text>
-            <Text style={styles.bioText}>{user.bio}</Text>
+            <Text 
+              style={styles.sectionTitle}
+              accessibilityRole="header"
+            >
+              Bio
+            </Text>
+            <Text 
+              style={styles.bioText}
+              accessibilityRole="text"
+            >
+              {user.bio}
+            </Text>
             <TouchableOpacity 
               style={styles.editButton}
               onPress={() => router.push('/edit-profile')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Modifica biografia"
+              accessibilityHint="Tocca per modificare la tua biografia"
             >
               <Edit3 size={16} color={Colors.primary} />
               <Text style={styles.editButtonText}>Modifica</Text>
@@ -128,6 +154,9 @@ export default function ProfileScreen() {
               style={styles.actionButton}
               onPress={() => router.push('/edit-profile')}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Modifica profilo"
+              accessibilityHint="Tocca per modificare le informazioni del tuo profilo"
             >
               <Settings size={20} color={Colors.textSecondary} />
               <Text style={styles.actionButtonText}>Modifica Profilo</Text>
@@ -137,6 +166,9 @@ export default function ProfileScreen() {
               style={styles.actionButton} 
               onPress={signOut}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Esci dall'account"
+              accessibilityHint="Tocca per disconnetterti dall'applicazione"
             >
               <LogOut size={20} color={Colors.error} />
               <Text style={[styles.actionButtonText, { color: Colors.error }]}>
@@ -181,9 +213,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: Colors.secondary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
@@ -331,6 +363,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+    minHeight: 44,
   },
   actionButtonText: {
     ...Typography.body,
