@@ -178,7 +178,7 @@ export default function VerificationScreen() {
       <View style={styles.content}>
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>Cosa ci serve:</Text>
-          <Text style={styles.infoText}>• Un documento d'identità (passaporto, patente o carta d'identità)</Text>
+          <Text style={styles.infoText}>• Un documento d&apos;identità (passaporto, patente o carta d&apos;identità)</Text>
           <Text style={styles.infoText}>• Un selfie dal vivo per confermare che sei davvero tu</Text>
         </View>
 
@@ -187,6 +187,18 @@ export default function VerificationScreen() {
           <Text style={styles.infoText}>• Le immagini sono elaborate in sicurezza e non memorizzate sul dispositivo</Text>
           <Text style={styles.infoText}>• Solo lo stato di verifica viene salvato nel tuo profilo</Text>
           <Text style={styles.infoText}>• I dati sono crittografati e gestiti da partner di verifica affidabili</Text>
+          <Text style={styles.infoText}>• I documenti non vengono mai condivisi con altri utenti</Text>
+          <Text style={styles.infoText}>• Puoi richiedere l&apos;eliminazione dei dati in qualsiasi momento</Text>
+        </View>
+
+        <View style={styles.privacyLinkBox}>
+          <TouchableOpacity
+            onPress={() => router.push('/privacy-policy' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Leggi la privacy policy completa"
+          >
+            <Text style={styles.privacyLinkText}>Leggi la Privacy Policy Completa</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -230,13 +242,13 @@ export default function VerificationScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Select Document Type</Text>
-        <Text style={styles.subtitle}>Choose the type of ID you'd like to use</Text>
+        <Text style={styles.subtitle}>Choose the type of ID you&apos;d like to use</Text>
       </View>
 
       <View style={styles.content}>
         {[
           { key: 'passport', label: 'Passport', description: 'International travel document' },
-          { key: 'drivers_license', label: 'Driver\'s License', description: 'Government-issued driving permit' },
+          { key: 'drivers_license', label: 'Driver&apos;s License', description: 'Government-issued driving permit' },
           { key: 'national_id', label: 'National ID Card', description: 'Government-issued identity card' },
         ].map((doc) => (
           <TouchableOpacity
@@ -690,5 +702,16 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     backgroundColor: '#fff',
+  },
+  privacyLinkBox: {
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  privacyLinkText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

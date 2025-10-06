@@ -63,9 +63,22 @@ export default function BackgroundCheckForm({ userId, onComplete }: BackgroundCh
         <Text style={styles.consentItem}>• Storia degli affitti precedenti</Text>
       </View>
       
-      <Text style={styles.privacyNote}>
-        I tuoi dati saranno trattati in conformità al GDPR e utilizzati esclusivamente per la verifica dell&apos;identità.
-      </Text>
+      <View style={styles.privacyNoteBox}>
+        <Shield size={16} color="#007AFF" />
+        <View style={styles.privacyNoteContent}>
+          <Text style={styles.privacyNote}>
+            I tuoi dati saranno trattati in conformità al GDPR e utilizzati esclusivamente per la verifica dell&apos;identità. Non verranno mai condivisi senza il tuo consenso esplicito.
+          </Text>
+          <TouchableOpacity
+            onPress={() => {
+              console.log('Navigate to privacy policy');
+            }}
+            style={styles.privacyLink}
+          >
+            <Text style={styles.privacyLinkText}>Leggi la Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       
       <TouchableOpacity
         style={[
@@ -276,11 +289,32 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
+  privacyNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    backgroundColor: '#F0F8FF',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  privacyNoteContent: {
+    flex: 1,
+  },
   privacyNote: {
     fontSize: 12,
-    color: '#999',
-    fontStyle: 'italic',
-    marginBottom: 20,
+    color: '#666',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  privacyLink: {
+    marginTop: 4,
+  },
+  privacyLinkText: {
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   consentButton: {
     flexDirection: 'row',
