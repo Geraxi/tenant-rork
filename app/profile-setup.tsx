@@ -28,11 +28,13 @@ import {
   ArrowLeft,
   Shield,
   Eye,
+  Bell,
 } from 'lucide-react-native';
 import DropdownMenu from '@/components/DropdownMenu';
 import { useUser } from '@/store/user-store';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { User, TenantPreference } from '@/types';
+import * as Notifications from 'expo-notifications';
 import { 
   INTERESTS_OPTIONS, 
   PROFESSION_CATEGORIES, 
@@ -40,7 +42,7 @@ import {
   CITIES 
 } from '@/constants/profile-options';
 
-type SetupStep = 'photos' | 'basic' | 'profession' | 'interests' | 'contract' | 'budget' | 'roommate' | 'preferences' | 'identity_verification' | 'background_check' | 'virtual_tour';
+type SetupStep = 'photos' | 'basic' | 'profession' | 'interests' | 'contract' | 'budget' | 'roommate' | 'preferences' | 'identity_verification' | 'background_check' | 'virtual_tour' | 'notifications';
 
 export default function ProfileSetupScreen() {
   const { user, updateProfile, isOnboardingComplete } = useUser();
@@ -76,7 +78,7 @@ export default function ProfileSetupScreen() {
   }, [user]);
 
   const steps: SetupStep[] = user?.current_mode === 'landlord' 
-    ? ['photos', 'basic', 'preferences', 'identity_verification', 'virtual_tour']
+    ? ['photos', 'basic', 'preferences', 'identity_verification', 'virtual_tour', 'notifications']
     : [
         'photos',
         'basic', 
@@ -86,7 +88,8 @@ export default function ProfileSetupScreen() {
         'budget',
         'roommate',
         'identity_verification',
-        'background_check'
+        'background_check',
+        'notifications'
       ];
 
   const currentStepIndex = steps.indexOf(currentStep);
@@ -833,6 +836,66 @@ export default function ProfileSetupScreen() {
           </View>
         );
 
+      case 'notifications':
+        return (
+          <View style={styles.stepContent}>
+            <View style={styles.stepHeader}>
+              <Bell size={32} color={Colors.primary} />
+              <Text style={styles.stepTitle}>Stay Connected</Text>
+              <Text style={styles.stepSubtitle}>
+                Enable notifications to stay updated with messages, matches, and important updates
+              </Text>
+            </View>
+            
+            <View style={styles.notificationsInfo}>
+              <Text style={styles.infoText}>
+                We\'ll notify you about:
+              </Text>
+              <View style={styles.infoItem}>
+                <CheckCircle size={20} color={Colors.primary} />
+                <Text style={styles.infoItemText}>New messages from matches</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <CheckCircle size={20} color={Colors.primary} />
+                <Text style={styles.infoItemText}>Property matches</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <CheckCircle size={20} color={Colors.primary} />
+                <Text style={styles.infoItemText}>Viewing reminders</Text>
+              </View>
+              <View style={styles.infoItem}>
+                <CheckCircle size={20} color={Colors.primary} />
+                <Text style={styles.infoItemText}>Important account updates</Text>
+              </View>
+            </View>
+            
+            <TouchableOpacity
+              style={styles.notificationsButton}
+              onPress={async () => {
+                console.log('Requesting notification permissions');
+                const { status } = await Notifications.requestPermissionsAsync();
+                console.log('Notification permission status:', status);
+                if (status === 'granted') {
+                  Alert.alert(
+                    'Notifications Enabled',
+                    'You\'ll now receive important updates and messages.',
+                    [{ text: 'Great!' }]
+                  );
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <Bell size={24} color={Colors.background} />
+              <Text style={styles.notificationsButtonText}>Enable Notifications</Text>
+            </TouchableOpacity>
+            
+            <Text style={styles.privacyNote}>
+              You can customize notification preferences anytime in Settings.
+              We respect your privacy and won\'t spam you.
+            </Text>
+          </View>
+        );
+
       default:
         return null;
     }
@@ -1418,5 +1481,26 @@ const styles = StyleSheet.create({
   skipButtonText: {
     ...Typography.body,
     color: Colors.textSecondary,
+  },
+  notificationsInfo: {
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  notificationsButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  notificationsButtonText: {
+    ...Typography.body,
+    color: Colors.background,
+    fontWeight: '600',
   },
 });

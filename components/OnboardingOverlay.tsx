@@ -40,24 +40,31 @@ export default function OnboardingOverlay({ visible, onComplete }: OnboardingOve
 
   const onboardingSteps: OnboardingStep[] = [
     {
+      id: 'welcome',
+      title: 'Welcome to Tenant',
+      description: 'Find your perfect rental match with our intuitive swipe interface. Let\'s show you how it works.',
+      icon: Heart,
+      position: { x: screenWidth * 0.5, y: screenHeight * 0.5 },
+    },
+    {
       id: 'swipe',
-      title: 'Scorri per Scegliere',
-      description: 'Scorri a destra per mettere "Mi piace" o a sinistra per passare oltre. Puoi anche usare i pulsanti in basso!',
+      title: 'Swipe to Choose',
+      description: 'Swipe right to like or left to pass. You can also use the buttons at the bottom.',
       icon: Heart,
       position: { x: screenWidth * 0.5, y: screenHeight * 0.4 },
       highlight: { x: 20, y: screenHeight * 0.2, width: screenWidth - 40, height: screenHeight * 0.5 },
     },
     {
       id: 'details',
-      title: 'Tocca per i Dettagli',
-      description: 'Tocca una carta per vedere tutti i dettagli della proprietà o del profilo.',
+      title: 'Tap for Details',
+      description: 'Tap any card to see complete property or profile information.',
       icon: Info,
       position: { x: screenWidth * 0.5, y: screenHeight * 0.3 },
     },
     {
       id: 'filters',
-      title: 'Usa i Filtri',
-      description: 'Personalizza la tua ricerca con filtri per prezzo, tipo di proprietà e posizione.',
+      title: 'Use Filters',
+      description: 'Customize your search with filters for price, property type, and location.',
       icon: Filter,
       position: { x: screenWidth * 0.5, y: Math.min(screenHeight * 0.5, screenHeight - 200) },
     },

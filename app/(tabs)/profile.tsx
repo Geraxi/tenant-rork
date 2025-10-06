@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Mod
 import { Stack, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Edit3, MapPin, Briefcase, Calendar, LogOut, Shield, Trash2, ChevronRight, Database } from 'lucide-react-native';
+import { Edit3, MapPin, Briefcase, Calendar, LogOut, Shield, Trash2, ChevronRight, Database, Bell } from 'lucide-react-native';
 import { useUser } from '@/store/user-store';
 import { Colors, Typography, BorderRadius, Spacing } from '@/constants/theme';
 import AccountSwitcher from '@/components/AccountSwitcher';
@@ -211,6 +211,22 @@ export default function ProfileScreen() {
               <View style={styles.actionButtonContent}>
                 <Text style={styles.actionButtonText}>Modifica Profilo</Text>
                 <Text style={styles.actionButtonSubtext}>Aggiorna le tue informazioni</Text>
+              </View>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/notification-settings')}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Notifiche"
+              accessibilityHint="Tocca per gestire le preferenze di notifica"
+            >
+              <Bell size={20} color={Colors.textSecondary} />
+              <View style={styles.actionButtonContent}>
+                <Text style={styles.actionButtonText}>Notifiche</Text>
+                <Text style={styles.actionButtonSubtext}>Gestisci le tue preferenze</Text>
               </View>
               <ChevronRight size={20} color={Colors.textSecondary} />
             </TouchableOpacity>
