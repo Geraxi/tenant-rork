@@ -46,90 +46,131 @@ export const useGoogleAuth = () => {
   const [response, setResponse] = useState<GoogleAuthResponse | null>(null);
 
   const promptAsync = async () => {
-    try {
-      if (!GOOGLE_CLIENT_ID) {
-        setResponse({
-          type: 'error',
-          error: 'Google Client ID not configured',
-        });
-        return;
-      }
-
-      const redirectUri = window.location.origin + window.location.pathname;
-      const scope = 'openid profile email';
-      const responseType = 'token';
-      
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=${responseType}&` +
-        `scope=${encodeURIComponent(scope)}&` +
-        `prompt=select_account`;
-
-      const width = 500;
-      const height = 600;
-      const left = window.screen.width / 2 - width / 2;
-      const top = window.screen.height / 2 - height / 2;
-
-      const popup = window.open(
-        authUrl,
-        'Google Sign-In',
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no`
-      );
-
-      if (!popup) {
-        setResponse({
-          type: 'error',
-          error: 'Popup blocked. Please allow popups for this site.',
-        });
-        return;
-      }
-
-      googleAuthCallback = (authResponse: GoogleAuthResponse) => {
-        setResponse(authResponse);
-        if (popup && !popup.closed) {
-          popup.close();
+    return new Promise<void>((resolve, reject) => {
+      try {
+        if (!GOOGLE_CLIENT_ID) {
+          console.error('Google Client ID not configured');
+          setResponse({
+            type: 'error',
+            error: 'Google Client ID non configurato. Controlla il file .env',
+          });
+          reject(new Error('Google Client ID not configured'));
+          return;
         }
-      };
 
-      const checkPopup = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkPopup);
-          if (googleAuthCallback) {
+        console.log('Starting Google auth with Client ID:', GOOGLE_CLIENT_ID.substring(0, 20) + '...');
+
+        const redirectUri = window.location.origin;
+        const scope = 'openid profile email';
+        const responseType = 'token';
+        
+        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+          `client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&` +
+          `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+          `response_type=${responseType}&` +
+          `scope=${encodeURIComponent(scope)}&` +
+          `prompt=select_account`;
+
+        console.log('Opening Google auth URL:', authUrl);
+
+        const width = 500;
+        const height = 600;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+
+        const popup = window.open(
+          authUrl,
+          'Google Sign-In',
+          `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=yes`
+        );
+
+        if (!popup) {
+          console.error('Popup blocked');
+          setResponse({
+            type: 'error',
+            error: 'Popup bloccato. Abilita i popup per questo sito.',
+          });
+          reject(new Error('Popup blocked'));
+          return;
+        }
+
+        let checkCount = 0;
+        const maxChecks = 600;
+
+        const checkPopup = setInterval(() => {
+          checkCount++;
+
+          if (checkCount > maxChecks) {
+            clearInterval(checkPopup);
+            console.log('Auth timeout');
             setResponse({ type: 'cancel' });
-            googleAuthCallback = null;
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+            resolve();
+            return;
           }
-        }
 
-        try {
-          if (popup.location.href.includes(window.location.origin)) {
-            const hash = popup.location.hash;
-            if (hash) {
-              const params = new URLSearchParams(hash.substring(1));
-              const accessToken = params.get('access_token');
+          if (popup.closed) {
+            clearInterval(checkPopup);
+            console.log('Popup closed by user');
+            setResponse({ type: 'cancel' });
+            resolve();
+            return;
+          }
+
+          try {
+            const popupUrl = popup.location.href;
+            
+            if (popupUrl && popupUrl.includes(window.location.origin)) {
+              const hash = popup.location.hash;
+              console.log('Popup redirected back, hash:', hash);
               
-              if (accessToken && googleAuthCallback) {
-                googleAuthCallback({
-                  type: 'success',
-                  authentication: { accessToken },
-                });
+              if (hash && hash.includes('access_token')) {
+                const params = new URLSearchParams(hash.substring(1));
+                const accessToken = params.get('access_token');
+                
+                if (accessToken) {
+                  console.log('Access token received:', accessToken.substring(0, 20) + '...');
+                  clearInterval(checkPopup);
+                  popup.close();
+                  
+                  setResponse({
+                    type: 'success',
+                    authentication: { accessToken },
+                  });
+                  resolve();
+                  return;
+                }
+              } else if (hash && hash.includes('error')) {
+                const params = new URLSearchParams(hash.substring(1));
+                const error = params.get('error');
+                console.error('Auth error from Google:', error);
                 clearInterval(checkPopup);
                 popup.close();
+                
+                setResponse({
+                  type: 'error',
+                  error: error || 'Authentication failed',
+                });
+                reject(new Error(error || 'Authentication failed'));
+                return;
               }
             }
+          } catch {
+            // Cross-origin error, popup is still on Google's domain
           }
-        } catch {
-          // Cross-origin error, popup is still on Google's domain
-        }
-      }, 500);
+        }, 100);
 
-    } catch (error) {
-      console.error('Google auth error:', error);
-      setResponse({
-        type: 'error',
-        error,
-      });
-    }
+      } catch (error) {
+        console.error('Google auth error:', error);
+        setResponse({
+          type: 'error',
+          error,
+        });
+        reject(error);
+      }
+    });
   };
 
   return {

@@ -86,11 +86,21 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
+      console.log('Initiating Google sign-in...');
       await promptGoogleAsync();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google sign-in error:', error);
       setIsLoading(false);
-      Alert.alert('Errore', 'Impossibile avviare l\'autenticazione Google.');
+      
+      let errorMessage = 'Impossibile avviare l\'autenticazione Google.';
+      
+      if (error?.message?.includes('not configured')) {
+        errorMessage = 'Google OAuth non è configurato. Controlla il file .env e aggiungi le credenziali Google.';
+      } else if (error?.message?.includes('Popup blocked')) {
+        errorMessage = 'Il popup è stato bloccato. Abilita i popup per questo sito e riprova.';
+      }
+      
+      Alert.alert('Errore Google Sign-In', errorMessage);
     }
   };
 
