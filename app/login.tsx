@@ -211,34 +211,55 @@ export default function LoginScreen() {
                     )}
                   </TouchableOpacity>
 
-                  {appleAvailable && (
-                    <TouchableOpacity 
-                      style={styles.appleButton} 
-                      onPress={handleAppleSignIn}
-                      disabled={isLoading}
-                      accessibilityRole="button"
-                      accessibilityLabel="Accedi con Apple"
-                    >
-                      {isLoading ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <>
-                          <Apple size={24} color="#FFFFFF" strokeWidth={2} />
-                          <Text style={styles.appleButtonText}>Accedi con Apple</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity 
+                    style={styles.appleButton} 
+                    onPress={handleAppleSignIn}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel="Accedi con Apple"
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <>
+                        <Apple size={24} color="#FFFFFF" strokeWidth={2} />
+                        <Text style={styles.appleButtonText}>Accedi con Apple</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={styles.divider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>oppure</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
 
                   <TouchableOpacity 
                     style={styles.emailButton} 
-                    onPress={() => setShowEmailAuth(true)}
+                    onPress={() => {
+                      setShowEmailAuth(true);
+                      setIsSignUp(false);
+                    }}
                     disabled={isLoading}
                     accessibilityRole="button"
-                    accessibilityLabel="Accedi con Email"
+                    accessibilityLabel="Accedi al tuo account"
                   >
                     <Mail size={24} color="#6B8FE8" strokeWidth={2} />
-                    <Text style={styles.emailButtonText}>Accedi con Email</Text>
+                    <Text style={styles.emailButtonText}>Accedi al tuo account</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={styles.signUpButton} 
+                    onPress={() => {
+                      setShowEmailAuth(true);
+                      setIsSignUp(true);
+                    }}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel="Registrati"
+                  >
+                    <User size={24} color="#FFFFFF" strokeWidth={2} />
+                    <Text style={styles.signUpButtonText}>Registrati</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -412,7 +433,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
     gap: 12,
     minHeight: 56,
     shadowColor: '#000',
@@ -449,7 +470,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
     gap: 12,
     minHeight: 56,
     shadowColor: '#000',
@@ -463,6 +484,24 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600' as const,
   },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 420,
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  dividerText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    opacity: 0.8,
+    marginHorizontal: 16,
+  },
   emailButton: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 16,
@@ -475,11 +514,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     minHeight: 56,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  signUpButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 50,
+    width: '100%',
+    maxWidth: 420,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    minHeight: 56,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  signUpButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600' as const,
   },
   emailButtonText: {
     color: '#6B8FE8',
