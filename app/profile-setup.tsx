@@ -32,6 +32,7 @@ import {
 } from 'lucide-react-native';
 import DropdownMenu from '@/components/DropdownMenu';
 import { useUser } from '@/store/user-store';
+import { useAuth } from '@/store/auth-store';
 import { Colors, Typography, Spacing, BorderRadius } from '@/constants/theme';
 import { User, TenantPreference } from '@/types';
 import * as Notifications from 'expo-notifications';
@@ -46,6 +47,7 @@ type SetupStep = 'photos' | 'basic' | 'profession' | 'interests' | 'contract' | 
 
 export default function ProfileSetupScreen() {
   const { user, updateProfile, isOnboardingComplete } = useUser();
+  const { updateUser: updateAuthUser } = useAuth();
   const [currentStep, setCurrentStep] = useState<SetupStep>('photos');
   const [formData, setFormData] = useState<Partial<User>>({
     profile_photos: [],
@@ -143,13 +145,16 @@ export default function ProfileSetupScreen() {
       if (result.success) {
         console.log('Profile completed successfully');
         
-        // Check if all onboarding is complete
+        if (user) {
+          const updatedUser = { ...user, ...dataToUpdate, profile_completed: true };
+          await updateAuthUser(updatedUser);
+        }
+        
         if (isOnboardingComplete()) {
           console.log('Full onboarding complete, navigating to dashboard');
           router.replace('/(tabs)/dashboard');
         } else {
           console.log('Profile setup complete but onboarding not finished');
-          // Show completion message but stay in onboarding flow
           setErrors(['Profilo completato! Ora completa la verifica dell\'identità.']);
         }
       } else {
