@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Platform,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -122,38 +123,53 @@ export default function NotificationSettingsScreen() {
   }, []);
 
   const checkNotificationPermissions = async () => {
-    const { status } = await Notifications.getPermissionsAsync();
-    setPermissionStatus(status);
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      setPermissionStatus(status);
+    } catch (error) {
+      console.log('Notification permissions check failed:', error);
+      setPermissionStatus('undetermined');
+    }
   };
 
   const requestNotificationPermissions = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    setPermissionStatus(status);
-    
-    if (status === 'granted') {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      setPermissionStatus(status);
+      
+      if (status === 'granted') {
+        Alert.alert(
+          'Notifications Enabled',
+          'You will now receive notifications based on your preferences.',
+          [{ text: 'OK' }]
+        );
+      } else if (status === 'denied') {
+        Alert.alert(
+          'Notifications Disabled',
+          'To enable notifications, please go to your device settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Open Settings', 
+              onPress: () => {
+                Alert.alert(
+                  'Open Settings',
+                  'Please open your device settings and enable notifications for Tenant.',
+                  [{ text: 'OK' }]
+                );
+              }
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.log('Notification permissions request failed:', error);
       Alert.alert(
-        'Notifications Enabled',
-        'You will now receive notifications based on your preferences.',
+        'Notifications',
+        'Push notifications are not fully supported in Expo Go. They will work in the production app. You can still configure your preferences here.',
         [{ text: 'OK' }]
       );
-    } else if (status === 'denied') {
-      Alert.alert(
-        'Notifications Disabled',
-        'To enable notifications, please go to your device settings.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Open Settings', 
-            onPress: () => {
-              Alert.alert(
-                'Open Settings',
-                'Please open your device settings and enable notifications for Tenant.',
-                [{ text: 'OK' }]
-              );
-            }
-          },
-        ]
-      );
+      setPermissionStatus('undetermined');
     }
   };
 

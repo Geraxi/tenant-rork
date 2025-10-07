@@ -25,7 +25,7 @@ import {
   AlertCircle,
   Plus,
   X,
-  ArrowLeft,
+
   Shield,
   Eye,
   Bell,
@@ -873,13 +873,22 @@ export default function ProfileSetupScreen() {
               style={styles.notificationsButton}
               onPress={async () => {
                 console.log('Requesting notification permissions');
-                const { status } = await Notifications.requestPermissionsAsync();
-                console.log('Notification permission status:', status);
-                if (status === 'granted') {
+                try {
+                  const { status } = await Notifications.requestPermissionsAsync();
+                  console.log('Notification permission status:', status);
+                  if (status === 'granted') {
+                    Alert.alert(
+                      'Notifications Enabled',
+                      'You\'ll now receive important updates and messages.',
+                      [{ text: 'Great!' }]
+                    );
+                  }
+                } catch (error) {
+                  console.log('Notification permissions not available:', error);
                   Alert.alert(
-                    'Notifications Enabled',
-                    'You\'ll now receive important updates and messages.',
-                    [{ text: 'Great!' }]
+                    'Notifications',
+                    'Notification settings will be available in the production app. For now, you can continue without enabling notifications.',
+                    [{ text: 'OK' }]
                   );
                 }
               }}
