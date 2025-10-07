@@ -112,26 +112,43 @@ export const useGoogleAuth = () => {
 
         console.log('🔗 Opening Google auth URL');
         console.log('📍 Redirect URI:', redirectUri);
+        console.log('🔗 Full Auth URL:', authUrl);
 
         const width = 500;
         const height = 600;
-        const left = window.screen.width / 2 - width / 2;
-        const top = window.screen.height / 2 - height / 2;
+        const left = Math.max(0, window.screen.width / 2 - width / 2);
+        const top = Math.max(0, window.screen.height / 2 - height / 2);
+
+        const windowFeatures = `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=yes,scrollbars=yes,status=yes,resizable=yes`;
+        
+        console.log('🪟 Opening popup with features:', windowFeatures);
 
         const popup = window.open(
           authUrl,
-          'Google Sign-In',
-          `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,location=yes,scrollbars=yes`
+          'GoogleSignIn',
+          windowFeatures
         );
 
-        if (!popup) {
-          console.error('❌ Popup blocked');
+        console.log('🔍 Popup result:', popup);
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          console.error('❌ Popup blocked or failed to open');
+          console.error('🔍 Popup object:', popup);
+          console.error('🔍 Popup closed:', popup?.closed);
+          
           setResponse({
             type: 'error',
-            error: 'Popup bloccato. Abilita i popup per questo sito.',
+            error: 'Il popup è stato bloccato dal browser.\n\nPer favore:\n1. Abilita i popup per questo sito\n2. Clicca sull\'icona del popup nella barra degli indirizzi\n3. Riprova',
           });
           reject(new Error('Popup blocked'));
           return;
+        }
+
+        try {
+          popup.focus();
+          console.log('✅ Popup focused');
+        } catch (e) {
+          console.warn('⚠️ Could not focus popup:', e);
         }
 
         setPopupWindow(popup);

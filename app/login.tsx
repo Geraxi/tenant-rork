@@ -84,7 +84,10 @@ export default function LoginScreen() {
   }, [googleResponse, handleGoogleSuccess]);
 
   const handleGoogleSignIn = async () => {
+    console.log('🎯 handleGoogleSignIn called');
+    
     if (!AuthService.isConfigured()) {
+      console.log('⚠️ Google OAuth not configured');
       Alert.alert(
         '⚙️ Configurazione Richiesta',
         'Google OAuth non è ancora configurato.\n\n' +
@@ -105,21 +108,45 @@ export default function LoginScreen() {
 
     try {
       setIsLoading(true);
-      console.log('Initiating Google sign-in...');
+      console.log('🚀 Initiating Google sign-in...');
+      console.log('📱 User agent:', navigator.userAgent);
+      console.log('🌐 Window location:', window.location.href);
+      
       await promptGoogleAsync();
+      console.log('✅ promptGoogleAsync completed');
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
+      console.error('❌ Google sign-in error:', error);
+      console.error('📋 Error details:', {
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      });
       setIsLoading(false);
       
       let errorMessage = 'Impossibile avviare l\'autenticazione Google.';
+      let errorDetails = '';
       
       if (error?.message?.includes('not configured')) {
-        errorMessage = 'Google OAuth non è configurato correttamente. Verifica il file .env.';
-      } else if (error?.message?.includes('Popup blocked')) {
-        errorMessage = 'Il popup è stato bloccato. Abilita i popup per questo sito e riprova.';
+        errorMessage = 'Google OAuth non è configurato correttamente.';
+        errorDetails = 'Verifica il file .env e riavvia il server.';
+      } else if (error?.message?.includes('Popup blocked') || error?.message?.includes('popup')) {
+        errorMessage = 'Il popup è stato bloccato dal browser.';
+        errorDetails = 'Abilita i popup per questo sito:\n\n' +
+          '1. Clicca sull\'icona del lucchetto/popup nella barra degli indirizzi\n' +
+          '2. Consenti i popup per questo sito\n' +
+          '3. Ricarica la pagina e riprova';
+      } else {
+        errorDetails = error?.message || 'Errore sconosciuto';
       }
       
-      Alert.alert('Errore Google Sign-In', errorMessage);
+      Alert.alert(
+        'Errore Google Sign-In',
+        errorMessage + (errorDetails ? '\n\n' + errorDetails : ''),
+        [
+          { text: 'Usa Email', onPress: () => setShowEmailAuth(true) },
+          { text: 'Riprova', style: 'cancel' }
+        ]
+      );
     }
   };
 
