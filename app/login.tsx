@@ -212,22 +212,24 @@ export default function LoginScreen() {
                     )}
                   </TouchableOpacity>
 
-                  <TouchableOpacity 
-                    style={styles.appleButton} 
-                    onPress={handleAppleSignIn}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel="Accedi con Apple"
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <>
-                        <Apple size={24} color="#FFFFFF" strokeWidth={2} />
-                        <Text style={styles.appleButtonText}>Accedi con Apple</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                  {appleAvailable && (
+                    <TouchableOpacity 
+                      style={styles.appleButton} 
+                      onPress={handleAppleSignIn}
+                      disabled={isLoading}
+                      accessibilityRole="button"
+                      accessibilityLabel="Accedi con Apple"
+                    >
+                      {isLoading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <Apple size={24} color="#FFFFFF" strokeWidth={2} />
+                          <Text style={styles.appleButtonText}>Accedi con Apple</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
 
                   <View style={styles.divider}>
                     <View style={styles.dividerLine} />
