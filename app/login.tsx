@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions, Alert, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, Alert, ActivityIndicator, TextInput } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Apple, Mail, Lock, User } from 'lucide-react-native';
@@ -239,181 +239,175 @@ export default function LoginScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.content, isDesktop && styles.contentDesktop]}>
-            <View style={[styles.card, isDesktop && styles.cardDesktop]}>
-              <View style={styles.logoContainer}>
-                <TenantLogo size={isDesktop ? 140 : 120} />
+      <View style={[styles.content, isDesktop && styles.contentDesktop]}>
+        <View style={[styles.card, isDesktop && styles.cardDesktop]}>
+          <View style={styles.logoContainer}>
+            <TenantLogo size={isDesktop ? 100 : 70} />
+          </View>
+
+          <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Benvenuto su Tenant</Text>
+          <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>
+            Trova la tua corrispondenza perfetta
+          </Text>
+
+          {!showEmailAuth ? (
+            <>
+              <TouchableOpacity 
+                style={styles.googleButton} 
+                onPress={handleGoogleSignIn}
+                disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Accedi con Google Account"
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#3C4043" />
+                ) : (
+                  <>
+                    <View style={styles.googleIconContainer}>
+                      <Text style={styles.googleG}>G</Text>
+                    </View>
+                    <Text style={styles.googleButtonText}>Accedi con Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {appleAvailable && (
+                <TouchableOpacity 
+                  style={styles.appleButton} 
+                  onPress={handleAppleSignIn}
+                  disabled={isLoading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Accedi con Apple"
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Apple size={20} color="#FFFFFF" strokeWidth={2} />
+                      <Text style={styles.appleButtonText}>Accedi con Apple</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>oppure</Text>
+                <View style={styles.dividerLine} />
               </View>
 
-              <Text style={[styles.title, isDesktop && styles.titleDesktop]}>Benvenuto su Tenant</Text>
-              <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>
-                Trova la tua corrispondenza perfetta nel mercato degli affitti
-              </Text>
+              <TouchableOpacity 
+                style={styles.emailButton} 
+                onPress={() => {
+                  setShowEmailAuth(true);
+                  setIsSignUp(false);
+                }}
+                disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Accedi al tuo account"
+              >
+                <Mail size={20} color="#6B8FE8" strokeWidth={2} />
+                <Text style={styles.emailButtonText}>Accedi al tuo account</Text>
+              </TouchableOpacity>
 
-              {!showEmailAuth ? (
-                <>
-                  <Text style={styles.sectionLabel}>Accedi con:</Text>
-
-                  <TouchableOpacity 
-                    style={styles.googleButton} 
-                    onPress={handleGoogleSignIn}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel="Accedi con Google Account"
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="#3C4043" />
-                    ) : (
-                      <>
-                        <View style={styles.googleIconContainer}>
-                          <Text style={styles.googleG}>G</Text>
-                        </View>
-                        <Text style={styles.googleButtonText}>Accedi con Google</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-
-                  {appleAvailable && (
-                    <TouchableOpacity 
-                      style={styles.appleButton} 
-                      onPress={handleAppleSignIn}
-                      disabled={isLoading}
-                      accessibilityRole="button"
-                      accessibilityLabel="Accedi con Apple"
-                    >
-                      {isLoading ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <>
-                          <Apple size={24} color="#FFFFFF" strokeWidth={2} />
-                          <Text style={styles.appleButtonText}>Accedi con Apple</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  )}
-
-                  <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>oppure</Text>
-                    <View style={styles.dividerLine} />
-                  </View>
-
-                  <TouchableOpacity 
-                    style={styles.emailButton} 
-                    onPress={() => {
-                      setShowEmailAuth(true);
-                      setIsSignUp(false);
-                    }}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel="Accedi al tuo account"
-                  >
-                    <Mail size={24} color="#6B8FE8" strokeWidth={2} />
-                    <Text style={styles.emailButtonText}>Accedi al tuo account</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={styles.signUpButton} 
-                    onPress={() => {
-                      setShowEmailAuth(true);
-                      setIsSignUp(true);
-                    }}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel="Registrati"
-                  >
-                    <User size={24} color="#FFFFFF" strokeWidth={2} />
-                    <Text style={styles.signUpButtonText}>Registrati</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.sectionLabel}>{isSignUp ? 'Crea Account' : 'Accedi'}</Text>
-
-                  {isSignUp && (
-                    <View style={styles.inputContainer}>
-                      <User size={20} color="#6B8FE8" strokeWidth={2} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Nome completo"
-                        placeholderTextColor="rgba(255, 255, 255, 0.6)"
-                        value={name}
-                        onChangeText={setName}
-                        autoCapitalize="words"
-                        editable={!isLoading}
-                      />
-                    </View>
-                  )}
-
-                  <View style={styles.inputContainer}>
-                    <Mail size={20} color="#6B8FE8" strokeWidth={2} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Email"
-                      placeholderTextColor="rgba(255, 255, 255, 0.6)"
-                      value={email}
-                      onChangeText={setEmail}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      editable={!isLoading}
-                    />
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Lock size={20} color="#6B8FE8" strokeWidth={2} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Password"
-                      placeholderTextColor="rgba(255, 255, 255, 0.6)"
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry
-                      autoCapitalize="none"
-                      autoComplete="password"
-                      editable={!isLoading}
-                    />
-                  </View>
-
-                  <TouchableOpacity 
-                    style={styles.primaryButton} 
-                    onPress={handleEmailAuth}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                  >
-                    {isLoading ? (
-                      <ActivityIndicator color="#6B8FE8" />
-                    ) : (
-                      <Text style={styles.primaryButtonText}>
-                        {isSignUp ? 'Registrati' : 'Accedi'}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-
-                  <View style={styles.switchContainer}>
-                    <Text style={styles.switchText}>
-                      {isSignUp ? 'Hai già un account?' : 'Non hai un account?'}
-                    </Text>
-                    <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)} disabled={isLoading}>
-                      <Text style={styles.switchLink}>
-                        {isSignUp ? 'Accedi' : 'Registrati'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <TouchableOpacity 
-                    style={styles.backButton} 
-                    onPress={() => setShowEmailAuth(false)}
-                    disabled={isLoading}
-                  >
-                    <Text style={styles.backButtonText}>← Torna indietro</Text>
-                  </TouchableOpacity>
-                </>
+              <TouchableOpacity 
+                style={styles.signUpButton} 
+                onPress={() => {
+                  setShowEmailAuth(true);
+                  setIsSignUp(true);
+                }}
+                disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Registrati"
+              >
+                <User size={20} color="#FFFFFF" strokeWidth={2} />
+                <Text style={styles.signUpButtonText}>Registrati</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {isSignUp && (
+                <View style={styles.inputContainer}>
+                  <User size={18} color="#6B8FE8" strokeWidth={2} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nome completo"
+                    placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                    value={name}
+                    onChangeText={setName}
+                    autoCapitalize="words"
+                    editable={!isLoading}
+                  />
+                </View>
               )}
-            </View>
-          </View>
-      </ScrollView>
+
+              <View style={styles.inputContainer}>
+                <Mail size={18} color="#6B8FE8" strokeWidth={2} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Lock size={18} color="#6B8FE8" strokeWidth={2} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Password"
+                  placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  editable={!isLoading}
+                />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.primaryButton} 
+                onPress={handleEmailAuth}
+                disabled={isLoading}
+                accessibilityRole="button"
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#6B8FE8" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>
+                    {isSignUp ? 'Registrati' : 'Accedi'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.switchContainer}>
+                <Text style={styles.switchText}>
+                  {isSignUp ? 'Hai già un account?' : 'Non hai un account?'}
+                </Text>
+                <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)} disabled={isLoading}>
+                  <Text style={styles.switchLink}>
+                    {isSignUp ? 'Accedi' : 'Registrati'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={() => setShowEmailAuth(false)}
+                disabled={isLoading}
+              >
+                <Text style={styles.backButtonText}>← Torna indietro</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
     </View>
   );
 }
@@ -423,15 +417,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#6B8FE8',
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 40,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   contentDesktop: {
     paddingHorizontal: 64,
@@ -441,11 +432,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardDesktop: {
-    maxWidth: 520,
+    maxWidth: 480,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 32,
-    paddingHorizontal: 48,
-    paddingVertical: 64,
+    borderRadius: 24,
+    paddingHorizontal: 40,
+    paddingVertical: 48,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
@@ -453,54 +444,44 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   logoContainer: {
-    marginBottom: 48,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 36,
+    fontSize: 28,
     fontWeight: 'bold' as const,
     color: '#FFFFFF',
-    marginBottom: 16,
+    marginBottom: 8,
     textAlign: 'center',
   },
   titleDesktop: {
-    fontSize: 42,
+    fontSize: 36,
   },
   subtitle: {
-    fontSize: 17,
+    fontSize: 15,
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 60,
+    marginBottom: 32,
     opacity: 0.95,
-    paddingHorizontal: 20,
-    lineHeight: 24,
+    paddingHorizontal: 16,
+    lineHeight: 20,
   },
   subtitleDesktop: {
-    fontSize: 19,
-    lineHeight: 28,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginBottom: 16,
-    marginTop: 8,
-    opacity: 0.95,
-    alignSelf: 'flex-start',
-    width: '100%',
-    maxWidth: 420,
+    fontSize: 17,
+    lineHeight: 24,
   },
   googleButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 50,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    gap: 12,
-    minHeight: 56,
+    marginBottom: 10,
+    gap: 10,
+    minHeight: 48,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -509,35 +490,35 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#3C4043',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600' as const,
   },
   googleIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: '#4285F4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleG: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold' as const,
     color: '#FFFFFF',
   },
   appleButton: {
     backgroundColor: '#000000',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 50,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    gap: 12,
-    minHeight: 56,
+    marginBottom: 10,
+    gap: 10,
+    minHeight: 48,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -546,15 +527,15 @@ const styles = StyleSheet.create({
   },
   appleButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600' as const,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    maxWidth: 420,
-    marginVertical: 24,
+    maxWidth: 380,
+    marginVertical: 16,
   },
   dividerLine: {
     flex: 1,
@@ -563,23 +544,23 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     opacity: 0.8,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
   },
   emailButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 50,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    minHeight: 56,
-    marginBottom: 16,
+    gap: 10,
+    minHeight: 48,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -588,16 +569,16 @@ const styles = StyleSheet.create({
   },
   signUpButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 50,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-    minHeight: 56,
+    gap: 10,
+    minHeight: 48,
     borderWidth: 2,
     borderColor: '#FFFFFF',
     shadowColor: '#000',
@@ -608,12 +589,12 @@ const styles = StyleSheet.create({
   },
   signUpButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600' as const,
   },
   emailButtonText: {
     color: '#6B8FE8',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '600' as const,
   },
   inputContainer: {
@@ -621,34 +602,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 50,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 4,
     width: '100%',
-    maxWidth: 420,
-    marginBottom: 16,
-    gap: 12,
-    minHeight: 56,
+    maxWidth: 380,
+    marginBottom: 10,
+    gap: 10,
+    minHeight: 48,
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   input: {
     flex: 1,
     color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 12,
+    fontSize: 15,
+    paddingVertical: 10,
   },
   primaryButton: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 50,
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 380,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-    minHeight: 56,
+    marginTop: 4,
+    marginBottom: 16,
+    minHeight: 48,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -657,33 +638,33 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#6B8FE8',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700' as const,
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    marginBottom: 24,
+    gap: 6,
+    marginBottom: 12,
   },
   switchText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     opacity: 0.9,
   },
   switchLink: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700' as const,
     textDecorationLine: 'underline',
   },
   backButton: {
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   backButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     opacity: 0.9,
   },
 });
