@@ -5,21 +5,57 @@ import { TRPCError } from "@trpc/server";
 
 export default publicProcedure
   .input(z.object({ 
-    provider: z.enum(['google', 'apple']),
+    provider: z.enum(['google', 'apple', 'email']),
     accessToken: z.string().optional(),
     idToken: z.string().optional(),
     email: z.string().email(),
-    name: z.string().min(1),
-    providerId: z.string(),
+    name: z.string().min(1).optional(),
+    password: z.string().optional(),
+    providerId: z.string().optional(),
     userMode: z.enum(['tenant', 'landlord', 'roommate']).default('tenant')
   }))
   .mutation(async ({ input, ctx }) => {
-    const { provider, accessToken, idToken, email, name, providerId, userMode } = input;
+    const { provider, accessToken, idToken, email, name, password, providerId, userMode } = input;
     
     // Verify the token with the provider
     let verifiedEmail: string | null = null;
     
-    if (provider === 'google' && accessToken) {
+    if (provider === 'email') {
+      if (!password) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Password richiesta per autenticazione email',
+        });
+      }
+      
+      const existingUser = Array.from(ctx.db.users.values()).find(
+        u => u.email === email
+      );
+      
+      if (existingUser) {
+        if (!existingUser.account_modes.includes(userMode)) {
+          existingUser.account_modes.push(userMode);
+        }
+        existingUser.current_mode = userMode;
+        ctx.db.users.set(existingUser.id, existingUser);
+        
+        return {
+          success: true,
+          user: existingUser,
+          token: existingUser.id,
+          isNewUser: false,
+        };
+      }
+      
+      if (!name) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Nome richiesto per la registrazione',
+        });
+      }
+      
+      verifiedEmail = email;
+    } else if (provider === 'google' && accessToken) {
       try {
         const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -57,10 +93,10 @@ export default publicProcedure
       });
     }
     
-    // Check if user already exists by email or provider ID
-    const existingUser = Array.from(ctx.db.users.values()).find(
-      u => u.email === email || u.id === providerId
-    );
+    // Check if user already exists by email or provider ID (skip for email provider as handled above)
+    const existingUser = provider !== 'email' ? Array.from(ctx.db.users.values()).find(
+      u => u.email === email || (providerId && u.id === providerId)
+    ) : null;
     
     if (existingUser) {
       // Update user mode if different
@@ -104,10 +140,11 @@ export default publicProcedure
       }
     };
     
-    // Create new user with provider ID as user ID
+    // Create new user with provider ID as user ID (or generate one for email)
+    const userId = providerId || `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newUser: User = {
-      id: providerId,
-      full_name: name,
+      id: userId,
+      full_name: name || email.split('@')[0],
       email,
       profile_photos: [],
       bio: getBioByMode(userMode),
