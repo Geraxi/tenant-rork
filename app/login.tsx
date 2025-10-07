@@ -84,6 +84,25 @@ export default function LoginScreen() {
   }, [googleResponse, handleGoogleSuccess]);
 
   const handleGoogleSignIn = async () => {
+    if (!AuthService.isConfigured()) {
+      Alert.alert(
+        '⚙️ Configurazione Richiesta',
+        'Google OAuth non è ancora configurato.\n\n' +
+        'Per abilitare l\'accesso con Google:\n\n' +
+        '1. Apri il file .env nella root del progetto\n' +
+        '2. Segui le istruzioni per ottenere le credenziali Google\n' +
+        '3. Sostituisci i valori placeholder\n' +
+        '4. Riavvia il server\n\n' +
+        'Vedi GOOGLE_OAUTH_CONFIGURATION.md per la guida completa.\n\n' +
+        'Nel frattempo, puoi usare l\'autenticazione email.',
+        [
+          { text: 'Usa Email', onPress: () => setShowEmailAuth(true) },
+          { text: 'OK', style: 'cancel' }
+        ]
+      );
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log('Initiating Google sign-in...');
@@ -95,7 +114,7 @@ export default function LoginScreen() {
       let errorMessage = 'Impossibile avviare l\'autenticazione Google.';
       
       if (error?.message?.includes('not configured')) {
-        errorMessage = 'Google OAuth non è configurato. Controlla il file .env e aggiungi le credenziali Google.';
+        errorMessage = 'Google OAuth non è configurato correttamente. Verifica il file .env.';
       } else if (error?.message?.includes('Popup blocked')) {
         errorMessage = 'Il popup è stato bloccato. Abilita i popup per questo sito e riprova.';
       }

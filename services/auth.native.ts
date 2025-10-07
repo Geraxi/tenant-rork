@@ -30,8 +30,10 @@ export const useGoogleAuth = () => {
 
 export class AuthService {
   static isConfigured(): boolean {
-    const hasGoogleConfig = !!(GOOGLE_WEB_CLIENT_ID && GOOGLE_IOS_CLIENT_ID && GOOGLE_ANDROID_CLIENT_ID);
-    return hasGoogleConfig;
+    const hasValidWebId = GOOGLE_WEB_CLIENT_ID && !GOOGLE_WEB_CLIENT_ID.includes('your-web-client-id');
+    const hasValidIosId = GOOGLE_IOS_CLIENT_ID && !GOOGLE_IOS_CLIENT_ID.includes('your-ios-client-id');
+    const hasValidAndroidId = GOOGLE_ANDROID_CLIENT_ID && !GOOGLE_ANDROID_CLIENT_ID.includes('your-android-client-id');
+    return !!(hasValidWebId && hasValidIosId && hasValidAndroidId);
   }
 
   static async signInWithApple(): Promise<AuthUser | null> {

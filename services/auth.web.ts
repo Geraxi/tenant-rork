@@ -48,11 +48,22 @@ export const useGoogleAuth = () => {
   const promptAsync = async () => {
     return new Promise<void>((resolve, reject) => {
       try {
-        if (!GOOGLE_CLIENT_ID) {
-          console.error('Google Client ID not configured');
+        if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('your-web-client-id')) {
+          console.error('❌ Google OAuth not configured');
+          console.error('📝 You need to set up Google OAuth credentials in the .env file');
+          console.error('📖 See GOOGLE_OAUTH_CONFIGURATION.md for detailed instructions');
+          console.error('🔗 Go to: https://console.cloud.google.com/apis/credentials');
+          
+          const errorMsg = 'Google OAuth non è configurato.\n\n' +
+            '1. Vai su Google Cloud Console:\n' +
+            '   https://console.cloud.google.com/apis/credentials\n\n' +
+            '2. Crea un OAuth 2.0 Client ID per Web\n\n' +
+            '3. Aggiungi il Client ID al file .env\n\n' +
+            'Vedi GOOGLE_OAUTH_CONFIGURATION.md per istruzioni dettagliate.';
+          
           setResponse({
             type: 'error',
-            error: 'Google Client ID non configurato. Controlla il file .env',
+            error: errorMsg,
           });
           reject(new Error('Google Client ID not configured'));
           return;
@@ -182,7 +193,7 @@ export const useGoogleAuth = () => {
 
 export class AuthService {
   static isConfigured(): boolean {
-    return !!GOOGLE_CLIENT_ID;
+    return !!GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes('your-web-client-id');
   }
 
   static async signInWithApple(): Promise<AuthUser | null> {
