@@ -79,7 +79,13 @@ export default function LoginScreen() {
       handleGoogleSuccess();
     } else if (googleResponse?.type === 'error') {
       setIsLoading(false);
-      Alert.alert('Errore', 'Autenticazione Google fallita. Riprova.');
+      const errorMsg = typeof googleResponse.error === 'string' 
+        ? googleResponse.error 
+        : 'Autenticazione Google fallita. Riprova.';
+      Alert.alert('Errore', errorMsg);
+    } else if (googleResponse?.type === 'cancel') {
+      setIsLoading(false);
+      console.log('Google auth cancelled by user');
     }
   }, [googleResponse, handleGoogleSuccess]);
 
@@ -112,8 +118,8 @@ export default function LoginScreen() {
       console.log('📱 User agent:', navigator.userAgent);
       console.log('🌐 Window location:', window.location.href);
       
-      await promptGoogleAsync();
-      console.log('✅ promptGoogleAsync completed');
+      promptGoogleAsync();
+      console.log('✅ promptGoogleAsync called');
     } catch (error: any) {
       console.error('❌ Google sign-in error:', error);
       console.error('📋 Error details:', {
