@@ -225,7 +225,7 @@ export default function LoginScreen() {
         provider: 'email',
         email: trimmedEmail,
         password: trimmedPassword,
-        name: isSignUp ? trimmedName : undefined,
+        name: trimmedName || undefined,
         userMode: 'tenant',
       });
 
@@ -248,6 +248,13 @@ export default function LoginScreen() {
           errorMessage = 'Indirizzo email non valido';
         } else if (error.message.includes('Password')) {
           errorMessage = 'Password non valida';
+        } else if (error.message.includes('Nome richiesto')) {
+          errorMessage = 'Account non trovato. Per registrarti, clicca su "Registrati" e inserisci il tuo nome.';
+          Alert.alert('Account non trovato', errorMessage, [
+            { text: 'OK', onPress: () => setIsSignUp(true) }
+          ]);
+          setIsLoading(false);
+          return;
         } else {
           errorMessage = error.message;
         }
