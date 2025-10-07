@@ -368,35 +368,15 @@ export default function LoginScreen() {
               <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </TouchableOpacity>
 
-            {!AuthService.isConfigured() && (
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>⚙️ Setup Required</Text>
-                <Text style={styles.infoText}>
-                  To use Google Sign-In, you need to configure OAuth credentials.
-                </Text>
-                <Text style={styles.infoText}>
-                  📖 See GOOGLE_OAUTH_SETUP.md for step-by-step instructions.
-                </Text>
-                <Text style={[styles.infoText, { marginTop: 8, fontWeight: '600' }]}>
-                  Quick start:
-                </Text>
-                <Text style={styles.infoText}>
-                  1. Create Google Cloud project
-                </Text>
-                <Text style={styles.infoText}>
-                  2. Generate OAuth credentials
-                </Text>
-                <Text style={styles.infoText}>
-                  3. Copy .env.example to .env
-                </Text>
-                <Text style={styles.infoText}>
-                  4. Add your Client IDs to .env
-                </Text>
-                <Text style={styles.infoText}>
-                  5. Restart Expo server
-                </Text>
-              </View>
-            )}
+            <View style={styles.infoSection}>
+              <Text style={styles.infoTitle}>Setup Required</Text>
+              <Text style={styles.infoText}>
+                To use Google or Apple Sign-In, you need to configure OAuth credentials.
+              </Text>
+              <Text style={styles.infoText}>
+                See GOOGLE_OAUTH_SETUP.md in the project root for detailed instructions.
+              </Text>
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
