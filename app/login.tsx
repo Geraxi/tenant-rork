@@ -215,7 +215,7 @@ export default function LoginScreen() {
       }
 
       if (isSignUp && !trimmedName) {
-        Alert.alert('Errore', 'Inserisci il tuo nome');
+        Alert.alert('Errore', 'Inserisci il tuo nome per registrarti');
         return;
       }
 
@@ -225,7 +225,7 @@ export default function LoginScreen() {
         provider: 'email',
         email: trimmedEmail,
         password: trimmedPassword,
-        name: trimmedName || undefined,
+        name: isSignUp ? trimmedName : undefined,
         userMode: 'tenant',
       });
 
@@ -244,16 +244,26 @@ export default function LoginScreen() {
       let errorMessage = 'Impossibile completare l\'autenticazione.';
       
       if (error?.message) {
-        if (error.message.includes('Invalid email')) {
+        if (error.message.includes('Invalid email') || error.message.includes('invalid_format')) {
           errorMessage = 'Indirizzo email non valido';
         } else if (error.message.includes('Password')) {
           errorMessage = 'Password non valida';
         } else if (error.message.includes('Nome richiesto')) {
-          errorMessage = 'Account non trovato. Per registrarti, clicca su "Registrati" e inserisci il tuo nome.';
-          Alert.alert('Account non trovato', errorMessage, [
-            { text: 'OK', onPress: () => setIsSignUp(true) }
-          ]);
           setIsLoading(false);
+          Alert.alert(
+            'Account non trovato', 
+            'Questa email non è registrata. Vuoi creare un nuovo account?',
+            [
+              { 
+                text: 'Sì, registrati', 
+                onPress: () => setIsSignUp(true)
+              },
+              { 
+                text: 'Annulla', 
+                style: 'cancel' 
+              }
+            ]
+          );
           return;
         } else {
           errorMessage = error.message;
