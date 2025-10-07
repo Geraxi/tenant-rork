@@ -199,12 +199,22 @@ export default function LoginScreen() {
 
   const handleEmailAuth = async () => {
     try {
-      if (!email || !password) {
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+      const trimmedName = name.trim();
+
+      if (!trimmedEmail || !trimmedPassword) {
         Alert.alert('Errore', 'Inserisci email e password');
         return;
       }
 
-      if (isSignUp && !name) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        Alert.alert('Errore', 'Inserisci un indirizzo email valido');
+        return;
+      }
+
+      if (isSignUp && !trimmedName) {
         Alert.alert('Errore', 'Inserisci il tuo nome');
         return;
       }
@@ -213,9 +223,9 @@ export default function LoginScreen() {
 
       const result = await trpcClient.auth.signin.mutate({
         provider: 'email',
-        email,
-        password,
-        name: isSignUp ? name : undefined,
+        email: trimmedEmail,
+        password: trimmedPassword,
+        name: isSignUp ? trimmedName : undefined,
         userMode: 'tenant',
       });
 
@@ -230,7 +240,20 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error('Email auth error:', error);
-      Alert.alert('Errore', error.message || 'Impossibile completare l\'autenticazione.');
+      
+      let errorMessage = 'Impossibile completare l\'autenticazione.';
+      
+      if (error?.message) {
+        if (error.message.includes('Invalid email')) {
+          errorMessage = 'Indirizzo email non valido';
+        } else if (error.message.includes('Password')) {
+          errorMessage = 'Password non valida';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert('Errore', errorMessage);
     } finally {
       setIsLoading(false);
     }
