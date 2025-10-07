@@ -63,10 +63,11 @@ Devi creare **3 OAuth Client ID** separati: uno per Web, uno per iOS e uno per A
    (Aggiungi anche il tuo dominio di produzione se ne hai uno)
 6. In "Authorized redirect URIs", aggiungi:
    ```
-   http://localhost:8081
-   https://localhost:8081
+   http://localhost:8081/auth-callback
+   https://localhost:8081/auth-callback
    ```
-   (Aggiungi anche il tuo dominio di produzione se ne hai uno)
+   **IMPORTANTE**: Devi includere `/auth-callback` alla fine dell'URL!
+   (Aggiungi anche il tuo dominio di produzione se ne hai uno, es. `https://tuodominio.com/auth-callback`)
 7. Clicca su "CREATE"
 8. **Copia il Client ID** (sarà simile a `123456789-abc123.apps.googleusercontent.com`)
 
