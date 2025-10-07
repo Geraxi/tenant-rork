@@ -126,9 +126,10 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error('Apple sign-in error:', error);
-      if (error.message !== 'Apple Sign-In is only available on iOS') {
-        Alert.alert('Errore', 'Impossibile completare l\'autenticazione Apple.');
-      }
+      Alert.alert(
+        'Errore Apple Sign-In', 
+        'Al momento Apple Sign-In richiede una configurazione aggiuntiva. Per favore usa Google o l\'autenticazione email.'
+      );
     } finally {
       setIsLoading(false);
     }
