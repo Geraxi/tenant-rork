@@ -220,6 +220,7 @@ export default function LoginScreen() {
       }
 
       setIsLoading(true);
+      console.log('Attempting email auth with:', { email: trimmedEmail, isSignUp, hasName: !!trimmedName });
 
       const result = await trpcClient.auth.signin.mutate({
         provider: 'email',
@@ -228,6 +229,8 @@ export default function LoginScreen() {
         name: isSignUp ? trimmedName : undefined,
         userMode: 'tenant',
       });
+
+      console.log('Auth result:', result);
 
       if (result.success && result.user) {
         await signIn(result.user, result.token);
@@ -240,10 +243,19 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error('Email auth error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        data: error?.data,
+        shape: error?.shape,
+      });
       
       let errorMessage = 'Impossibile completare l\'autenticazione.';
+      let errorDetails = '';
       
-      if (error?.message) {
+      if (error?.message?.includes('404') || error?.message?.includes('Not found')) {
+        errorMessage = 'Errore di connessione al server';
+        errorDetails = 'Il backend non è raggiungibile. Verifica che il server sia avviato correttamente.';
+      } else if (error?.message) {
         if (error.message.includes('Invalid email') || error.message.includes('invalid_format')) {
           errorMessage = 'Indirizzo email non valido';
         } else if (error.message.includes('Password')) {
@@ -270,7 +282,10 @@ export default function LoginScreen() {
         }
       }
       
-      Alert.alert('Errore', errorMessage);
+      Alert.alert(
+        'Errore', 
+        errorMessage + (errorDetails ? '\n\n' + errorDetails : '')
+      );
     } finally {
       setIsLoading(false);
     }

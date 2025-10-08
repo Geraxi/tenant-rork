@@ -4,13 +4,10 @@ import { cors } from "hono/cors";
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
 
-// app will be mounted at /api
 const app = new Hono();
 
-// Enable CORS for all routes
 app.use("*", cors());
 
-// Mount tRPC router at /trpc
 app.use(
   "/trpc/*",
   trpcServer({
@@ -19,9 +16,14 @@ app.use(
   })
 );
 
-// Simple health check endpoint
 app.get("/", (c) => {
+  console.log('Health check endpoint hit');
   return c.json({ status: "ok", message: "API is running" });
+});
+
+app.all("*", (c) => {
+  console.log('Unmatched route:', c.req.method, c.req.url);
+  return c.json({ error: "Not found", path: c.req.url }, 404);
 });
 
 export default app;
