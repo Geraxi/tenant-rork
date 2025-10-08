@@ -7,18 +7,18 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
-  // Check for explicit environment variable
-  if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
-    console.log('Using EXPO_PUBLIC_RORK_API_BASE_URL:', process.env.EXPO_PUBLIC_RORK_API_BASE_URL);
-    return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-  }
-
   // For Rork platform, the backend is served from the same origin
   // The backend is mounted at /api, so we can use relative URLs
   if (typeof window !== 'undefined') {
     const origin = window.location.origin;
     console.log('Using window.location.origin:', origin);
     return origin;
+  }
+
+  // Check for explicit environment variable
+  if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
+    console.log('Using EXPO_PUBLIC_RORK_API_BASE_URL:', process.env.EXPO_PUBLIC_RORK_API_BASE_URL);
+    return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
 
   // Fallback for development (native apps)
