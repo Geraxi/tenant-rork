@@ -198,30 +198,30 @@ export default function LoginScreen() {
   };
 
   const handleEmailAuth = async () => {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    const trimmedName = name.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      Alert.alert('Errore', 'Inserisci email e password');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Errore', 'Inserisci un indirizzo email valido');
+      return;
+    }
+
+    if (isSignUp && !trimmedName) {
+      Alert.alert('Errore', 'Inserisci il tuo nome per registrarti');
+      return;
+    }
+
+    setIsLoading(true);
+    console.log('Attempting email auth with:', { email: trimmedEmail, isSignUp, hasName: !!trimmedName });
+
     try {
-      const trimmedEmail = email.trim();
-      const trimmedPassword = password.trim();
-      const trimmedName = name.trim();
-
-      if (!trimmedEmail || !trimmedPassword) {
-        Alert.alert('Errore', 'Inserisci email e password');
-        return;
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedEmail)) {
-        Alert.alert('Errore', 'Inserisci un indirizzo email valido');
-        return;
-      }
-
-      if (isSignUp && !trimmedName) {
-        Alert.alert('Errore', 'Inserisci il tuo nome per registrarti');
-        return;
-      }
-
-      setIsLoading(true);
-      console.log('Attempting email auth with:', { email: trimmedEmail, isSignUp, hasName: !!trimmedName });
-
       const result = await trpcClient.auth.signin.mutate({
         provider: 'email',
         email: trimmedEmail,
@@ -261,7 +261,6 @@ export default function LoginScreen() {
         } else if (error.message.includes('Password')) {
           errorMessage = 'Password non valida';
         } else if (error.message.includes('Nome richiesto')) {
-          setIsLoading(false);
           Alert.alert(
             'Account non trovato', 
             'Questa email non è registrata. Vuoi creare un nuovo account?',
@@ -276,6 +275,7 @@ export default function LoginScreen() {
               }
             ]
           );
+          setIsLoading(false);
           return;
         } else {
           errorMessage = error.message;
@@ -286,7 +286,6 @@ export default function LoginScreen() {
         'Errore', 
         errorMessage + (errorDetails ? '\n\n' + errorDetails : '')
       );
-    } finally {
       setIsLoading(false);
     }
   };
