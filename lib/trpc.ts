@@ -7,20 +7,29 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
+  // Check for explicit environment variable
   if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
     console.log('Using EXPO_PUBLIC_RORK_API_BASE_URL:', process.env.EXPO_PUBLIC_RORK_API_BASE_URL);
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
 
-  // Fallback for development
+  // For Rork platform, the backend is served from the same origin
+  // The backend is mounted at /api, so we can use relative URLs
+  if (typeof window !== 'undefined') {
+    const origin = window.location.origin;
+    console.log('Using window.location.origin:', origin);
+    return origin;
+  }
+
+  // Fallback for development (native apps)
   if (__DEV__) {
-    console.log('Using development fallback URL: http://localhost:3000');
-    return "http://localhost:3000";
+    console.log('Using development fallback URL: http://localhost:8081');
+    return "http://localhost:8081";
   }
 
   // If no environment variable is set, try to use a reasonable default
   console.warn('No EXPO_PUBLIC_RORK_API_BASE_URL found, using fallback');
-  return "https://api.example.com"; // Use a placeholder that won't work to force proper configuration
+  return "";
 };
 
 const baseUrl = getBaseUrl();
@@ -69,7 +78,7 @@ export const trpcClient = trpc.createClient({
         try {
           // Create a timeout promise
           const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error('Request timeout')), 30000);
+            setTimeout(() => reject(new Error('Request timeout after 30 seconds')), 30000);
           });
           
           // Race between fetch and timeout
@@ -83,13 +92,23 @@ export const trpcClient = trpc.createClient({
           
           if (!response.ok) {
             console.error('tRPC response not ok:', response.status, response.statusText);
-            const errorText = await response.text();
-            console.error('tRPC error response body:', errorText);
+            // Clone the response before reading it
+            const clonedResponse = response.clone();
+            try {
+              const errorText = await clonedResponse.text();
+              console.error('tRPC error response body:', errorText);
+            } catch (e) {
+              console.error('Could not read error response body:', e);
+            }
           }
           
           return response;
         } catch (error) {
           console.error('tRPC fetch error:', error);
+          if (error instanceof Error) {
+            console.error('Error message:', error.message);
+            console.error('Error stack:', error.stack);
+          }
           throw error;
         }
       },
