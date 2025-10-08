@@ -10,6 +10,12 @@ console.log('🚀 Hono server initializing...');
 
 app.use("*", cors());
 
+app.use("*", async (c, next) => {
+  console.log('📥 Incoming request:', c.req.method, c.req.url, c.req.path);
+  await next();
+  console.log('📤 Response status:', c.res.status);
+});
+
 app.get("/", (c) => {
   console.log('✅ Health check endpoint hit');
   return c.json({ status: "ok", message: "API is running" });
@@ -33,7 +39,7 @@ app.use(
 );
 
 app.all("*", (c) => {
-  console.log('⚠️ Unmatched route:', c.req.method, c.req.url);
+  console.log('⚠️ Unmatched route:', c.req.method, c.req.url, c.req.path);
   return c.json({ error: "Not found", path: c.req.url, method: c.req.method }, 404);
 });
 

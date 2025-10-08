@@ -25,7 +25,28 @@ export default function LoginScreen() {
 
   useEffect(() => {
     checkAppleAvailability();
+    checkBackendHealth();
   }, []);
+
+  const checkBackendHealth = async () => {
+    try {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const healthUrl = `${baseUrl}/api`;
+      console.log('Checking backend health at:', healthUrl);
+      
+      const response = await fetch(healthUrl);
+      console.log('Backend health check response:', response.status, response.ok);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Backend health check data:', data);
+      } else {
+        console.warn('Backend health check failed:', response.status);
+      }
+    } catch (error) {
+      console.error('Backend health check error:', error);
+    }
+  };
 
   const checkAppleAvailability = async () => {
     const available = await AuthService.isAppleSignInAvailable();
@@ -66,9 +87,17 @@ export default function LoginScreen() {
           router.replace('/(tabs)/browse');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google sign-in error:', error);
-      Alert.alert('Errore', 'Impossibile completare l\'autenticazione. Riprova.');
+      
+      let errorMessage = 'Impossibile completare l\'autenticazione Google.';
+      if (error?.message?.includes('404') || error?.message?.includes('Not found')) {
+        errorMessage = 'Backend non disponibile. Verifica che il server sia in esecuzione.';
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Errore', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -247,14 +276,25 @@ export default function LoginScreen() {
         message: error?.message,
         data: error?.data,
         shape: error?.shape,
+        cause: error?.cause,
       });
       
       let errorMessage = 'Impossibile completare l\'autenticazione.';
       let errorDetails = '';
       
-      if (error?.message?.includes('404') || error?.message?.includes('Not found')) {
-        errorMessage = 'Errore di connessione al server';
-        errorDetails = 'Il backend non è raggiungibile. Verifica che il server sia avviato correttamente.';
+      if (error?.message?.includes('404') || error?.message?.includes('Not found') || error?.message?.includes('Not Found')) {
+        errorMessage = 'Backend non disponibile';
+        errorDetails = 'Il server backend non risponde. Questo può accadere se:\n\n' +
+          '1. Il server non è stato avviato\n' +
+          '2. La configurazione del backend non è corretta\n' +
+          '3. Problemi di rete\n\n' +
+          'Verifica i log del server per maggiori dettagli.';
+      } else if (error?.message?.includes('JSON Parse error') || error?.message?.includes('Unexpected character')) {
+        errorMessage = 'Errore di comunicazione con il server';
+        errorDetails = 'Il server ha restituito una risposta non valida. Verifica che il backend sia configurato correttamente.';
+      } else if (error?.message?.includes('Network request failed') || error?.message?.includes('Failed to fetch')) {
+        errorMessage = 'Errore di rete';
+        errorDetails = 'Impossibile connettersi al server. Verifica la connessione internet e che il server sia in esecuzione.';
       } else if (error?.message) {
         if (error.message.includes('Invalid email') || error.message.includes('invalid_format')) {
           errorMessage = 'Indirizzo email non valido';

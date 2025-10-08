@@ -28,7 +28,7 @@ const getBaseUrl = () => {
 };
 
 const baseUrl = getBaseUrl();
-const trpcUrl = `${baseUrl}/api/trpc`;
+const trpcUrl = baseUrl ? `${baseUrl}/api/trpc` : '/api/trpc';
 console.log('tRPC URL configured as:', trpcUrl);
 
 export const trpcReactClient = trpc.createClient({
