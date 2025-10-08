@@ -8,22 +8,28 @@ export const trpc = createTRPCReact<AppRouter>();
 
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return '';
+    const url = window.location.origin;
+    console.log('Web baseUrl:', url);
+    return url;
   }
 
   if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
+    console.log('Using EXPO_PUBLIC_RORK_API_BASE_URL:', process.env.EXPO_PUBLIC_RORK_API_BASE_URL);
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
 
   if (__DEV__) {
+    console.log('Using dev localhost');
     return "http://localhost:8081";
   }
 
+  console.log('Using empty baseUrl');
   return "";
 };
 
 const baseUrl = getBaseUrl();
 const trpcUrl = `${baseUrl}/api/trpc`;
+console.log('tRPC URL configured as:', trpcUrl);
 
 export const trpcClient = trpc.createClient({
   links: [

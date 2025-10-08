@@ -6,24 +6,37 @@ import { createContext } from "./trpc/create-context";
 
 const app = new Hono();
 
+console.log('🚀 Hono server initializing...');
+
 app.use("*", cors());
+
+app.get("/", (c) => {
+  console.log('✅ Health check endpoint hit');
+  return c.json({ status: "ok", message: "API is running" });
+});
+
+app.get("/api", (c) => {
+  console.log('✅ API root endpoint hit');
+  return c.json({ status: "ok", message: "API root" });
+});
 
 app.use(
   "/api/trpc/*",
   trpcServer({
     router: appRouter,
     createContext,
+    onError: ({ error, path }) => {
+      console.error('❌ tRPC error on path:', path);
+      console.error('❌ Error:', error);
+    },
   })
 );
 
-app.get("/", (c) => {
-  console.log('Health check endpoint hit');
-  return c.json({ status: "ok", message: "API is running" });
+app.all("*", (c) => {
+  console.log('⚠️ Unmatched route:', c.req.method, c.req.url);
+  return c.json({ error: "Not found", path: c.req.url, method: c.req.method }, 404);
 });
 
-app.all("*", (c) => {
-  console.log('Unmatched route:', c.req.method, c.req.url);
-  return c.json({ error: "Not found", path: c.req.url }, 404);
-});
+console.log('✅ Hono server configured');
 
 export default app;
