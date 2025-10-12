@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -13,6 +14,8 @@ import SwipeCard from '../components/SwipeCard';
 import MatchAnimation from '../components/MatchAnimation';
 import { User } from '../types';
 import { t } from '../utils/translations';
+
+const { height } = Dimensions.get('window');
 
 // Mock data for demonstration
 const mockUsers: User[] = [
@@ -23,8 +26,12 @@ const mockUsers: User[] = [
     userType: 'homeowner',
     age: 32,
     bio: 'Renting out a cozy 2BR apartment near downtown. Pet-friendly and close to public transport.',
-    photos: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'],
-    location: 'Downtown, Seattle',
+    photos: [
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400',
+    ],
+    location: 'Milano, Italia',
     verified: 'verified',
     idVerified: true,
     backgroundCheckPassed: true,
@@ -32,7 +39,7 @@ const mockUsers: User[] = [
       rent: 1800,
       bedrooms: 2,
       bathrooms: 1,
-      amenities: ['Parking', 'Gym', 'Pet-friendly'],
+      amenities: ['Parcheggio', 'Palestra', 'Animali ammessi'],
       nearAirport: false,
       preferredTenantTypes: ['professionals', 'students'],
     },
@@ -44,9 +51,13 @@ const mockUsers: User[] = [
     email: 'michael@example.com',
     userType: 'homeowner',
     age: 45,
-    bio: 'Modern studio near airport. Perfect for cabin crew and pilots. Flexible lease terms available.',
-    photos: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'],
-    location: 'Airport District, Seattle',
+    bio: 'Monolocale moderno vicino all\'aeroporto. Perfetto per equipaggio di cabina e piloti.',
+    photos: [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+      'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=400',
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400',
+    ],
+    location: 'Roma, Italia',
     verified: 'verified',
     idVerified: true,
     backgroundCheckPassed: true,
@@ -54,7 +65,7 @@ const mockUsers: User[] = [
       rent: 1500,
       bedrooms: 1,
       bathrooms: 1,
-      amenities: ['WiFi', 'Furnished', 'Parking'],
+      amenities: ['WiFi', 'Arredato', 'Parcheggio'],
       nearAirport: true,
       preferredTenantTypes: ['cabin crew', 'pilots'],
     },
@@ -66,9 +77,13 @@ const mockUsers: User[] = [
     email: 'emma@example.com',
     userType: 'homeowner',
     age: 38,
-    bio: 'Beautiful 3BR house with backyard. Family-friendly neighborhood, great schools nearby.',
-    photos: ['https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400'],
-    location: 'Suburbs, Seattle',
+    bio: 'Bellissima casa con 3 camere e giardino. Quartiere adatto alle famiglie.',
+    photos: [
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
+      'https://images.unsplash.com/photo-1502672023488-70e25813eb80?w=400',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
+    ],
+    location: 'Firenze, Italia',
     verified: 'verified',
     idVerified: true,
     backgroundCheckPassed: true,
@@ -76,7 +91,7 @@ const mockUsers: User[] = [
       rent: 2500,
       bedrooms: 3,
       bathrooms: 2,
-      amenities: ['Backyard', 'Garage', 'Pet-friendly'],
+      amenities: ['Giardino', 'Garage', 'Animali ammessi'],
       nearAirport: false,
       preferredTenantTypes: ['families', 'professionals'],
     },
@@ -100,6 +115,7 @@ export default function HomeScreen({
   const [users] = useState<User[]>(mockUsers);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const handleSwipeLeft = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -132,9 +148,30 @@ export default function HomeScreen({
     );
   };
 
+  const handleCardPress = (user: User) => {
+    setSelectedUser(user);
+  };
+
   if (currentIndex >= users.length) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={onNavigateToProfile}>
+            <MaterialIcons name="person" size={28} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Tenant</Text>
+          <View style={styles.headerRight}>
+            {currentUser.userType === 'homeowner' && (
+              <TouchableOpacity onPress={onNavigateToContracts} style={styles.headerButton}>
+                <MaterialIcons name="description" size={28} color="#333" />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={onNavigateToMatches}>
+              <MaterialIcons name="chat-bubble" size={28} color="#333" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        
         <View style={styles.emptyContainer}>
           <MaterialIcons name="check-circle" size={80} color="#4ECDC4" />
           <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
@@ -154,7 +191,7 @@ export default function HomeScreen({
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {showMatchAnimation && (
         <MatchAnimation onComplete={handleMatchAnimationComplete} />
       )}
@@ -183,6 +220,7 @@ export default function HomeScreen({
             user={user}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
+            onPress={() => handleCardPress(user)}
             isFirst={index === 1}
           />
         ))}
@@ -200,7 +238,7 @@ export default function HomeScreen({
           style={[styles.actionButton, styles.superLikeButton]}
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Super Like!', 'This feature is coming soon!');
+            Alert.alert('Super Like!', 'Questa funzione sarà presto disponibile!');
           }}
         >
           <MaterialIcons name="star" size={28} color="#2196F3" />
@@ -227,7 +265,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    zIndex: 10,
   },
   headerTitle: {
     fontSize: 24,
@@ -246,13 +288,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 20,
   },
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+    paddingBottom: 30,
     gap: 20,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   actionButton: {
     width: 60,
@@ -262,10 +309,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   nopeButton: {
     borderWidth: 2,
@@ -303,11 +350,16 @@ const styles = StyleSheet.create({
   refreshButton: {
     flexDirection: 'row',
     backgroundColor: '#4ECDC4',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 30,
     alignItems: 'center',
     gap: 8,
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   refreshButtonText: {
     color: '#fff',

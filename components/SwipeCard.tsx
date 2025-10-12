@@ -20,10 +20,11 @@ interface SwipeCardProps {
   user: User;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
+  onPress: () => void;
   isFirst: boolean;
 }
 
-export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, isFirst }: SwipeCardProps) {
+export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, onPress, isFirst }: SwipeCardProps) {
   const pan = useRef(new Animated.ValueXY()).current;
   const rotate = pan.x.interpolate({
     inputRange: [-width / 2, 0, width / 2],
