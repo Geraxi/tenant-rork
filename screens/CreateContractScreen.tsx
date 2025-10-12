@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -27,6 +28,7 @@ export default function CreateContractScreen({ onBack, onSave }: CreateContractS
   const [endDate, setEndDate] = useState('');
   const [tenantName, setTenantName] = useState('');
   const [terms, setTerms] = useState('');
+  const [registerWithAgency, setRegisterWithAgency] = useState(false);
 
   const isValid = propertyAddress && monthlyRent && startDate && endDate && tenantName;
 
@@ -42,13 +44,21 @@ export default function CreateContractScreen({ onBack, onSave }: CreateContractS
 
   const handleShare = () => {
     if (isValid) {
+      const message = registerWithAgency 
+        ? 'Il contratto verrà inviato all\'inquilino via email e registrato presso l\'Agenzia delle Entrate.'
+        : 'Il contratto verrà inviato all\'inquilino via email.';
+      
       Alert.alert(
         'Condividi Contratto',
-        'Il contratto verrà inviato all\'inquilino via email.',
+        message,
         [
           { text: 'Annulla', style: 'cancel' },
           { text: 'Invia', onPress: () => {
-            Alert.alert('Successo', 'Contratto inviato!');
+            if (registerWithAgency) {
+              Alert.alert(t('registrationSuccess'), 'Il contratto è stato registrato presso l\'Agenzia delle Entrate.');
+            } else {
+              Alert.alert('Successo', 'Contratto inviato!');
+            }
             onSave();
           }}
         ]
@@ -160,6 +170,20 @@ export default function CreateContractScreen({ onBack, onSave }: CreateContractS
                 textAlignVertical="top"
               />
             </View>
+
+            <View style={styles.registrationContainer}>
+              <View style={styles.registrationHeader}>
+                <MaterialIcons name="account-balance" size={24} color="#4ECDC4" />
+                <Text style={styles.registrationTitle}>{t('registerWithAgency')}</Text>
+              </View>
+              <Text style={styles.registrationInfo}>{t('registrationInfo')}</Text>
+              <Switch
+                value={registerWithAgency}
+                onValueChange={setRegisterWithAgency}
+                trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                thumbColor="#fff"
+              />
+            </View>
           </View>
 
           <View style={styles.buttonContainer}>
@@ -244,6 +268,32 @@ const styles = StyleSheet.create({
   termsInput: {
     height: 150,
     paddingTop: 16,
+  },
+  registrationContainer: {
+    backgroundColor: '#E8F9F7',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+  },
+  registrationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  registrationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  registrationInfo: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 20,
   },
   buttonContainer: {
     gap: 12,

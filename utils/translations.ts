@@ -36,6 +36,40 @@ export const translations = {
   nearAirport: 'Vicino Aeroporto',
   amenities: 'Servizi',
   preferredTenantTypes: 'Tipi di Inquilini Preferiti',
+  hasChildren: 'Ha Figli',
+  numberOfOccupants: 'Numero di Occupanti',
+  employmentStatus: 'Stato Occupazionale',
+  jobType: 'Tipo di Lavoro',
+  requiresEmployed: 'Richiede Occupazione',
+  acceptedJobTypes: 'Tipi di Lavoro Accettati',
+  minimumIncome: 'Reddito Minimo',
+  petsAllowed: 'Animali Ammessi',
+  childrenAllowed: 'Bambini Ammessi',
+  furnished: 'Arredato',
+  parkingAvailable: 'Parcheggio Disponibile',
+  
+  // Employment Status
+  employed: 'Occupato',
+  unemployed: 'Disoccupato',
+  selfEmployed: 'Autonomo',
+  student: 'Studente',
+  retired: 'Pensionato',
+  
+  // Job Types
+  professional: 'Professionista',
+  cabinCrew: 'Equipaggio di Cabina',
+  pilot: 'Pilota',
+  healthcare: 'Sanità',
+  tech: 'Tecnologia',
+  finance: 'Finanza',
+  education: 'Istruzione',
+  hospitality: 'Ospitalità',
+  retail: 'Vendita al Dettaglio',
+  other: 'Altro',
+  
+  // Navigation
+  browse: 'Sfoglia',
+  messages: 'Messaggi',
   
   // Home Screen
   tenant: 'Tenant',
@@ -100,6 +134,9 @@ export const translations = {
   saveContract: 'Salva Contratto',
   shareContract: 'Condividi Contratto',
   viewContract: 'Visualizza Contratto',
+  registerWithAgency: 'Registra con Agenzia delle Entrate',
+  registrationSuccess: 'Contratto registrato con successo!',
+  registrationInfo: 'Il contratto verrà registrato presso l\'Agenzia delle Entrate',
   
   // Match Animation
   itsAMatch: 'È una Corrispondenza! 🎉',
@@ -128,7 +165,7 @@ export const translations = {
   // Tenant Types
   professionals: 'Professionisti',
   students: 'Studenti',
-  cabinCrew: 'Equipaggio di Cabina',
+  cabinCrewType: 'Equipaggio di Cabina',
   pilots: 'Piloti',
   families: 'Famiglie',
 };

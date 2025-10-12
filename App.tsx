@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, StyleSheet } from 'react-native';
 import OnboardingScreen from './screens/OnboardingScreen';
 import ProfileSetupScreen, { ProfileData } from './screens/ProfileSetupScreen';
 import PreferencesScreen from './screens/PreferencesScreen';
@@ -12,6 +13,7 @@ import ProfileScreen from './screens/ProfileScreen';
 import VerificationScreen from './screens/VerificationScreen';
 import ContractsScreen from './screens/ContractsScreen';
 import CreateContractScreen from './screens/CreateContractScreen';
+import BottomNavigation from './components/BottomNavigation';
 import { User, UserType } from './types';
 
 type Screen = 
@@ -25,6 +27,8 @@ type Screen =
   | 'verification'
   | 'contracts'
   | 'createContract';
+
+type NavScreen = 'browse' | 'matches' | 'messages' | 'contracts' | 'profile';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
@@ -78,6 +82,27 @@ export default function App() {
     }
     setCurrentScreen('profile');
   };
+
+  const handleNavigation = (screen: NavScreen) => {
+    const screenMap: Record<NavScreen, Screen> = {
+      browse: 'home',
+      matches: 'matches',
+      messages: 'matches',
+      contracts: 'contracts',
+      profile: 'profile',
+    };
+    setCurrentScreen(screenMap[screen]);
+  };
+
+  const getCurrentNavScreen = (): NavScreen => {
+    if (currentScreen === 'home') return 'browse';
+    if (currentScreen === 'matches' || currentScreen === 'chat') return 'matches';
+    if (currentScreen === 'contracts' || currentScreen === 'createContract') return 'contracts';
+    if (currentScreen === 'profile' || currentScreen === 'verification') return 'profile';
+    return 'browse';
+  };
+
+  const showBottomNav = currentUser && !['onboarding', 'profileSetup', 'preferences', 'chat', 'verification', 'createContract'].includes(currentScreen);
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -167,9 +192,24 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        {renderScreen()}
+        <View style={styles.container}>
+          {renderScreen()}
+          {showBottomNav && (
+            <BottomNavigation
+              currentScreen={getCurrentNavScreen()}
+              onNavigate={handleNavigation}
+              showContracts={currentUser?.userType === 'homeowner'}
+            />
+          )}
+        </View>
         <StatusBar style="dark" />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

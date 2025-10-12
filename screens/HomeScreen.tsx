@@ -177,13 +177,13 @@ export default function HomeScreen({
       </View>
 
       <View style={styles.cardContainer}>
-        {users.slice(currentIndex, currentIndex + 2).map((user, index) => (
+        {users.slice(currentIndex, currentIndex + 2).reverse().map((user, index) => (
           <SwipeCard
-            key={user.id}
+            key={`${user.id}-${currentIndex}`}
             user={user}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
-            isFirst={index === 0}
+            isFirst={index === 1}
           />
         ))}
       </View>

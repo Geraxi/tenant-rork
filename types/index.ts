@@ -2,6 +2,21 @@ export type UserType = 'tenant' | 'homeowner' | 'roommate';
 
 export type VerificationStatus = 'unverified' | 'pending' | 'verified';
 
+export type EmploymentStatus = 'employed' | 'unemployed' | 'self-employed' | 'student' | 'retired';
+
+export type JobType = 
+  | 'professional' 
+  | 'cabin-crew' 
+  | 'pilot' 
+  | 'student' 
+  | 'healthcare' 
+  | 'tech' 
+  | 'finance'
+  | 'education'
+  | 'hospitality'
+  | 'retail'
+  | 'other';
+
 export interface User {
   id: string;
   name: string;
@@ -15,6 +30,9 @@ export interface User {
   idVerified: boolean;
   backgroundCheckPassed: boolean;
   preferences: UserPreferences;
+  employmentStatus?: EmploymentStatus;
+  jobType?: JobType;
+  monthlyIncome?: number;
   createdAt: number;
 }
 
@@ -25,6 +43,10 @@ export interface UserPreferences {
   leaseDuration?: string;
   petFriendly?: boolean;
   smoking?: boolean;
+  hasChildren?: boolean;
+  numberOfOccupants?: number;
+  employmentStatus?: EmploymentStatus;
+  jobType?: JobType;
   
   // For Homeowners
   propertyType?: string;
@@ -33,15 +55,24 @@ export interface UserPreferences {
   bathrooms?: number;
   amenities?: string[];
   nearAirport?: boolean;
-  preferredTenantTypes?: string[]; // e.g., 'cabin crew', 'pilots', 'students', 'professionals'
+  preferredTenantTypes?: string[];
+  requiresEmployed?: boolean;
+  acceptedJobTypes?: JobType[];
+  minimumIncome?: number;
+  petsAllowed?: boolean;
+  childrenAllowed?: boolean;
   
   // For Roommates
   roommatePreferences?: string[];
   lifestyle?: string[];
+  cleanliness?: string;
+  workSchedule?: string;
   
   // Common
   ageRange?: { min: number; max: number };
   gender?: string;
+  furnished?: boolean;
+  parkingAvailable?: boolean;
 }
 
 export interface Property {
@@ -74,4 +105,20 @@ export interface Message {
   text: string;
   timestamp: number;
   read: boolean;
+}
+
+export interface Contract {
+  id: string;
+  landlordId: string;
+  tenantId: string;
+  propertyAddress: string;
+  monthlyRent: number;
+  securityDeposit: number;
+  startDate: string;
+  endDate: string;
+  terms: string;
+  status: 'draft' | 'sent' | 'signed' | 'registered';
+  registeredWithAgency?: boolean;
+  registrationDate?: string;
+  createdAt: number;
 }

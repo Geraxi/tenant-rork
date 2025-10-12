@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { UserType, UserPreferences } from '../types';
+import { UserType, UserPreferences, JobType } from '../types';
 import { t } from '../utils/translations';
 
 interface PreferencesScreenProps {
@@ -26,6 +26,33 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
   const [petFriendly, setPetFriendly] = useState(false);
   const [smoking, setSmoking] = useState(false);
   const [nearAirport, setNearAirport] = useState(false);
+  const [hasChildren, setHasChildren] = useState(false);
+  const [furnished, setFurnished] = useState(false);
+  const [parkingAvailable, setParkingAvailable] = useState(false);
+  const [requiresEmployed, setRequiresEmployed] = useState(false);
+  const [minimumIncome, setMinimumIncome] = useState('');
+  const [selectedJobTypes, setSelectedJobTypes] = useState<JobType[]>([]);
+
+  const jobTypes: { value: JobType; label: string }[] = [
+    { value: 'professional', label: t('professional') },
+    { value: 'cabin-crew', label: t('cabinCrew') },
+    { value: 'pilot', label: t('pilot') },
+    { value: 'healthcare', label: t('healthcare') },
+    { value: 'tech', label: t('tech') },
+    { value: 'finance', label: t('finance') },
+    { value: 'education', label: t('education') },
+    { value: 'hospitality', label: t('hospitality') },
+    { value: 'retail', label: t('retail') },
+    { value: 'student', label: t('student') },
+  ];
+
+  const toggleJobType = (jobType: JobType) => {
+    setSelectedJobTypes(prev => 
+      prev.includes(jobType) 
+        ? prev.filter(j => j !== jobType)
+        : [...prev, jobType]
+    );
+  };
 
   const handleContinue = () => {
     const preferences: UserPreferences = {};
@@ -34,12 +61,21 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
       if (budget) preferences.budget = parseInt(budget);
       preferences.petFriendly = petFriendly;
       preferences.smoking = smoking;
+      preferences.hasChildren = hasChildren;
+      preferences.furnished = furnished;
+      preferences.parkingAvailable = parkingAvailable;
     } else if (userType === 'homeowner') {
       if (rent) preferences.rent = parseInt(rent);
       if (bedrooms) preferences.bedrooms = parseInt(bedrooms);
       if (bathrooms) preferences.bathrooms = parseInt(bathrooms);
-      preferences.petFriendly = petFriendly;
+      preferences.petsAllowed = petFriendly;
+      preferences.childrenAllowed = hasChildren;
       preferences.nearAirport = nearAirport;
+      preferences.furnished = furnished;
+      preferences.parkingAvailable = parkingAvailable;
+      preferences.requiresEmployed = requiresEmployed;
+      if (minimumIncome) preferences.minimumIncome = parseInt(minimumIncome);
+      preferences.acceptedJobTypes = selectedJobTypes;
       preferences.amenities = [];
       preferences.preferredTenantTypes = [];
     }
@@ -113,17 +149,86 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                   />
                 </View>
               </View>
+
+              <View style={styles.switchContainer}>
+                <View style={styles.switchRow}>
+                  <MaterialIcons name="work" size={24} color="#4ECDC4" />
+                  <Text style={styles.switchLabel}>{t('requiresEmployed')}</Text>
+                </View>
+                <Switch
+                  value={requiresEmployed}
+                  onValueChange={setRequiresEmployed}
+                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  thumbColor="#fff"
+                />
+              </View>
+
+              {requiresEmployed && (
+                <>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('minimumIncome')} (€/mese)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={minimumIncome}
+                      onChangeText={setMinimumIncome}
+                      placeholder="2000"
+                      keyboardType="number-pad"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>{t('acceptedJobTypes')}</Text>
+                    <View style={styles.jobTypesContainer}>
+                      {jobTypes.map((job) => (
+                        <TouchableOpacity
+                          key={job.value}
+                          style={[
+                            styles.jobTypeChip,
+                            selectedJobTypes.includes(job.value) && styles.jobTypeChipSelected
+                          ]}
+                          onPress={() => toggleJobType(job.value)}
+                        >
+                          <Text style={[
+                            styles.jobTypeText,
+                            selectedJobTypes.includes(job.value) && styles.jobTypeTextSelected
+                          ]}>
+                            {job.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </>
+              )}
             </>
           )}
 
           <View style={styles.switchContainer}>
             <View style={styles.switchRow}>
               <MaterialIcons name="pets" size={24} color="#4ECDC4" />
-              <Text style={styles.switchLabel}>{t('petFriendly')}</Text>
+              <Text style={styles.switchLabel}>
+                {userType === 'homeowner' ? t('petsAllowed') : t('petFriendly')}
+              </Text>
             </View>
             <Switch
               value={petFriendly}
               onValueChange={setPetFriendly}
+              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.switchContainer}>
+            <View style={styles.switchRow}>
+              <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
+              <Text style={styles.switchLabel}>
+                {userType === 'homeowner' ? t('childrenAllowed') : t('hasChildren')}
+              </Text>
+            </View>
+            <Switch
+              value={hasChildren}
+              onValueChange={setHasChildren}
               trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
               thumbColor="#fff"
             />
@@ -158,6 +263,32 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
               />
             </View>
           )}
+
+          <View style={styles.switchContainer}>
+            <View style={styles.switchRow}>
+              <MaterialIcons name="weekend" size={24} color="#4ECDC4" />
+              <Text style={styles.switchLabel}>{t('furnished')}</Text>
+            </View>
+            <Switch
+              value={furnished}
+              onValueChange={setFurnished}
+              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={styles.switchContainer}>
+            <View style={styles.switchRow}>
+              <MaterialIcons name="local-parking" size={24} color="#4ECDC4" />
+              <Text style={styles.switchLabel}>{t('parkingAvailable')}</Text>
+            </View>
+            <Switch
+              value={parkingAvailable}
+              onValueChange={setParkingAvailable}
+              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              thumbColor="#fff"
+            />
+          </View>
         </View>
 
         <TouchableOpacity
@@ -246,6 +377,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  jobTypesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  jobTypeChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  jobTypeChipSelected: {
+    backgroundColor: '#4ECDC4',
+    borderColor: '#4ECDC4',
+  },
+  jobTypeText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  jobTypeTextSelected: {
+    color: '#fff',
   },
   continueButton: {
     flexDirection: 'row',

@@ -81,7 +81,46 @@ export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, isFirst }: 
     return (
       <View style={[styles.card, styles.nextCard]} pointerEvents="none">
         <View style={styles.imageContainer}>
-          <Image source={{ uri: user.photos[0] }} style={styles.imageStyle} />
+          <Image 
+            source={{ uri: user.photos[0] }} 
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+          />
+        </View>
+        <View style={styles.infoContainer}>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{user.name}, {user.age}</Text>
+            <VerificationBadge 
+              status={user.verified}
+              idVerified={user.idVerified}
+              backgroundCheck={user.backgroundCheckPassed}
+            />
+          </View>
+          
+          <View style={styles.typeRow}>
+            <MaterialIcons 
+              name={user.userType === 'homeowner' ? 'home' : user.userType === 'tenant' ? 'person' : 'people'} 
+              size={16} 
+              color="#666" 
+            />
+            <Text style={styles.userType}>
+              {user.userType.charAt(0).toUpperCase() + user.userType.slice(1)}
+            </Text>
+          </View>
+
+          <View style={styles.locationRow}>
+            <MaterialIcons name="location-on" size={16} color="#666" />
+            <Text style={styles.location}>{user.location}</Text>
+          </View>
+
+          <Text style={styles.bio} numberOfLines={3}>{user.bio}</Text>
+
+          {user.userType === 'homeowner' && user.preferences.rent && (
+            <View style={styles.rentRow}>
+              <MaterialIcons name="attach-money" size={20} color="#4ECDC4" />
+              <Text style={styles.rent}>€{user.preferences.rent}/mese</Text>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -98,7 +137,11 @@ export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, isFirst }: 
       {...panResponder.panHandlers}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: user.photos[0] }} style={styles.imageStyle} />
+        <Image 
+          source={{ uri: user.photos[0] }} 
+          style={{ width: '100%', height: '100%' }}
+          resizeMode="cover"
+        />
       </View>
       
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]}>
@@ -171,10 +214,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '70%',
     overflow: 'hidden',
-  },
-  imageStyle: {
-    width: '100%',
-    height: '100%',
   },
   infoContainer: {
     padding: 20,
