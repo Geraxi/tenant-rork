@@ -61,19 +61,26 @@ export interface UserPreferences {
   balconyOrTerrace?: boolean;
   speseCondominiali?: number;
   
-  // For Homeowners
+  // For Homeowners - Tenant Requirements
+  requiresEmployed?: boolean;
+  acceptedJobTypes?: JobType[];
+  acceptedEmploymentStatuses?: EmploymentStatus[];
+  minimumIncome?: number;
+  petsAllowed?: boolean;
+  childrenAllowed?: boolean;
+  smokingAllowed?: boolean;
+  ageRange?: { min: number; max: number };
+  gender?: string;
+  maxOccupants?: number;
+  minLeaseDuration?: string;
+  
+  // Property details (moved to Property interface, kept for backward compatibility)
   propertyType?: string;
   rent?: number;
   squareMeters?: number;
   amenities?: string[];
   nearAirport?: boolean;
   preferredTenantTypes?: string[];
-  requiresEmployed?: boolean;
-  acceptedJobTypes?: JobType[];
-  minimumIncome?: number;
-  petsAllowed?: boolean;
-  childrenAllowed?: boolean;
-  smokingAllowed?: boolean;
   
   // For Roommates
   roommatePreferences?: string[];
@@ -82,8 +89,6 @@ export interface UserPreferences {
   workSchedule?: string;
   
   // Common
-  ageRange?: { min: number; max: number };
-  gender?: string;
   furnished?: boolean;
   parkingAvailable?: boolean;
 }

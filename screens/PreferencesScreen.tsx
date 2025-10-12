@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { UserType, UserPreferences, JobType } from '../types';
+import { UserType, UserPreferences, JobType, EmploymentStatus } from '../types';
 import { t } from '../utils/translations';
+import Slider from '../components/Slider';
 
 interface PreferencesScreenProps {
   userType: UserType;
@@ -19,31 +20,46 @@ interface PreferencesScreenProps {
 }
 
 export default function PreferencesScreen({ userType, onComplete }: PreferencesScreenProps) {
+  // Tenant preferences
   const [budget, setBudget] = useState('');
-  const [rent, setRent] = useState('');
-  const [bedrooms, setBedrooms] = useState('');
-  const [bathrooms, setBathrooms] = useState('');
   const [petFriendly, setPetFriendly] = useState(false);
   const [smoking, setSmoking] = useState(false);
-  const [nearAirport, setNearAirport] = useState(false);
   const [hasChildren, setHasChildren] = useState(false);
   const [furnished, setFurnished] = useState(false);
   const [parkingAvailable, setParkingAvailable] = useState(false);
+
+  // Homeowner preferences - focused on finding ideal tenant
   const [requiresEmployed, setRequiresEmployed] = useState(false);
   const [minimumIncome, setMinimumIncome] = useState('');
   const [selectedJobTypes, setSelectedJobTypes] = useState<JobType[]>([]);
+  const [selectedEmploymentStatuses, setSelectedEmploymentStatuses] = useState<EmploymentStatus[]>([]);
+  const [petsAllowed, setPetsAllowed] = useState(false);
+  const [childrenAllowed, setChildrenAllowed] = useState(false);
+  const [smokingAllowed, setSmokingAllowed] = useState(false);
+  const [minAge, setMinAge] = useState(18);
+  const [maxAge, setMaxAge] = useState(65);
+  const [preferredGender, setPreferredGender] = useState<'any' | 'male' | 'female'>('any');
+  const [maxOccupants, setMaxOccupants] = useState(1);
+  const [minLeaseDuration, setMinLeaseDuration] = useState<'any' | '3' | '6' | '12' | '24'>('any');
 
-  const jobTypes: { value: JobType; label: string }[] = [
-    { value: 'professional', label: t('professional') },
-    { value: 'cabin-crew', label: t('cabinCrew') },
-    { value: 'pilot', label: t('pilot') },
-    { value: 'healthcare', label: t('healthcare') },
-    { value: 'tech', label: t('tech') },
-    { value: 'finance', label: t('finance') },
-    { value: 'education', label: t('education') },
-    { value: 'hospitality', label: t('hospitality') },
-    { value: 'retail', label: t('retail') },
-    { value: 'student', label: t('student') },
+  const jobTypes: { value: JobType; label: string; icon: string }[] = [
+    { value: 'professional', label: 'Professionista', icon: 'business-center' },
+    { value: 'cabin-crew', label: 'Assistente di Volo', icon: 'flight-takeoff' },
+    { value: 'pilot', label: 'Pilota', icon: 'flight' },
+    { value: 'healthcare', label: 'Sanità', icon: 'local-hospital' },
+    { value: 'tech', label: 'Tecnologia', icon: 'computer' },
+    { value: 'finance', label: 'Finanza', icon: 'account-balance' },
+    { value: 'education', label: 'Istruzione', icon: 'school' },
+    { value: 'hospitality', label: 'Ospitalità', icon: 'restaurant' },
+    { value: 'student', label: 'Studente', icon: 'menu-book' },
+    { value: 'other', label: 'Altro', icon: 'work' },
+  ];
+
+  const employmentStatuses: { value: EmploymentStatus; label: string; icon: string }[] = [
+    { value: 'employed', label: 'Dipendente', icon: 'work' },
+    { value: 'self-employed', label: 'Autonomo', icon: 'business' },
+    { value: 'student', label: 'Studente', icon: 'school' },
+    { value: 'retired', label: 'Pensionato', icon: 'elderly' },
   ];
 
   const toggleJobType = (jobType: JobType) => {
@@ -51,6 +67,14 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
       prev.includes(jobType) 
         ? prev.filter(j => j !== jobType)
         : [...prev, jobType]
+    );
+  };
+
+  const toggleEmploymentStatus = (status: EmploymentStatus) => {
+    setSelectedEmploymentStatuses(prev => 
+      prev.includes(status) 
+        ? prev.filter(s => s !== status)
+        : [...prev, status]
     );
   };
 
@@ -65,19 +89,18 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
       preferences.furnished = furnished;
       preferences.parkingAvailable = parkingAvailable;
     } else if (userType === 'homeowner') {
-      if (rent) preferences.rent = parseInt(rent);
-      if (bedrooms) preferences.bedrooms = parseInt(bedrooms);
-      if (bathrooms) preferences.bathrooms = parseInt(bathrooms);
-      preferences.petsAllowed = petFriendly;
-      preferences.childrenAllowed = hasChildren;
-      preferences.nearAirport = nearAirport;
-      preferences.furnished = furnished;
-      preferences.parkingAvailable = parkingAvailable;
+      // Tenant requirements
       preferences.requiresEmployed = requiresEmployed;
       if (minimumIncome) preferences.minimumIncome = parseInt(minimumIncome);
-      preferences.acceptedJobTypes = selectedJobTypes;
-      preferences.amenities = [];
-      preferences.preferredTenantTypes = [];
+      preferences.acceptedJobTypes = selectedJobTypes.length > 0 ? selectedJobTypes : undefined;
+      preferences.acceptedEmploymentStatuses = selectedEmploymentStatuses.length > 0 ? selectedEmploymentStatuses : undefined;
+      preferences.petsAllowed = petsAllowed;
+      preferences.childrenAllowed = childrenAllowed;
+      preferences.smokingAllowed = smokingAllowed;
+      preferences.ageRange = { min: minAge, max: maxAge };
+      preferences.gender = preferredGender !== 'any' ? preferredGender : undefined;
+      preferences.maxOccupants = maxOccupants;
+      preferences.minLeaseDuration = minLeaseDuration !== 'any' ? minLeaseDuration : undefined;
     }
     
     onComplete(preferences);
@@ -91,204 +114,352 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
       >
         <View style={styles.header}>
           <MaterialIcons name="tune" size={64} color="#4ECDC4" />
-          <Text style={styles.title}>{t('setPreferences')}</Text>
-          <Text style={styles.subtitle}>{t('preferencesSubtitle')}</Text>
+          <Text style={styles.title}>
+            {userType === 'homeowner' ? 'Trova l\'Inquilino Ideale' : t('setPreferences')}
+          </Text>
+          <Text style={styles.subtitle}>
+            {userType === 'homeowner' 
+              ? 'Imposta i criteri per trovare l\'inquilino perfetto per la tua proprietà'
+              : t('preferencesSubtitle')
+            }
+          </Text>
         </View>
 
         <View style={styles.form}>
-          {userType === 'tenant' && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>{t('budget')} (€)</Text>
-              <TextInput
-                style={styles.input}
-                value={budget}
-                onChangeText={setBudget}
-                placeholder="1500"
-                keyboardType="number-pad"
-                placeholderTextColor="#999"
-              />
-            </View>
-          )}
-
-          {userType === 'homeowner' && (
+          {userType === 'tenant' ? (
             <>
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>{t('rent')} (€)</Text>
+                <Text style={styles.label}>{t('budget')} (€)</Text>
                 <TextInput
                   style={styles.input}
-                  value={rent}
-                  onChangeText={setRent}
+                  value={budget}
+                  onChangeText={setBudget}
                   placeholder="1500"
                   keyboardType="number-pad"
                   placeholderTextColor="#999"
                 />
               </View>
 
-              <View style={styles.row}>
-                <View style={[styles.inputContainer, styles.halfWidth]}>
-                  <Text style={styles.label}>{t('bedrooms')}</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={bedrooms}
-                    onChangeText={setBedrooms}
-                    placeholder="2"
-                    keyboardType="number-pad"
-                    placeholderTextColor="#999"
-                  />
-                </View>
-
-                <View style={[styles.inputContainer, styles.halfWidth]}>
-                  <Text style={styles.label}>{t('bathrooms')}</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={bathrooms}
-                    onChangeText={setBathrooms}
-                    placeholder="1"
-                    keyboardType="number-pad"
-                    placeholderTextColor="#999"
-                  />
-                </View>
-              </View>
-
               <View style={styles.switchContainer}>
                 <View style={styles.switchRow}>
-                  <MaterialIcons name="work" size={24} color="#4ECDC4" />
-                  <Text style={styles.switchLabel}>{t('requiresEmployed')}</Text>
+                  <MaterialIcons name="pets" size={24} color="#4ECDC4" />
+                  <Text style={styles.switchLabel}>{t('petFriendly')}</Text>
                 </View>
                 <Switch
-                  value={requiresEmployed}
-                  onValueChange={setRequiresEmployed}
+                  value={petFriendly}
+                  onValueChange={setPetFriendly}
                   trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
                   thumbColor="#fff"
                 />
               </View>
 
-              {requiresEmployed && (
-                <>
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.label}>{t('minimumIncome')} (€/mese)</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={minimumIncome}
-                      onChangeText={setMinimumIncome}
-                      placeholder="2000"
-                      keyboardType="number-pad"
-                      placeholderTextColor="#999"
-                    />
-                  </View>
+              <View style={styles.switchContainer}>
+                <View style={styles.switchRow}>
+                  <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
+                  <Text style={styles.switchLabel}>{t('hasChildren')}</Text>
+                </View>
+                <Switch
+                  value={hasChildren}
+                  onValueChange={setHasChildren}
+                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  thumbColor="#fff"
+                />
+              </View>
 
-                  <View style={styles.inputContainer}>
-                    <Text style={styles.label}>{t('acceptedJobTypes')}</Text>
-                    <View style={styles.jobTypesContainer}>
-                      {jobTypes.map((job) => (
-                        <TouchableOpacity
-                          key={job.value}
-                          style={[
-                            styles.jobTypeChip,
-                            selectedJobTypes.includes(job.value) && styles.jobTypeChipSelected
-                          ]}
-                          onPress={() => toggleJobType(job.value)}
-                        >
-                          <Text style={[
-                            styles.jobTypeText,
-                            selectedJobTypes.includes(job.value) && styles.jobTypeTextSelected
-                          ]}>
-                            {job.label}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+              <View style={styles.switchContainer}>
+                <View style={styles.switchRow}>
+                  <MaterialIcons name="smoking-rooms" size={24} color="#4ECDC4" />
+                  <Text style={styles.switchLabel}>{t('smoking')}</Text>
+                </View>
+                <Switch
+                  value={smoking}
+                  onValueChange={setSmoking}
+                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  thumbColor="#fff"
+                />
+              </View>
+
+              <View style={styles.switchContainer}>
+                <View style={styles.switchRow}>
+                  <MaterialIcons name="weekend" size={24} color="#4ECDC4" />
+                  <Text style={styles.switchLabel}>{t('furnished')}</Text>
+                </View>
+                <Switch
+                  value={furnished}
+                  onValueChange={setFurnished}
+                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  thumbColor="#fff"
+                />
+              </View>
+
+              <View style={styles.switchContainer}>
+                <View style={styles.switchRow}>
+                  <MaterialIcons name="local-parking" size={24} color="#4ECDC4" />
+                  <Text style={styles.switchLabel}>{t('parkingAvailable')}</Text>
+                </View>
+                <Switch
+                  value={parkingAvailable}
+                  onValueChange={setParkingAvailable}
+                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  thumbColor="#fff"
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Employment & Income Requirements */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>💼 Requisiti Lavorativi</Text>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Stato Occupazionale Accettato</Text>
+                  <Text style={styles.helperText}>Seleziona uno o più stati (lascia vuoto per accettare tutti)</Text>
+                  <View style={styles.chipsContainer}>
+                    {employmentStatuses.map((status) => (
+                      <TouchableOpacity
+                        key={status.value}
+                        style={[
+                          styles.chip,
+                          selectedEmploymentStatuses.includes(status.value) && styles.chipSelected
+                        ]}
+                        onPress={() => toggleEmploymentStatus(status.value)}
+                      >
+                        <MaterialIcons 
+                          name={status.icon as any} 
+                          size={18} 
+                          color={selectedEmploymentStatuses.includes(status.value) ? '#fff' : '#4ECDC4'} 
+                        />
+                        <Text style={[
+                          styles.chipText,
+                          selectedEmploymentStatuses.includes(status.value) && styles.chipTextSelected
+                        ]}>
+                          {status.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                </>
-              )}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Tipo di Lavoro Preferito</Text>
+                  <Text style={styles.helperText}>Seleziona uno o più settori (lascia vuoto per accettare tutti)</Text>
+                  <View style={styles.chipsContainer}>
+                    {jobTypes.map((job) => (
+                      <TouchableOpacity
+                        key={job.value}
+                        style={[
+                          styles.chip,
+                          selectedJobTypes.includes(job.value) && styles.chipSelected
+                        ]}
+                        onPress={() => toggleJobType(job.value)}
+                      >
+                        <MaterialIcons 
+                          name={job.icon as any} 
+                          size={18} 
+                          color={selectedJobTypes.includes(job.value) ? '#fff' : '#4ECDC4'} 
+                        />
+                        <Text style={[
+                          styles.chipText,
+                          selectedJobTypes.includes(job.value) && styles.chipTextSelected
+                        ]}>
+                          {job.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Reddito Minimo Mensile (€)</Text>
+                  <Text style={styles.helperText}>Lascia vuoto se non richiesto</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={minimumIncome}
+                    onChangeText={setMinimumIncome}
+                    placeholder="2000"
+                    keyboardType="number-pad"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              </View>
+
+              {/* Demographic Preferences */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>👥 Preferenze Demografiche</Text>
+                
+                <Slider
+                  label="Età Minima"
+                  value={minAge}
+                  minValue={18}
+                  maxValue={65}
+                  step={1}
+                  unit=" anni"
+                  onValueChange={setMinAge}
+                />
+
+                <Slider
+                  label="Età Massima"
+                  value={maxAge}
+                  minValue={18}
+                  maxValue={65}
+                  step={1}
+                  unit=" anni"
+                  onValueChange={setMaxAge}
+                />
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Genere Preferito</Text>
+                  <View style={styles.genderContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.genderButton,
+                        preferredGender === 'any' && styles.genderButtonSelected
+                      ]}
+                      onPress={() => setPreferredGender('any')}
+                    >
+                      <MaterialIcons 
+                        name="people" 
+                        size={24} 
+                        color={preferredGender === 'any' ? '#fff' : '#4ECDC4'} 
+                      />
+                      <Text style={[
+                        styles.genderButtonText,
+                        preferredGender === 'any' && styles.genderButtonTextSelected
+                      ]}>
+                        Qualsiasi
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.genderButton,
+                        preferredGender === 'male' && styles.genderButtonSelected
+                      ]}
+                      onPress={() => setPreferredGender('male')}
+                    >
+                      <MaterialIcons 
+                        name="man" 
+                        size={24} 
+                        color={preferredGender === 'male' ? '#fff' : '#4ECDC4'} 
+                      />
+                      <Text style={[
+                        styles.genderButtonText,
+                        preferredGender === 'male' && styles.genderButtonTextSelected
+                      ]}>
+                        Uomo
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.genderButton,
+                        preferredGender === 'female' && styles.genderButtonSelected
+                      ]}
+                      onPress={() => setPreferredGender('female')}
+                    >
+                      <MaterialIcons 
+                        name="woman" 
+                        size={24} 
+                        color={preferredGender === 'female' ? '#fff' : '#4ECDC4'} 
+                      />
+                      <Text style={[
+                        styles.genderButtonText,
+                        preferredGender === 'female' && styles.genderButtonTextSelected
+                      ]}>
+                        Donna
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <Slider
+                  label="Numero Massimo di Occupanti"
+                  value={maxOccupants}
+                  minValue={1}
+                  maxValue={6}
+                  step={1}
+                  unit=" persone"
+                  onValueChange={setMaxOccupants}
+                />
+              </View>
+
+              {/* Lifestyle Preferences */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>🏡 Preferenze di Stile di Vita</Text>
+                
+                <View style={styles.switchContainer}>
+                  <View style={styles.switchRow}>
+                    <MaterialIcons name="pets" size={24} color="#4ECDC4" />
+                    <Text style={styles.switchLabel}>Animali Ammessi</Text>
+                  </View>
+                  <Switch
+                    value={petsAllowed}
+                    onValueChange={setPetsAllowed}
+                    trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                    thumbColor="#fff"
+                  />
+                </View>
+
+                <View style={styles.switchContainer}>
+                  <View style={styles.switchRow}>
+                    <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
+                    <Text style={styles.switchLabel}>Bambini Ammessi</Text>
+                  </View>
+                  <Switch
+                    value={childrenAllowed}
+                    onValueChange={setChildrenAllowed}
+                    trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                    thumbColor="#fff"
+                  />
+                </View>
+
+                <View style={styles.switchContainer}>
+                  <View style={styles.switchRow}>
+                    <MaterialIcons name="smoking-rooms" size={24} color="#4ECDC4" />
+                    <Text style={styles.switchLabel}>Fumatori Ammessi</Text>
+                  </View>
+                  <Switch
+                    value={smokingAllowed}
+                    onValueChange={setSmokingAllowed}
+                    trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                    thumbColor="#fff"
+                  />
+                </View>
+              </View>
+
+              {/* Lease Preferences */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>📅 Preferenze Contratto</Text>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Durata Minima Contratto</Text>
+                  <View style={styles.durationContainer}>
+                    {[
+                      { value: 'any', label: 'Qualsiasi' },
+                      { value: '3', label: '3 mesi' },
+                      { value: '6', label: '6 mesi' },
+                      { value: '12', label: '12 mesi' },
+                      { value: '24', label: '24 mesi' },
+                    ].map((duration) => (
+                      <TouchableOpacity
+                        key={duration.value}
+                        style={[
+                          styles.durationButton,
+                          minLeaseDuration === duration.value && styles.durationButtonSelected
+                        ]}
+                        onPress={() => setMinLeaseDuration(duration.value as any)}
+                      >
+                        <Text style={[
+                          styles.durationButtonText,
+                          minLeaseDuration === duration.value && styles.durationButtonTextSelected
+                        ]}>
+                          {duration.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
             </>
           )}
-
-          <View style={styles.switchContainer}>
-            <View style={styles.switchRow}>
-              <MaterialIcons name="pets" size={24} color="#4ECDC4" />
-              <Text style={styles.switchLabel}>
-                {userType === 'homeowner' ? t('petsAllowed') : t('petFriendly')}
-              </Text>
-            </View>
-            <Switch
-              value={petFriendly}
-              onValueChange={setPetFriendly}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          <View style={styles.switchContainer}>
-            <View style={styles.switchRow}>
-              <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
-              <Text style={styles.switchLabel}>
-                {userType === 'homeowner' ? t('childrenAllowed') : t('hasChildren')}
-              </Text>
-            </View>
-            <Switch
-              value={hasChildren}
-              onValueChange={setHasChildren}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          {userType === 'tenant' && (
-            <View style={styles.switchContainer}>
-              <View style={styles.switchRow}>
-                <MaterialIcons name="smoking-rooms" size={24} color="#4ECDC4" />
-                <Text style={styles.switchLabel}>{t('smoking')}</Text>
-              </View>
-              <Switch
-                value={smoking}
-                onValueChange={setSmoking}
-                trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-                thumbColor="#fff"
-              />
-            </View>
-          )}
-
-          {userType === 'homeowner' && (
-            <View style={styles.switchContainer}>
-              <View style={styles.switchRow}>
-                <MaterialIcons name="flight" size={24} color="#4ECDC4" />
-                <Text style={styles.switchLabel}>{t('nearAirport')}</Text>
-              </View>
-              <Switch
-                value={nearAirport}
-                onValueChange={setNearAirport}
-                trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-                thumbColor="#fff"
-              />
-            </View>
-          )}
-
-          <View style={styles.switchContainer}>
-            <View style={styles.switchRow}>
-              <MaterialIcons name="weekend" size={24} color="#4ECDC4" />
-              <Text style={styles.switchLabel}>{t('furnished')}</Text>
-            </View>
-            <Switch
-              value={furnished}
-              onValueChange={setFurnished}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          <View style={styles.switchContainer}>
-            <View style={styles.switchRow}>
-              <MaterialIcons name="local-parking" size={24} color="#4ECDC4" />
-              <Text style={styles.switchLabel}>{t('parkingAvailable')}</Text>
-            </View>
-            <Switch
-              value={parkingAvailable}
-              onValueChange={setParkingAvailable}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-              thumbColor="#fff"
-            />
-          </View>
         </View>
 
         <TouchableOpacity
@@ -322,6 +493,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginTop: 16,
     marginBottom: 8,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
@@ -332,21 +504,28 @@ const styles = StyleSheet.create({
   form: {
     marginBottom: 24,
   },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
   },
   inputContainer: {
     marginBottom: 20,
-  },
-  halfWidth: {
-    flex: 1,
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
     marginBottom: 8,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 12,
   },
   input: {
     backgroundColor: '#fff',
@@ -378,30 +557,84 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
-  jobTypesContainer: {
+  chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 8,
   },
-  jobTypeChip: {
-    paddingHorizontal: 16,
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
   },
-  jobTypeChipSelected: {
+  chipSelected: {
     backgroundColor: '#4ECDC4',
     borderColor: '#4ECDC4',
   },
-  jobTypeText: {
+  chipText: {
     fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    color: '#4ECDC4',
+    fontWeight: '600',
   },
-  jobTypeTextSelected: {
+  chipTextSelected: {
+    color: '#fff',
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  genderButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+  },
+  genderButtonSelected: {
+    backgroundColor: '#4ECDC4',
+    borderColor: '#4ECDC4',
+  },
+  genderButtonText: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    fontWeight: '600',
+  },
+  genderButtonTextSelected: {
+    color: '#fff',
+  },
+  durationContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  durationButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+  },
+  durationButtonSelected: {
+    backgroundColor: '#4ECDC4',
+    borderColor: '#4ECDC4',
+  },
+  durationButtonText: {
+    fontSize: 14,
+    color: '#4ECDC4',
+    fontWeight: '600',
+  },
+  durationButtonTextSelected: {
     color: '#fff',
   },
   continueButton: {
