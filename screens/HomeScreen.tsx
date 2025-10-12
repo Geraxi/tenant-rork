@@ -12,6 +12,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import SwipeCard from '../components/SwipeCard';
 import MatchAnimation from '../components/MatchAnimation';
+import CardDetailModal from '../components/CardDetailModal';
 import { User } from '../types';
 import { t } from '../utils/translations';
 
@@ -116,6 +117,7 @@ export default function HomeScreen({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   const handleSwipeLeft = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -150,6 +152,7 @@ export default function HomeScreen({
 
   const handleCardPress = (user: User) => {
     setSelectedUser(user);
+    setShowDetailModal(true);
   };
 
   if (currentIndex >= users.length) {
@@ -194,6 +197,14 @@ export default function HomeScreen({
     <SafeAreaView style={styles.container} edges={['top']}>
       {showMatchAnimation && (
         <MatchAnimation onComplete={handleMatchAnimationComplete} />
+      )}
+
+      {selectedUser && (
+        <CardDetailModal
+          visible={showDetailModal}
+          user={selectedUser}
+          onClose={() => setShowDetailModal(false)}
+        />
       )}
 
       <View style={styles.header}>

@@ -2,9 +2,13 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import LoginScreen from './screens/LoginScreen';
+import SignupScreen from './screens/SignupScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import ProfileSetupScreen, { ProfileData } from './screens/ProfileSetupScreen';
+import IDVerificationScreen from './screens/IDVerificationScreen';
+import TenantPreferencesScreen from './screens/TenantPreferencesScreen';
 import PreferencesScreen from './screens/PreferencesScreen';
 import HomeScreen from './screens/HomeScreen';
 import MatchesScreen from './screens/MatchesScreen';
@@ -17,8 +21,11 @@ import BottomNavigation from './components/BottomNavigation';
 import { User, UserType } from './types';
 
 type Screen = 
+  | 'login'
+  | 'signup'
   | 'onboarding' 
-  | 'profileSetup' 
+  | 'profileSetup'
+  | 'idVerification'
   | 'preferences' 
   | 'home' 
   | 'matches' 
@@ -31,10 +38,28 @@ type Screen =
 type NavScreen = 'browse' | 'matches' | 'messages' | 'contracts' | 'profile';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<User | null>(null);
+  const [tempProfileData, setTempProfileData] = useState<ProfileData | null>(null);
+  const [tempIdData, setTempIdData] = useState<{ idDocument: string; selfie: string } | null>(null);
+
+  const handleLogin = (email: string, password: string) => {
+    // Simulate login
+    Alert.alert('Successo', 'Login effettuato con successo!');
+    setCurrentScreen('onboarding');
+  };
+
+  const handleSignup = (email: string, password: string) => {
+    // Simulate signup
+    Alert.alert('Successo', 'Registrazione completata!');
+    setCurrentScreen('onboarding');
+  };
+
+  const handleSocialAuth = (provider: string) => {
+    Alert.alert('Info', `${provider} auth sarà disponibile presto!`);
+  };
 
   const handleOnboardingComplete = (userType: UserType) => {
     setSelectedUserType(userType);
@@ -42,33 +67,38 @@ export default function App() {
   };
 
   const handleProfileSetupComplete = (profileData: ProfileData) => {
-    const newUser: User = {
-      id: 'current-user',
-      name: profileData.name,
-      email: 'user@example.com',
-      userType: selectedUserType!,
-      age: parseInt(profileData.age),
-      bio: profileData.bio,
-      photos: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'],
-      location: profileData.location,
-      verified: 'unverified',
-      idVerified: false,
-      backgroundCheckPassed: false,
-      preferences: {},
-      createdAt: Date.now(),
-    };
-    setCurrentUser(newUser);
+    setTempProfileData(profileData);
+    setCurrentScreen('idVerification');
+  };
+
+  const handleIDVerificationComplete = (idDocument: string, selfie: string) => {
+    setTempIdData({ idDocument, selfie });
     setCurrentScreen('preferences');
   };
 
   const handlePreferencesComplete = (preferences: any) => {
-    if (currentUser) {
-      setCurrentUser({
-        ...currentUser,
+    if (tempProfileData && tempIdData && selectedUserType) {
+      const newUser: User = {
+        id: 'current-user',
+        name: tempProfileData.name,
+        email: 'user@example.com',
+        phone: tempProfileData.phone,
+        userType: selectedUserType,
+        age: parseInt(tempProfileData.age),
+        bio: tempProfileData.bio,
+        photos: tempProfileData.photos,
+        location: tempProfileData.location,
+        verified: 'verified',
+        idVerified: true,
+        backgroundCheckPassed: true,
         preferences,
-      });
+        idDocument: tempIdData.idDocument,
+        selfiePhoto: tempIdData.selfie,
+        createdAt: Date.now(),
+      };
+      setCurrentUser(newUser);
+      setCurrentScreen('home');
     }
-    setCurrentScreen('home');
   };
 
   const handleVerificationComplete = () => {
@@ -102,18 +132,57 @@ export default function App() {
     return 'browse';
   };
 
-  const showBottomNav = currentUser && !['onboarding', 'profileSetup', 'preferences', 'chat', 'verification', 'createContract'].includes(currentScreen);
+  const showBottomNav = currentUser && !['login', 'signup', 'onboarding', 'profileSetup', 'idVerification', 'preferences', 'chat', 'verification', 'createContract'].includes(currentScreen);
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case 'login':
+        return (
+          <LoginScreen
+            onLogin={handleLogin}
+            onGoogleLogin={() => handleSocialAuth('Google')}
+            onAppleLogin={() => handleSocialAuth('Apple')}
+            onNavigateToSignup={() => setCurrentScreen('signup')}
+          />
+        );
+      
+      case 'signup':
+        return (
+          <SignupScreen
+            onSignup={handleSignup}
+            onGoogleSignup={() => handleSocialAuth('Google')}
+            onAppleSignup={() => handleSocialAuth('Apple')}
+            onNavigateToLogin={() => setCurrentScreen('login')}
+          />
+        );
+      
       case 'onboarding':
         return <OnboardingScreen onComplete={handleOnboardingComplete} />;
       
       case 'profileSetup':
-        return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
+        return selectedUserType ? (
+          <ProfileSetupScreen
+            userType={selectedUserType}
+            onComplete={handleProfileSetupComplete}
+            onBack={() => setCurrentScreen('onboarding')}
+          />
+        ) : null;
+      
+      case 'idVerification':
+        return (
+          <IDVerificationScreen
+            onComplete={handleIDVerificationComplete}
+            onBack={() => setCurrentScreen('profileSetup')}
+          />
+        );
       
       case 'preferences':
-        return selectedUserType ? (
+        return selectedUserType === 'tenant' ? (
+          <TenantPreferencesScreen
+            onComplete={handlePreferencesComplete}
+            onBack={() => setCurrentScreen('idVerification')}
+          />
+        ) : selectedUserType ? (
           <PreferencesScreen 
             userType={selectedUserType}
             onComplete={handlePreferencesComplete}
@@ -185,7 +254,14 @@ export default function App() {
         );
       
       default:
-        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+        return (
+          <LoginScreen
+            onLogin={handleLogin}
+            onGoogleLogin={() => handleSocialAuth('Google')}
+            onAppleLogin={() => handleSocialAuth('Apple')}
+            onNavigateToSignup={() => setCurrentScreen('signup')}
+          />
+        );
     }
   };
 

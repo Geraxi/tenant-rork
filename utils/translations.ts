@@ -1,7 +1,20 @@
 export const translations = {
-  // Onboarding
+  // Authentication
   welcomeTitle: 'Benvenuto su Tenant',
-  welcomeSubtitle: 'Trova la tua corrispondenza perfetta - che tu stia cercando una casa, un inquilino o un coinquilino',
+  welcomeSubtitle: 'Trova la tua casa perfetta o l\'inquilino ideale',
+  login: 'Accedi',
+  signup: 'Registrati',
+  email: 'Email',
+  password: 'Password',
+  confirmPassword: 'Conferma Password',
+  forgotPassword: 'Password dimenticata?',
+  dontHaveAccount: 'Non hai un account?',
+  alreadyHaveAccount: 'Hai già un account?',
+  continueWithGoogle: 'Continua con Google',
+  continueWithApple: 'Continua con Apple',
+  orContinueWith: 'oppure',
+  
+  // Onboarding
   imTenant: 'Sono un Inquilino',
   imHomeowner: 'Sono un Proprietario',
   lookingForRoommate: 'Cerco Coinquilino',
@@ -9,46 +22,78 @@ export const translations = {
   homeownerDescription: 'Ho una proprietà da affittare',
   roommateDescription: 'Trova qualcuno con cui condividere',
   continue: 'Continua',
-  idVerification: 'Verifica ID',
-  backgroundChecks: 'Controlli Background',
-  scamFree: 'Senza Truffe',
+  skip: 'Salta',
   
-  // Profile Setup
-  completeProfile: 'Completa il Profilo',
-  profileSetupSubtitle: 'Raccontaci di più su di te per trovare le migliori corrispondenze',
+  // Personal Info
+  personalInfo: 'Informazioni Personali',
   fullName: 'Nome Completo',
   age: 'Età',
+  phone: 'Telefono',
   location: 'Posizione',
   bio: 'Biografia',
   bioPlaceholder: 'Raccontaci qualcosa su di te...',
   
-  // Preferences
-  setPreferences: 'Imposta Preferenze',
-  preferencesSubtitle: 'Aiutaci a trovare la tua corrispondenza perfetta',
-  budget: 'Budget Mensile',
-  rent: 'Affitto Mensile',
-  moveInDate: 'Data di Trasloco',
-  leaseDuration: 'Durata Contratto',
+  // Photos
+  uploadPhotos: 'Carica Foto',
+  uploadMinPhotos: 'Carica almeno {min} foto',
+  uploadProfilePhotos: 'Carica Foto Profilo',
+  uploadPropertyPhotos: 'Carica Foto Proprietà',
+  addPhoto: 'Aggiungi Foto',
+  takePhoto: 'Scatta Foto',
+  chooseFromLibrary: 'Scegli dalla Libreria',
+  
+  // ID Verification
+  idVerification: 'Verifica Identità',
+  idVerificationRequired: 'Verifica Identità Obbligatoria',
+  uploadIdDocument: 'Carica Documento d\'Identità',
+  uploadIdDesc: 'Carica carta d\'identità o passaporto',
+  takeSelfie: 'Scatta Selfie',
+  takeSelfieDesc: 'Scatta un selfie per confermare la tua identità',
+  verificationComplete: 'Verifica Completata',
+  
+  // Preferences - Tenant
+  housingPreferences: 'Preferenze Abitazione',
+  priceRange: 'Fascia di Prezzo',
+  propertySize: 'Dimensione Proprietà',
+  squareMeters: 'Metri Quadrati',
+  balconyOrTerrace: 'Balcone o Terrazza',
+  speseCondominiali: 'Spese Condominiali',
+  lookingForRoommateQuestion: 'Cerchi un coinquilino?',
+  
+  // Preferences - Homeowner
+  tenantPreferences: 'Preferenze Inquilino',
+  employmentRequired: 'Occupazione Richiesta',
+  jobTypePreference: 'Tipo di Lavoro',
+  smokerPreference: 'Fumatore',
+  
+  // Property Listing
+  propertyListing: 'Annuncio Proprietà',
+  addProperty: 'Aggiungi Proprietà',
+  propertyDetails: 'Dettagli Proprietà',
+  propertyTitle: 'Titolo Annuncio',
+  propertyDescription: 'Descrizione',
+  propertyAddress: 'Indirizzo',
+  monthlyRent: 'Affitto Mensile',
   bedrooms: 'Camere da Letto',
   bathrooms: 'Bagni',
-  petFriendly: 'Animali Ammessi',
-  smoking: 'Fumatori',
-  nearAirport: 'Vicino Aeroporto',
-  amenities: 'Servizi',
-  preferredTenantTypes: 'Tipi di Inquilini Preferiti',
-  hasChildren: 'Ha Figli',
-  numberOfOccupants: 'Numero di Occupanti',
-  employmentStatus: 'Stato Occupazionale',
-  jobType: 'Tipo di Lavoro',
-  requiresEmployed: 'Richiede Occupazione',
-  acceptedJobTypes: 'Tipi di Lavoro Accettati',
-  minimumIncome: 'Reddito Minimo',
-  petsAllowed: 'Animali Ammessi',
-  childrenAllowed: 'Bambini Ammessi',
   furnished: 'Arredato',
-  parkingAvailable: 'Parcheggio Disponibile',
+  available: 'Disponibile',
   
-  // Employment Status
+  // Common Preferences
+  budget: 'Budget Mensile',
+  rent: 'Affitto Mensile',
+  petFriendly: 'Animali Ammessi',
+  petsAllowed: 'Animali Ammessi',
+  smoking: 'Fumatori',
+  smokingAllowed: 'Fumatori Ammessi',
+  hasChildren: 'Ha Figli',
+  childrenAllowed: 'Bambini Ammessi',
+  nearAirport: 'Vicino Aeroporto',
+  parkingAvailable: 'Parcheggio Disponibile',
+  amenities: 'Servizi',
+  
+  // Employment
+  employmentStatus: 'Stato Occupazionale',
   employed: 'Occupato',
   unemployed: 'Disoccupato',
   selfEmployed: 'Autonomo',
@@ -56,6 +101,7 @@ export const translations = {
   retired: 'Pensionato',
   
   // Job Types
+  jobType: 'Tipo di Lavoro',
   professional: 'Professionista',
   cabinCrew: 'Equipaggio di Cabina',
   pilot: 'Pilota',
@@ -69,18 +115,27 @@ export const translations = {
   
   // Navigation
   browse: 'Sfoglia',
+  matches: 'Corrispondenze',
   messages: 'Messaggi',
+  contracts: 'Contratti',
+  profile: 'Profilo',
   
   // Home Screen
   tenant: 'Tenant',
   like: 'MI PIACE',
   nope: 'NO',
+  superLike: 'SUPER LIKE',
   allCaughtUp: 'Sei aggiornato!',
   checkBackLater: 'Torna più tardi per altre potenziali corrispondenze',
   startOver: 'Ricomincia',
   
+  // Card Details
+  viewProfile: 'Vedi Profilo',
+  viewAllPhotos: 'Vedi Tutte le Foto',
+  propertyInfo: 'Info Proprietà',
+  about: 'Informazioni',
+  
   // Matches
-  matches: 'Corrispondenze',
   noMatches: 'Nessuna corrispondenza ancora',
   keepSwiping: 'Continua a scorrere per trovare la tua corrispondenza perfetta!',
   startConversation: 'Inizia una conversazione',
@@ -91,39 +146,26 @@ export const translations = {
   send: 'Invia',
   
   // Profile
-  profile: 'Profilo',
-  about: 'Informazioni',
-  userType: 'Tipo Utente',
-  propertyDetails: 'Dettagli Proprietà',
-  verified: 'Verificato',
-  completeVerification: 'Completa Verifica',
+  editProfile: 'Modifica Profilo',
+  deleteProfile: 'Elimina Profilo',
+  myProperties: 'Le Mie Proprietà',
+  addNewProperty: 'Aggiungi Nuova Proprietà',
   signOut: 'Esci',
   
   // Verification
   verification: 'Verifica',
-  staySafeVerified: 'Rimani al Sicuro e Verificato',
-  verificationIntro: 'Completa questi passaggi di verifica per costruire fiducia e garantire un\'esperienza senza truffe per tutti.',
-  idVerificationTitle: 'Verifica Identità',
-  idVerificationDesc: 'Verifica la tua identità con un documento d\'identità rilasciato dal governo',
-  backgroundCheckTitle: 'Controllo Background',
-  backgroundCheckDesc: 'Completa un controllo del background per maggiore sicurezza',
-  verifyId: 'Verifica ID',
-  startCheck: 'Inizia Controllo',
-  completed: 'Completato',
-  benefitsOfVerification: 'Vantaggi della Verifica',
-  increasedTrust: 'Maggiore fiducia da altri utenti',
-  higherMatchRate: 'Tasso di corrispondenza più alto',
-  scamFreeEnvironment: 'Ambiente senza truffe',
+  verified: 'Verificato',
+  unverified: 'Non Verificato',
+  pending: 'In Attesa',
+  completeVerification: 'Completa Verifica',
+  verificationRequired: 'Verifica Richiesta',
   
   // Contracts
-  contracts: 'Contratti',
   rentalContracts: 'Contratti di Affitto',
   createContract: 'Crea Contratto',
   noContracts: 'Nessun contratto ancora',
   createFirstContract: 'Crea il tuo primo contratto di affitto',
   contractDetails: 'Dettagli Contratto',
-  propertyAddress: 'Indirizzo Proprietà',
-  monthlyRent: 'Affitto Mensile',
   securityDeposit: 'Deposito Cauzionale',
   startDate: 'Data Inizio',
   endDate: 'Data Fine',
@@ -154,8 +196,21 @@ export const translations = {
   back: 'Indietro',
   next: 'Avanti',
   done: 'Fatto',
+  confirm: 'Conferma',
   month: 'mese',
   perMonth: '/mese',
+  euro: '€',
+  
+  // Errors & Success
+  error: 'Errore',
+  success: 'Successo',
+  fillAllFields: 'Compila tutti i campi',
+  invalidEmail: 'Email non valida',
+  passwordMismatch: 'Le password non corrispondono',
+  uploadSuccess: 'Caricamento riuscito',
+  uploadError: 'Errore nel caricamento',
+  profileUpdated: 'Profilo aggiornato',
+  profileDeleted: 'Profilo eliminato',
   
   // User Types
   tenantType: 'Inquilino',
@@ -168,10 +223,29 @@ export const translations = {
   cabinCrewType: 'Equipaggio di Cabina',
   pilots: 'Piloti',
   families: 'Famiglie',
+  
+  // Requirements
+  requiresEmployed: 'Richiede Occupazione',
+  acceptedJobTypes: 'Tipi di Lavoro Accettati',
+  minimumIncome: 'Reddito Minimo',
+  
+  // Sliders
+  min: 'Min',
+  max: 'Max',
+  from: 'Da',
+  to: 'A',
 };
 
 export type TranslationKey = keyof typeof translations;
 
-export const t = (key: TranslationKey): string => {
-  return translations[key] || key;
+export const t = (key: TranslationKey, params?: Record<string, string | number>): string => {
+  let text = translations[key] || key;
+  
+  if (params) {
+    Object.keys(params).forEach(paramKey => {
+      text = text.replace(`{${paramKey}}`, String(params[paramKey]));
+    });
+  }
+  
+  return text;
 };

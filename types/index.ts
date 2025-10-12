@@ -21,6 +21,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   userType: UserType;
   age: number;
   bio: string;
@@ -33,12 +34,17 @@ export interface User {
   employmentStatus?: EmploymentStatus;
   jobType?: JobType;
   monthlyIncome?: number;
+  lookingForRoommate?: boolean;
+  idDocument?: string;
+  selfiePhoto?: string;
   createdAt: number;
 }
 
 export interface UserPreferences {
   // For Tenants
   budget?: number;
+  minBudget?: number;
+  maxBudget?: number;
   moveInDate?: string;
   leaseDuration?: string;
   petFriendly?: boolean;
@@ -47,12 +53,17 @@ export interface UserPreferences {
   numberOfOccupants?: number;
   employmentStatus?: EmploymentStatus;
   jobType?: JobType;
+  bedrooms?: number;
+  bathrooms?: number;
+  minSquareMeters?: number;
+  maxSquareMeters?: number;
+  balconyOrTerrace?: boolean;
+  speseCondominiali?: number;
   
   // For Homeowners
   propertyType?: string;
   rent?: number;
-  bedrooms?: number;
-  bathrooms?: number;
+  squareMeters?: number;
   amenities?: string[];
   nearAirport?: boolean;
   preferredTenantTypes?: string[];
@@ -61,6 +72,7 @@ export interface UserPreferences {
   minimumIncome?: number;
   petsAllowed?: boolean;
   childrenAllowed?: boolean;
+  smokingAllowed?: boolean;
   
   // For Roommates
   roommatePreferences?: string[];
@@ -84,17 +96,21 @@ export interface Property {
   rent: number;
   bedrooms: number;
   bathrooms: number;
-  squareFeet?: number;
+  squareMeters: number;
+  speseCondominiali?: number;
   amenities: string[];
   location: string;
+  address: string;
   nearAirport: boolean;
+  balconyOrTerrace: boolean;
+  furnished: boolean;
   available: boolean;
+  createdAt: number;
 }
 
 export interface Match {
   id: string;
-  user1Id: string;
-  user2Id: string;
+  user: User;
   matchedAt: number;
   chatId?: string;
 }
@@ -111,6 +127,7 @@ export interface Contract {
   id: string;
   landlordId: string;
   tenantId: string;
+  propertyId?: string;
   propertyAddress: string;
   monthlyRent: number;
   securityDeposit: number;
@@ -121,4 +138,22 @@ export interface Contract {
   registeredWithAgency?: boolean;
   registrationDate?: string;
   createdAt: number;
+}
+
+export interface OnboardingData {
+  userType: UserType;
+  name: string;
+  email: string;
+  phone: string;
+  age: number;
+  bio: string;
+  location: string;
+  photos: string[];
+  idDocument?: string;
+  selfiePhoto?: string;
+  preferences: UserPreferences;
+  employmentStatus?: EmploymentStatus;
+  jobType?: JobType;
+  lookingForRoommate?: boolean;
+  properties?: Property[];
 }

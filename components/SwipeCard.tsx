@@ -7,6 +7,7 @@ import {
   Dimensions,
   Animated,
   PanResponder,
+  TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { User } from '../types';
@@ -137,13 +138,19 @@ export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, onPress, is
       ]}
       {...panResponder.panHandlers}
     >
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: user.photos[0] }} 
-          style={{ width: '100%', height: '100%' }}
-          resizeMode="cover"
-        />
-      </View>
+      <TouchableOpacity activeOpacity={1} onPress={onPress} style={styles.cardTouchable}>
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: user.photos[0] }} 
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+          />
+          <View style={styles.tapHint}>
+            <MaterialIcons name="touch-app" size={24} color="#fff" />
+            <Text style={styles.tapHintText}>Tocca per vedere di più</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
       
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]}>
         <Text style={styles.labelText}>{t('like')}</Text>
@@ -206,6 +213,9 @@ const styles = StyleSheet.create({
     elevation: 5,
     overflow: 'hidden',
   },
+  cardTouchable: {
+    flex: 1,
+  },
   nextCard: {
     transform: [{ scale: 0.95 }, { translateY: 10 }],
     opacity: 1,
@@ -215,6 +225,26 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '70%',
     overflow: 'hidden',
+    position: 'relative',
+  },
+  tapHint: {
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
+  tapHintText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   infoContainer: {
     padding: 20,
