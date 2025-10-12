@@ -39,6 +39,27 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
 
   const minPhotos = 3;
 
+  // Helper function to format date of birth with automatic "/" insertion
+  const handleDateOfBirthChange = (text: string) => {
+    // Remove all non-numeric characters
+    const cleaned = text.replace(/[^\d]/g, '');
+    
+    // Format the date as DD/MM/YYYY
+    let formatted = cleaned;
+    
+    if (cleaned.length >= 2) {
+      formatted = cleaned.slice(0, 2);
+      if (cleaned.length >= 3) {
+        formatted += '/' + cleaned.slice(2, 4);
+        if (cleaned.length >= 5) {
+          formatted += '/' + cleaned.slice(4, 8);
+        }
+      }
+    }
+    
+    setDateOfBirth(formatted);
+  };
+
   // Helper function to validate date format and calculate age
   const validateDateOfBirth = (date: string): { valid: boolean; age?: number; error?: string } => {
     // Check format DD/MM/YYYY
@@ -184,7 +205,7 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
               <TextInput
                 style={styles.input}
                 value={dateOfBirth}
-                onChangeText={setDateOfBirth}
+                onChangeText={handleDateOfBirthChange}
                 placeholder={t('dateOfBirthPlaceholder')}
                 keyboardType="number-pad"
                 placeholderTextColor="#999"
