@@ -38,8 +38,12 @@ export default function LoginScreen() {
       console.log('Backend health check response:', response.status, response.ok);
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('Backend health check data:', data);
+        try {
+          const data = await response.json();
+          console.log('Backend health check data:', data);
+        } catch (jsonError) {
+          console.warn('Backend responded but could not parse JSON:', jsonError);
+        }
       } else {
         console.warn('Backend health check failed:', response.status);
       }
