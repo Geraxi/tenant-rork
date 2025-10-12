@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { UserType } from '../types';
+import { t } from '../utils/translations';
 
 const { width } = Dimensions.get('window');
 
@@ -63,9 +64,9 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             resizeMode="contain"
           />
           
-          <Text style={styles.title}>Welcome to Tenant</Text>
+          <Text style={styles.title}>{t('welcomeTitle')}</Text>
           <Text style={styles.subtitle}>
-            Find your perfect match - whether you&apos;re looking for a home, a tenant, or a roommate
+            {t('welcomeSubtitle')}
           </Text>
 
           <View style={styles.typesContainer}>
@@ -85,10 +86,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                 styles.typeTitle,
                 selectedType === 'tenant' && styles.typeTitleSelected,
               ]}>
-                I&apos;m a Tenant
+                {t('imTenant')}
               </Text>
               <Text style={styles.typeDescription}>
-                Looking for a place to rent
+                {t('tenantDescription')}
               </Text>
             </TouchableOpacity>
 
@@ -108,10 +109,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                 styles.typeTitle,
                 selectedType === 'homeowner' && styles.typeTitleSelected,
               ]}>
-                I&apos;m a Homeowner
+                {t('imHomeowner')}
               </Text>
               <Text style={styles.typeDescription}>
-                I have a property to rent
+                {t('homeownerDescription')}
               </Text>
             </TouchableOpacity>
 
@@ -131,10 +132,10 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
                 styles.typeTitle,
                 selectedType === 'roommate' && styles.typeTitleSelected,
               ]}>
-                Looking for Roommate
+                {t('lookingForRoommate')}
               </Text>
               <Text style={styles.typeDescription}>
-                Find someone to share with
+                {t('roommateDescription')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -147,22 +148,22 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             onPress={handleContinue}
             disabled={!selectedType}
           >
-            <Text style={styles.continueButtonText}>Continue</Text>
+            <Text style={styles.continueButtonText}>{t('continue')}</Text>
             <MaterialIcons name="arrow-forward" size={24} color="#fff" />
           </TouchableOpacity>
 
           <View style={styles.featuresContainer}>
             <View style={styles.feature}>
               <MaterialIcons name="verified-user" size={20} color="#4ECDC4" />
-              <Text style={styles.featureText}>ID Verification</Text>
+              <Text style={styles.featureText}>{t('idVerification')}</Text>
             </View>
             <View style={styles.feature}>
               <MaterialIcons name="security" size={20} color="#4ECDC4" />
-              <Text style={styles.featureText}>Background Checks</Text>
+              <Text style={styles.featureText}>{t('backgroundChecks')}</Text>
             </View>
             <View style={styles.feature}>
               <MaterialIcons name="shield" size={20} color="#4ECDC4" />
-              <Text style={styles.featureText}>Scam-Free</Text>
+              <Text style={styles.featureText}>{t('scamFree')}</Text>
             </View>
           </View>
         </Animated.View>

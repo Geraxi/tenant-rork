@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { User } from '../types';
+import { t } from '../utils/translations';
 
 interface Match {
   id: string;
@@ -61,7 +62,7 @@ export default function MatchesScreen({ onBack, onSelectMatch }: MatchesScreenPr
           )}
         </View>
         <Text style={styles.lastMessage} numberOfLines={1}>
-          {item.lastMessage || 'Start a conversation'}
+          {item.lastMessage || t('startConversation')}
         </Text>
       </View>
       <MaterialIcons name="chevron-right" size={24} color="#CCC" />
@@ -74,16 +75,16 @@ export default function MatchesScreen({ onBack, onSelectMatch }: MatchesScreenPr
         <TouchableOpacity onPress={onBack}>
           <MaterialIcons name="arrow-back" size={28} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Matches</Text>
+        <Text style={styles.headerTitle}>{t('matches')}</Text>
         <View style={{ width: 28 }} />
       </View>
 
       {mockMatches.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialIcons name="chat-bubble-outline" size={80} color="#CCC" />
-          <Text style={styles.emptyTitle}>No matches yet</Text>
+          <Text style={styles.emptyTitle}>{t('noMatches')}</Text>
           <Text style={styles.emptySubtitle}>
-            Keep swiping to find your perfect match!
+            {t('keepSwiping')}
           </Text>
         </View>
       ) : (

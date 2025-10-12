@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import SwipeCard from '../components/SwipeCard';
 import MatchAnimation from '../components/MatchAnimation';
 import { User } from '../types';
+import { t } from '../utils/translations';
 
 // Mock data for demonstration
 const mockUsers: User[] = [
@@ -87,12 +88,14 @@ interface HomeScreenProps {
   currentUser: User;
   onNavigateToMatches: () => void;
   onNavigateToProfile: () => void;
+  onNavigateToContracts: () => void;
 }
 
 export default function HomeScreen({ 
   currentUser, 
   onNavigateToMatches,
-  onNavigateToProfile 
+  onNavigateToProfile,
+  onNavigateToContracts
 }: HomeScreenProps) {
   const [users] = useState<User[]>(mockUsers);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -120,11 +123,11 @@ export default function HomeScreen({
     setShowMatchAnimation(false);
     setCurrentIndex(prev => prev + 1);
     Alert.alert(
-      'It\'s a Match! 🎉',
-      'You can now start chatting with each other.',
+      t('itsAMatch'),
+      t('canStartChatting'),
       [
-        { text: 'Keep Swiping', style: 'cancel' },
-        { text: 'View Matches', onPress: onNavigateToMatches },
+        { text: t('keepSwipingButton'), style: 'cancel' },
+        { text: t('viewMatches'), onPress: onNavigateToMatches },
       ]
     );
   };
@@ -134,16 +137,16 @@ export default function HomeScreen({
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
           <MaterialIcons name="check-circle" size={80} color="#4ECDC4" />
-          <Text style={styles.emptyTitle}>You&apos;re all caught up!</Text>
+          <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
           <Text style={styles.emptySubtitle}>
-            Check back later for more potential matches
+            {t('checkBackLater')}
           </Text>
           <TouchableOpacity 
             style={styles.refreshButton}
             onPress={() => setCurrentIndex(0)}
           >
             <MaterialIcons name="refresh" size={24} color="#fff" />
-            <Text style={styles.refreshButtonText}>Start Over</Text>
+            <Text style={styles.refreshButtonText}>{t('startOver')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -161,9 +164,16 @@ export default function HomeScreen({
           <MaterialIcons name="person" size={28} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tenant</Text>
-        <TouchableOpacity onPress={onNavigateToMatches}>
-          <MaterialIcons name="chat-bubble" size={28} color="#333" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {currentUser.userType === 'homeowner' && (
+            <TouchableOpacity onPress={onNavigateToContracts} style={styles.headerButton}>
+              <MaterialIcons name="description" size={28} color="#333" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={onNavigateToMatches}>
+            <MaterialIcons name="chat-bubble" size={28} color="#333" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.cardContainer}>
@@ -223,6 +233,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4ECDC4',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  headerButton: {
+    marginRight: 0,
   },
   cardContainer: {
     flex: 1,

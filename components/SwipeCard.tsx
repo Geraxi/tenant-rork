@@ -11,6 +11,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { User } from '../types';
 import VerificationBadge from './VerificationBadge';
+import { t } from '../utils/translations';
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.25;
@@ -78,8 +79,10 @@ export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, isFirst }: 
 
   if (!isFirst) {
     return (
-      <View style={[styles.card, styles.nextCard]}>
-        <Image source={{ uri: user.photos[0] }} style={styles.image} />
+      <View style={[styles.card, styles.nextCard]} pointerEvents="none">
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: user.photos[0] }} style={styles.imageStyle} />
+        </View>
       </View>
     );
   }
@@ -94,14 +97,16 @@ export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, isFirst }: 
       ]}
       {...panResponder.panHandlers}
     >
-      <Image source={{ uri: user.photos[0] }} style={styles.image} />
+      <View style={styles.imageContainer}>
+        <Image source={{ uri: user.photos[0] }} style={styles.imageStyle} />
+      </View>
       
       <Animated.View style={[styles.likeLabel, { opacity: likeOpacity }]}>
-        <Text style={styles.labelText}>LIKE</Text>
+        <Text style={styles.labelText}>{t('like')}</Text>
       </Animated.View>
       
       <Animated.View style={[styles.nopeLabel, { opacity: nopeOpacity }]}>
-        <Text style={styles.labelText}>NOPE</Text>
+        <Text style={styles.labelText}>{t('nope')}</Text>
       </Animated.View>
 
       <View style={styles.infoContainer}>
@@ -135,7 +140,7 @@ export default function SwipeCard({ user, onSwipeLeft, onSwipeRight, isFirst }: 
         {user.userType === 'homeowner' && user.preferences.rent && (
           <View style={styles.rentRow}>
             <MaterialIcons name="attach-money" size={20} color="#4ECDC4" />
-            <Text style={styles.rent}>${user.preferences.rent}/month</Text>
+            <Text style={styles.rent}>€{user.preferences.rent}/mese</Text>
           </View>
         )}
       </View>
@@ -155,16 +160,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    overflow: 'hidden',
   },
   nextCard: {
-    transform: [{ scale: 0.95 }],
-    opacity: 0.8,
+    transform: [{ scale: 0.95 }, { translateY: 10 }],
+    opacity: 1,
+    zIndex: -1,
   },
-  image: {
+  imageContainer: {
     width: '100%',
     height: '70%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    overflow: 'hidden',
+  },
+  imageStyle: {
+    width: '100%',
+    height: '100%',
   },
   infoContainer: {
     padding: 20,
