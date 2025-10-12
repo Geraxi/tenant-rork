@@ -8,6 +8,8 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  PanResponder,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -15,7 +17,7 @@ import { User } from '../types';
 import VerificationBadge from './VerificationBadge';
 import { t } from '../utils/translations';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 interface CardDetailModalProps {
   visible: boolean;
@@ -25,6 +27,40 @@ interface CardDetailModalProps {
 
 export default function CardDetailModal({ visible, user, onClose }: CardDetailModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const translateY = new Animated.Value(0);
+
+  // Pan responder for swipe-down to close
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (_, gestureState) => {
+      // Only respond to vertical swipes
+      return Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && gestureState.dy > 0;
+    },
+    onPanResponderMove: (_, gestureState) => {
+      if (gestureState.dy > 0) {
+        translateY.setValue(gestureState.dy);
+      }
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      if (gestureState.dy > 150) {
+        // Swipe down threshold reached, close modal
+        Animated.timing(translateY, {
+          toValue: height,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          translateY.setValue(0);
+          onClose();
+        });
+      } else {
+        // Return to original position
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+        }).start();
+      }
+    },
+  });
 
   return (
     <Modal
@@ -33,156 +69,195 @@ export default function CardDetailModal({ visible, user, onClose }: CardDetailMo
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <MaterialIcons name="close" size={28} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('viewProfile')}</Text>
-          <View style={{ width: 28 }} />
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.photosContainer}>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={(event) => {
-                const index = Math.round(event.nativeEvent.contentOffset.x / width);
-                setCurrentPhotoIndex(index);
-              }}
-              scrollEventThrottle={16}
-            >
-              {user.photos.map((photo, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: photo }}
-                  style={styles.photo}
-                  resizeMode="cover"
-                />
-              ))}
-            </ScrollView>
-            <View style={styles.photoIndicators}>
-              {user.photos.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    index === currentPhotoIndex && styles.indicatorActive,
-                  ]}
-                />
-              ))}
-            </View>
+      <Animated.View 
+        style={[
+          styles.modalContainer,
+          { transform: [{ translateY }] }
+        ]}
+      >
+        <SafeAreaView style={styles.container}>
+          {/* Swipe indicator */}
+          <View style={styles.swipeIndicatorContainer} {...panResponder.panHandlers}>
+            <View style={styles.swipeIndicator} />
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{user.name}, {user.age}</Text>
-              <VerificationBadge
-                status={user.verified}
-                idVerified={user.idVerified}
-                backgroundCheck={user.backgroundCheckPassed}
-                size="large"
-              />
-            </View>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <MaterialIcons name="close" size={28} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{t('viewProfile')}</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <MaterialIcons name="keyboard-arrow-down" size={28} color="#333" />
+            </TouchableOpacity>
+          </View>
 
-            <View style={styles.infoRow}>
-              <MaterialIcons name="location-on" size={20} color="#666" />
-              <Text style={styles.infoText}>{user.location}</Text>
-            </View>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Tap photo area to close */}
+            <TouchableOpacity 
+              activeOpacity={0.9} 
+              onPress={onClose}
+              style={styles.photosContainer}
+            >
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={(event) => {
+                  const index = Math.round(event.nativeEvent.contentOffset.x / width);
+                  setCurrentPhotoIndex(index);
+                }}
+                scrollEventThrottle={16}
+              >
+                {user.photos.map((photo, index) => (
+                  <Image
+                    key={index}
+                    source={{ uri: photo }}
+                    style={styles.photo}
+                    resizeMode="cover"
+                  />
+                ))}
+              </ScrollView>
+              <View style={styles.photoIndicators}>
+                {user.photos.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.indicator,
+                      index === currentPhotoIndex && styles.indicatorActive,
+                    ]}
+                  />
+                ))}
+              </View>
+              {/* Close hint overlay */}
+              <View style={styles.closeHintOverlay}>
+                <MaterialIcons name="keyboard-arrow-down" size={32} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.closeHintText}>Tocca per chiudere</Text>
+              </View>
+            </TouchableOpacity>
 
-            <View style={styles.infoRow}>
-              <MaterialIcons
-                name={user.userType === 'homeowner' ? 'home' : user.userType === 'tenant' ? 'person' : 'people'}
-                size={20}
-                color="#666"
-              />
-              <Text style={styles.infoText}>
-                {user.userType.charAt(0).toUpperCase() + user.userType.slice(1)}
-              </Text>
-            </View>
+            <View style={styles.content}>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>{user.name}, {user.age}</Text>
+                <VerificationBadge
+                  status={user.verified}
+                  idVerified={user.idVerified}
+                  backgroundCheck={user.backgroundCheckPassed}
+                  size="large"
+                />
+              </View>
 
-            {user.employmentStatus && (
               <View style={styles.infoRow}>
-                <MaterialIcons name="work" size={20} color="#666" />
+                <MaterialIcons name="location-on" size={20} color="#666" />
+                <Text style={styles.infoText}>{user.location}</Text>
+              </View>
+
+              <View style={styles.infoRow}>
+                <MaterialIcons
+                  name={user.userType === 'homeowner' ? 'home' : user.userType === 'tenant' ? 'person' : 'people'}
+                  size={20}
+                  color="#666"
+                />
                 <Text style={styles.infoText}>
-                  {t(user.employmentStatus as any)}
-                  {user.jobType && ` - ${t(user.jobType as any)}`}
+                  {user.userType.charAt(0).toUpperCase() + user.userType.slice(1)}
                 </Text>
               </View>
-            )}
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('about')}</Text>
-              <Text style={styles.bio}>{user.bio}</Text>
-            </View>
+              {user.employmentStatus && (
+                <View style={styles.infoRow}>
+                  <MaterialIcons name="work" size={20} color="#666" />
+                  <Text style={styles.infoText}>
+                    {t(user.employmentStatus as any)}
+                    {user.jobType && ` - ${t(user.jobType as any)}`}
+                  </Text>
+                </View>
+              )}
 
-            {user.userType === 'homeowner' && user.preferences.rent && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('propertyInfo')}</Text>
-                <View style={styles.propertyGrid}>
-                  <View style={styles.propertyItem}>
-                    <MaterialIcons name="attach-money" size={24} color="#4ECDC4" />
-                    <Text style={styles.propertyValue}>€{user.preferences.rent}</Text>
-                    <Text style={styles.propertyLabel}>{t('perMonth')}</Text>
+                <Text style={styles.sectionTitle}>{t('about')}</Text>
+                <Text style={styles.bio}>{user.bio}</Text>
+              </View>
+
+              {user.userType === 'homeowner' && user.preferences.rent && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>{t('propertyInfo')}</Text>
+                  <View style={styles.propertyGrid}>
+                    <View style={styles.propertyItem}>
+                      <MaterialIcons name="attach-money" size={24} color="#4ECDC4" />
+                      <Text style={styles.propertyValue}>€{user.preferences.rent}</Text>
+                      <Text style={styles.propertyLabel}>{t('perMonth')}</Text>
+                    </View>
+                    {user.preferences.bedrooms && (
+                      <View style={styles.propertyItem}>
+                        <MaterialIcons name="bed" size={24} color="#4ECDC4" />
+                        <Text style={styles.propertyValue}>{user.preferences.bedrooms}</Text>
+                        <Text style={styles.propertyLabel}>{t('bedrooms')}</Text>
+                      </View>
+                    )}
+                    {user.preferences.bathrooms && (
+                      <View style={styles.propertyItem}>
+                        <MaterialIcons name="bathtub" size={24} color="#4ECDC4" />
+                        <Text style={styles.propertyValue}>{user.preferences.bathrooms}</Text>
+                        <Text style={styles.propertyLabel}>{t('bathrooms')}</Text>
+                      </View>
+                    )}
+                    {user.preferences.squareMeters && (
+                      <View style={styles.propertyItem}>
+                        <MaterialIcons name="square-foot" size={24} color="#4ECDC4" />
+                        <Text style={styles.propertyValue}>{user.preferences.squareMeters}</Text>
+                        <Text style={styles.propertyLabel}>{t('squareMeters')}</Text>
+                      </View>
+                    )}
                   </View>
-                  {user.preferences.bedrooms && (
-                    <View style={styles.propertyItem}>
-                      <MaterialIcons name="bed" size={24} color="#4ECDC4" />
-                      <Text style={styles.propertyValue}>{user.preferences.bedrooms}</Text>
-                      <Text style={styles.propertyLabel}>{t('bedrooms')}</Text>
-                    </View>
-                  )}
-                  {user.preferences.bathrooms && (
-                    <View style={styles.propertyItem}>
-                      <MaterialIcons name="bathtub" size={24} color="#4ECDC4" />
-                      <Text style={styles.propertyValue}>{user.preferences.bathrooms}</Text>
-                      <Text style={styles.propertyLabel}>{t('bathrooms')}</Text>
-                    </View>
-                  )}
-                  {user.preferences.squareMeters && (
-                    <View style={styles.propertyItem}>
-                      <MaterialIcons name="square-foot" size={24} color="#4ECDC4" />
-                      <Text style={styles.propertyValue}>{user.preferences.squareMeters}</Text>
-                      <Text style={styles.propertyLabel}>{t('squareMeters')}</Text>
-                    </View>
-                  )}
                 </View>
-              </View>
-            )}
+              )}
 
-            {user.preferences.amenities && user.preferences.amenities.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>{t('amenities')}</Text>
-                <View style={styles.amenitiesContainer}>
-                  {user.preferences.amenities.map((amenity, index) => (
-                    <View key={index} style={styles.amenityChip}>
-                      <MaterialIcons name="check-circle" size={16} color="#4ECDC4" />
-                      <Text style={styles.amenityText}>{amenity}</Text>
-                    </View>
-                  ))}
+              {user.preferences.amenities && user.preferences.amenities.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>{t('amenities')}</Text>
+                  <View style={styles.amenitiesContainer}>
+                    {user.preferences.amenities.map((amenity, index) => (
+                      <View key={index} style={styles.amenityChip}>
+                        <MaterialIcons name="check-circle" size={16} color="#4ECDC4" />
+                        <Text style={styles.amenityText}>{amenity}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            )}
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+              )}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Animated.View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  swipeIndicatorContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  swipeIndicator: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CCC',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
@@ -221,6 +296,23 @@ const styles = StyleSheet.create({
   indicatorActive: {
     backgroundColor: '#fff',
     width: 24,
+  },
+  closeHintOverlay: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    opacity: 0.7,
+  },
+  closeHintText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   content: {
     padding: 20,

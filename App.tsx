@@ -17,8 +17,9 @@ import ProfileScreen from './screens/ProfileScreen';
 import VerificationScreen from './screens/VerificationScreen';
 import ContractsScreen from './screens/ContractsScreen';
 import CreateContractScreen from './screens/CreateContractScreen';
+import CreateListingScreen from './screens/CreateListingScreen';
 import BottomNavigation from './components/BottomNavigation';
-import { User, UserType } from './types';
+import { User, UserType, Property } from './types';
 
 type Screen = 
   | 'login'
@@ -33,7 +34,8 @@ type Screen =
   | 'profile' 
   | 'verification'
   | 'contracts'
-  | 'createContract';
+  | 'createContract'
+  | 'createListing';
 
 type NavScreen = 'browse' | 'matches' | 'messages' | 'contracts' | 'profile';
 
@@ -44,6 +46,7 @@ export default function App() {
   const [selectedMatch, setSelectedMatch] = useState<User | null>(null);
   const [tempProfileData, setTempProfileData] = useState<ProfileData | null>(null);
   const [tempIdData, setTempIdData] = useState<{ idDocument: string; selfie: string } | null>(null);
+  const [userProperties, setUserProperties] = useState<Property[]>([]);
 
   const handleLogin = (email: string, password: string) => {
     // Simulate login
@@ -137,6 +140,19 @@ export default function App() {
     setCurrentScreen('profile');
   };
 
+  const handleCreateListing = (propertyData: Omit<Property, 'id' | 'ownerId' | 'createdAt'>) => {
+    const newProperty: Property = {
+      ...propertyData,
+      id: `property-${Date.now()}`,
+      ownerId: currentUser?.id || 'current-user',
+      createdAt: Date.now(),
+    };
+    
+    setUserProperties([...userProperties, newProperty]);
+    Alert.alert('Successo!', 'Il tuo annuncio è stato pubblicato con successo!');
+    setCurrentScreen('profile');
+  };
+
   const handleNavigation = (screen: NavScreen) => {
     const screenMap: Record<NavScreen, Screen> = {
       browse: 'home',
@@ -152,11 +168,11 @@ export default function App() {
     if (currentScreen === 'home') return 'browse';
     if (currentScreen === 'matches' || currentScreen === 'chat') return 'matches';
     if (currentScreen === 'contracts' || currentScreen === 'createContract') return 'contracts';
-    if (currentScreen === 'profile' || currentScreen === 'verification') return 'profile';
+    if (currentScreen === 'profile' || currentScreen === 'verification' || currentScreen === 'createListing') return 'profile';
     return 'browse';
   };
 
-  const showBottomNav = currentUser && !['login', 'signup', 'onboarding', 'profileSetup', 'idVerification', 'preferences', 'chat', 'verification', 'createContract'].includes(currentScreen);
+  const showBottomNav = currentUser && !['login', 'signup', 'onboarding', 'profileSetup', 'idVerification', 'preferences', 'chat', 'verification', 'createContract', 'createListing'].includes(currentScreen);
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -247,8 +263,10 @@ export default function App() {
         return currentUser ? (
           <ProfileScreen
             user={currentUser}
+            properties={userProperties}
             onBack={() => setCurrentScreen('home')}
             onVerification={() => setCurrentScreen('verification')}
+            onCreateListing={() => setCurrentScreen('createListing')}
           />
         ) : null;
       
@@ -274,6 +292,14 @@ export default function App() {
           <CreateContractScreen
             onBack={() => setCurrentScreen('contracts')}
             onSave={() => setCurrentScreen('contracts')}
+          />
+        );
+      
+      case 'createListing':
+        return (
+          <CreateListingScreen
+            onBack={() => setCurrentScreen('profile')}
+            onSave={handleCreateListing}
           />
         );
       

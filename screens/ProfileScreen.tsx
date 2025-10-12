@@ -9,16 +9,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { User } from '../types';
+import { User, Property } from '../types';
 import VerificationBadge from '../components/VerificationBadge';
 
 interface ProfileScreenProps {
   user: User;
+  properties?: Property[];
   onBack: () => void;
   onVerification: () => void;
+  onCreateListing?: () => void;
 }
 
-export default function ProfileScreen({ user, onBack, onVerification }: ProfileScreenProps) {
+export default function ProfileScreen({ user, properties = [], onBack, onVerification, onCreateListing }: ProfileScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -60,6 +62,84 @@ export default function ProfileScreen({ user, onBack, onVerification }: ProfileS
           </TouchableOpacity>
         )}
 
+        {/* Homeowner Listings Section */}
+        {user.userType === 'homeowner' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>I Miei Annunci</Text>
+              {onCreateListing && (
+                <TouchableOpacity 
+                  style={styles.addListingButton}
+                  onPress={onCreateListing}
+                >
+                  <MaterialIcons name="add" size={20} color="#fff" />
+                  <Text style={styles.addListingButtonText}>Nuovo</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {properties.length === 0 ? (
+              <View style={styles.emptyListings}>
+                <MaterialIcons name="home-work" size={48} color="#CCC" />
+                <Text style={styles.emptyListingsText}>Nessun annuncio ancora</Text>
+                <Text style={styles.emptyListingsSubtext}>
+                  Crea il tuo primo annuncio per iniziare a trovare inquilini
+                </Text>
+                {onCreateListing && (
+                  <TouchableOpacity 
+                    style={styles.createFirstListingButton}
+                    onPress={onCreateListing}
+                  >
+                    <MaterialIcons name="add-home" size={24} color="#fff" />
+                    <Text style={styles.createFirstListingButtonText}>Crea Annuncio</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <View style={styles.listingsGrid}>
+                {properties.map((property) => (
+                  <View key={property.id} style={styles.listingCard}>
+                    <Image 
+                      source={{ uri: property.photos[0] }} 
+                      style={styles.listingImage}
+                    />
+                    <View style={styles.listingInfo}>
+                      <Text style={styles.listingTitle} numberOfLines={1}>
+                        {property.title}
+                      </Text>
+                      <Text style={styles.listingPrice}>€{property.rent}/mese</Text>
+                      <View style={styles.listingDetails}>
+                        <View style={styles.listingDetail}>
+                          <MaterialIcons name="bed" size={14} color="#666" />
+                          <Text style={styles.listingDetailText}>{property.bedrooms}</Text>
+                        </View>
+                        <View style={styles.listingDetail}>
+                          <MaterialIcons name="bathtub" size={14} color="#666" />
+                          <Text style={styles.listingDetailText}>{property.bathrooms}</Text>
+                        </View>
+                        <View style={styles.listingDetail}>
+                          <MaterialIcons name="square-foot" size={14} color="#666" />
+                          <Text style={styles.listingDetailText}>{property.squareMeters}m²</Text>
+                        </View>
+                      </View>
+                      <View style={styles.listingStatus}>
+                        <View style={[
+                          styles.statusBadge,
+                          property.available ? styles.statusAvailable : styles.statusUnavailable
+                        ]}>
+                          <Text style={styles.statusText}>
+                            {property.available ? 'Disponibile' : 'Non Disponibile'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.infoCard}>
@@ -84,33 +164,6 @@ export default function ProfileScreen({ user, onBack, onVerification }: ProfileS
             <Text style={styles.bioText}>{user.bio}</Text>
           </View>
         </View>
-
-        {user.userType === 'homeowner' && user.preferences.rent && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Property Details</Text>
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <MaterialIcons name="attach-money" size={20} color="#4ECDC4" />
-                <Text style={styles.infoLabel}>Rent:</Text>
-                <Text style={styles.infoValue}>${user.preferences.rent}/month</Text>
-              </View>
-              {user.preferences.bedrooms && (
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="bed" size={20} color="#4ECDC4" />
-                  <Text style={styles.infoLabel}>Bedrooms:</Text>
-                  <Text style={styles.infoValue}>{user.preferences.bedrooms}</Text>
-                </View>
-              )}
-              {user.preferences.nearAirport && (
-                <View style={styles.infoRow}>
-                  <MaterialIcons name="flight" size={20} color="#4ECDC4" />
-                  <Text style={styles.infoLabel}>Near Airport:</Text>
-                  <Text style={styles.infoValue}>Yes</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        )}
 
         <TouchableOpacity style={styles.logoutButton}>
           <MaterialIcons name="logout" size={20} color="#F44336" />
@@ -186,11 +239,131 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
+  },
+  addListingButton: {
+    flexDirection: 'row',
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    gap: 4,
+  },
+  addListingButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyListings: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  emptyListingsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 12,
+  },
+  emptyListingsSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  createFirstListingButton: {
+    flexDirection: 'row',
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    alignItems: 'center',
+    gap: 8,
+  },
+  createFirstListingButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  listingsGrid: {
+    gap: 16,
+  },
+  listingCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  listingImage: {
+    width: '100%',
+    height: 180,
+  },
+  listingInfo: {
+    padding: 16,
+  },
+  listingTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  listingPrice: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4ECDC4',
     marginBottom: 12,
+  },
+  listingDetails: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 12,
+  },
+  listingDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  listingDetailText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  listingStatus: {
+    marginTop: 8,
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusAvailable: {
+    backgroundColor: '#E8F9F7',
+  },
+  statusUnavailable: {
+    backgroundColor: '#FFE8E8',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4ECDC4',
   },
   infoCard: {
     backgroundColor: '#fff',
