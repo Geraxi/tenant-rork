@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -63,7 +64,11 @@ export default function SignupScreen({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <MaterialIcons name="home" size={80} color="#4ECDC4" />
+            <Image 
+              source={require('../assets/images/tenant-logo.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
             <Text style={styles.title}>{t('welcomeTitle')}</Text>
             <Text style={styles.subtitle}>
               {t('welcomeSubtitle')}
@@ -181,11 +186,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 8,
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#333',
-    marginTop: 20,
+    marginTop: 12,
     marginBottom: 8,
   },
   subtitle: {
