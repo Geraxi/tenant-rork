@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -94,7 +94,7 @@ export default function HomeScreen({
   onNavigateToMatches,
   onNavigateToProfile 
 }: HomeScreenProps) {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users] = useState<User[]>(mockUsers);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
 
@@ -134,7 +134,7 @@ export default function HomeScreen({
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
           <MaterialIcons name="check-circle" size={80} color="#4ECDC4" />
-          <Text style={styles.emptyTitle}>You\'re all caught up!</Text>
+          <Text style={styles.emptyTitle}>You&apos;re all caught up!</Text>
           <Text style={styles.emptySubtitle}>
             Check back later for more potential matches
           </Text>

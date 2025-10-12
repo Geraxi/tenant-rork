@@ -7,6 +7,7 @@ import {
   Image,
   Animated,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -46,121 +47,126 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 
   return (
     <SafeAreaView style={styles.container}>
-      <Animated.View 
-        style={[
-          styles.content,
-          { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-        ]}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Image 
-          source={require('../assets/images/tenant-logo.png')} 
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        
-        <Text style={styles.title}>Welcome to Tenant</Text>
-        <Text style={styles.subtitle}>
-          Find your perfect match - whether you\'re looking for a home, a tenant, or a roommate
-        </Text>
-
-        <View style={styles.typesContainer}>
-          <TouchableOpacity
-            style={[
-              styles.typeCard,
-              selectedType === 'tenant' && styles.typeCardSelected,
-            ]}
-            onPress={() => setSelectedType('tenant')}
-          >
-            <MaterialIcons 
-              name="person-search" 
-              size={48} 
-              color={selectedType === 'tenant' ? '#4ECDC4' : '#666'} 
-            />
-            <Text style={[
-              styles.typeTitle,
-              selectedType === 'tenant' && styles.typeTitleSelected,
-            ]}>
-              I\'m a Tenant
-            </Text>
-            <Text style={styles.typeDescription}>
-              Looking for a place to rent
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.typeCard,
-              selectedType === 'homeowner' && styles.typeCardSelected,
-            ]}
-            onPress={() => setSelectedType('homeowner')}
-          >
-            <MaterialIcons 
-              name="home" 
-              size={48} 
-              color={selectedType === 'homeowner' ? '#4ECDC4' : '#666'} 
-            />
-            <Text style={[
-              styles.typeTitle,
-              selectedType === 'homeowner' && styles.typeTitleSelected,
-            ]}>
-              I\'m a Homeowner
-            </Text>
-            <Text style={styles.typeDescription}>
-              I have a property to rent
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.typeCard,
-              selectedType === 'roommate' && styles.typeCardSelected,
-            ]}
-            onPress={() => setSelectedType('roommate')}
-          >
-            <MaterialIcons 
-              name="people" 
-              size={48} 
-              color={selectedType === 'roommate' ? '#4ECDC4' : '#666'} 
-            />
-            <Text style={[
-              styles.typeTitle,
-              selectedType === 'roommate' && styles.typeTitleSelected,
-            ]}>
-              Looking for Roommate
-            </Text>
-            <Text style={styles.typeDescription}>
-              Find someone to share with
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity
+        <Animated.View 
           style={[
-            styles.continueButton,
-            !selectedType && styles.continueButtonDisabled,
+            styles.content,
+            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
           ]}
-          onPress={handleContinue}
-          disabled={!selectedType}
         >
-          <Text style={styles.continueButtonText}>Continue</Text>
-          <MaterialIcons name="arrow-forward" size={24} color="#fff" />
-        </TouchableOpacity>
+          <Image 
+            source={require('../assets/images/tenant-logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          
+          <Text style={styles.title}>Welcome to Tenant</Text>
+          <Text style={styles.subtitle}>
+            Find your perfect match - whether you&apos;re looking for a home, a tenant, or a roommate
+          </Text>
 
-        <View style={styles.featuresContainer}>
-          <View style={styles.feature}>
-            <MaterialIcons name="verified-user" size={20} color="#4ECDC4" />
-            <Text style={styles.featureText}>ID Verification</Text>
+          <View style={styles.typesContainer}>
+            <TouchableOpacity
+              style={[
+                styles.typeCard,
+                selectedType === 'tenant' && styles.typeCardSelected,
+              ]}
+              onPress={() => setSelectedType('tenant')}
+            >
+              <MaterialIcons 
+                name="person-search" 
+                size={48} 
+                color={selectedType === 'tenant' ? '#4ECDC4' : '#666'} 
+              />
+              <Text style={[
+                styles.typeTitle,
+                selectedType === 'tenant' && styles.typeTitleSelected,
+              ]}>
+                I&apos;m a Tenant
+              </Text>
+              <Text style={styles.typeDescription}>
+                Looking for a place to rent
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.typeCard,
+                selectedType === 'homeowner' && styles.typeCardSelected,
+              ]}
+              onPress={() => setSelectedType('homeowner')}
+            >
+              <MaterialIcons 
+                name="home" 
+                size={48} 
+                color={selectedType === 'homeowner' ? '#4ECDC4' : '#666'} 
+              />
+              <Text style={[
+                styles.typeTitle,
+                selectedType === 'homeowner' && styles.typeTitleSelected,
+              ]}>
+                I&apos;m a Homeowner
+              </Text>
+              <Text style={styles.typeDescription}>
+                I have a property to rent
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.typeCard,
+                selectedType === 'roommate' && styles.typeCardSelected,
+              ]}
+              onPress={() => setSelectedType('roommate')}
+            >
+              <MaterialIcons 
+                name="people" 
+                size={48} 
+                color={selectedType === 'roommate' ? '#4ECDC4' : '#666'} 
+              />
+              <Text style={[
+                styles.typeTitle,
+                selectedType === 'roommate' && styles.typeTitleSelected,
+              ]}>
+                Looking for Roommate
+              </Text>
+              <Text style={styles.typeDescription}>
+                Find someone to share with
+              </Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.feature}>
-            <MaterialIcons name="security" size={20} color="#4ECDC4" />
-            <Text style={styles.featureText}>Background Checks</Text>
+
+          <TouchableOpacity
+            style={[
+              styles.continueButton,
+              !selectedType && styles.continueButtonDisabled,
+            ]}
+            onPress={handleContinue}
+            disabled={!selectedType}
+          >
+            <Text style={styles.continueButtonText}>Continue</Text>
+            <MaterialIcons name="arrow-forward" size={24} color="#fff" />
+          </TouchableOpacity>
+
+          <View style={styles.featuresContainer}>
+            <View style={styles.feature}>
+              <MaterialIcons name="verified-user" size={20} color="#4ECDC4" />
+              <Text style={styles.featureText}>ID Verification</Text>
+            </View>
+            <View style={styles.feature}>
+              <MaterialIcons name="security" size={20} color="#4ECDC4" />
+              <Text style={styles.featureText}>Background Checks</Text>
+            </View>
+            <View style={styles.feature}>
+              <MaterialIcons name="shield" size={20} color="#4ECDC4" />
+              <Text style={styles.featureText}>Scam-Free</Text>
+            </View>
           </View>
-          <View style={styles.feature}>
-            <MaterialIcons name="shield" size={20} color="#4ECDC4" />
-            <Text style={styles.featureText}>Scam-Free</Text>
-          </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -170,31 +176,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F9FA',
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
   content: {
-    flex: 1,
     padding: 20,
     alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginTop: 20,
-    marginBottom: 20,
+    width: 100,
+    height: 100,
+    marginTop: 10,
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 10,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
     paddingHorizontal: 20,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   typesContainer: {
     width: '100%',
