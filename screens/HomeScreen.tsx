@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,10 +15,8 @@ import CardDetailModal from '../components/CardDetailModal';
 import { User } from '../types';
 import { t } from '../utils/translations';
 
-const { height } = Dimensions.get('window');
-
-// Mock data for demonstration
-const mockUsers: User[] = [
+// Mock data - includes both tenants and homeowners
+const mockHomeowners: User[] = [
   {
     id: '1',
     name: 'Sarah Johnson',
@@ -100,6 +97,82 @@ const mockUsers: User[] = [
   },
 ];
 
+const mockTenants: User[] = [
+  {
+    id: '4',
+    name: 'Marco Rossi',
+    email: 'marco@example.com',
+    userType: 'tenant',
+    age: 28,
+    bio: 'Software engineer looking for a quiet place near the city center. Non-smoker, no pets.',
+    photos: [
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+    ],
+    location: 'Milano, Italia',
+    verified: 'verified',
+    idVerified: true,
+    backgroundCheckPassed: true,
+    employmentStatus: 'employed',
+    jobType: 'tech',
+    preferences: {
+      budget: 1500,
+      petFriendly: false,
+      smoking: false,
+    },
+    createdAt: Date.now(),
+  },
+  {
+    id: '5',
+    name: 'Laura Bianchi',
+    email: 'laura@example.com',
+    userType: 'tenant',
+    age: 24,
+    bio: 'University student studying architecture. Looking for a cozy place with good natural light.',
+    photos: [
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
+    ],
+    location: 'Roma, Italia',
+    verified: 'verified',
+    idVerified: true,
+    backgroundCheckPassed: true,
+    employmentStatus: 'student',
+    jobType: 'student',
+    preferences: {
+      budget: 1200,
+      petFriendly: false,
+      smoking: false,
+    },
+    createdAt: Date.now(),
+  },
+  {
+    id: '6',
+    name: 'Alessandro Conti',
+    email: 'alessandro@example.com',
+    userType: 'tenant',
+    age: 35,
+    bio: 'Airline pilot seeking accommodation near the airport. Flexible schedule, clean and responsible.',
+    photos: [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+    ],
+    location: 'Roma, Italia',
+    verified: 'verified',
+    idVerified: true,
+    backgroundCheckPassed: true,
+    employmentStatus: 'employed',
+    jobType: 'pilot',
+    preferences: {
+      budget: 1600,
+      petFriendly: false,
+      smoking: false,
+      nearAirport: true,
+    },
+    createdAt: Date.now(),
+  },
+];
+
 interface HomeScreenProps {
   currentUser: User;
   onNavigateToMatches: () => void;
@@ -113,7 +186,19 @@ export default function HomeScreen({
   onNavigateToProfile,
   onNavigateToContracts
 }: HomeScreenProps) {
-  const [users] = useState<User[]>(mockUsers);
+  // Filter users based on current user type
+  // Tenants see homeowners, homeowners see tenants
+  const getFilteredUsers = (): User[] => {
+    if (currentUser.userType === 'tenant') {
+      return mockHomeowners;
+    } else if (currentUser.userType === 'homeowner') {
+      return mockTenants;
+    }
+    // For roommates, show other roommates (not implemented in mock data yet)
+    return [];
+  };
+
+  const [users] = useState<User[]>(getFilteredUsers());
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMatchAnimation, setShowMatchAnimation] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -153,6 +238,16 @@ export default function HomeScreen({
   const handleCardPress = (user: User) => {
     setSelectedUser(user);
     setShowDetailModal(true);
+  };
+
+  // Get browsing context text
+  const getBrowsingText = () => {
+    if (currentUser.userType === 'tenant') {
+      return 'Sfoglia Proprietà';
+    } else if (currentUser.userType === 'homeowner') {
+      return 'Sfoglia Inquilini';
+    }
+    return 'Sfoglia';
   };
 
   if (currentIndex >= users.length) {
@@ -211,7 +306,10 @@ export default function HomeScreen({
         <TouchableOpacity onPress={onNavigateToProfile}>
           <MaterialIcons name="person" size={28} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Tenant</Text>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Tenant</Text>
+          <Text style={styles.headerSubtitle}>{getBrowsingText()}</Text>
+        </View>
         <View style={styles.headerRight}>
           {currentUser.userType === 'homeowner' && (
             <TouchableOpacity onPress={onNavigateToContracts} style={styles.headerButton}>
@@ -282,10 +380,18 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
     zIndex: 10,
   },
+  headerCenter: {
+    alignItems: 'center',
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#4ECDC4',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
   headerRight: {
     flexDirection: 'row',
