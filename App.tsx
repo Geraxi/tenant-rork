@@ -1,175 +1,114 @@
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Image, TouchableOpacity, Animated } from 'react-native';
-import { useState, useEffect, useRef } from 'react';
-import { useFonts, PlayfairDisplay_400Regular, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
-import { Inter_300Light, Inter_400Regular } from '@expo-google-fonts/inter';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import OnboardingScreen from './screens/OnboardingScreen';
+import HomeScreen from './screens/HomeScreen';
+import MatchesScreen from './screens/MatchesScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import VerificationScreen from './screens/VerificationScreen';
+import { User, UserType } from './types';
+
+type Screen = 'onboarding' | 'home' | 'matches' | 'profile' | 'verification';
 
 export default function App() {
-  const [theme, setTheme] = useState('light');
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const [currentScreen, setCurrentScreen] = useState<Screen>('onboarding');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  const [fontsLoaded] = useFonts({
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_700Bold,
-    Inter_300Light,
-    Inter_400Regular,
-  });
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      // Fade in animation when component mounts
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 4,
-          tension: 40,
-          useNativeDriver: true,
-        })
-      ]).start();
-    }
-  }, [fontsLoaded]);
-
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+  // Mock current user for demo
+  const mockCurrentUser: User = {
+    id: 'current-user',
+    name: 'John Doe',
+    email: 'john@example.com',
+    userType: 'tenant',
+    age: 28,
+    bio: 'Looking for a cozy place near downtown. Non-smoker, no pets. Working professional.',
+    photos: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'],
+    location: 'Seattle, WA',
+    verified: 'unverified',
+    idVerified: false,
+    backgroundCheckPassed: false,
+    preferences: {
+      budget: 1800,
+      moveInDate: '2024-02-01',
+      leaseDuration: '12 months',
+      petFriendly: false,
+      smoking: false,
+      ageRange: { min: 25, max: 45 },
+    },
+    createdAt: Date.now(),
   };
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  const handleOnboardingComplete = (userType: UserType) => {
+    setCurrentUser({
+      ...mockCurrentUser,
+      userType,
+    });
+    setCurrentScreen('home');
+  };
+
+  const handleVerificationComplete = () => {
+    if (currentUser) {
+      setCurrentUser({
+        ...currentUser,
+        verified: 'verified',
+        idVerified: true,
+        backgroundCheckPassed: true,
+      });
+    }
+    setCurrentScreen('profile');
+  };
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'onboarding':
+        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+      
+      case 'home':
+        return currentUser ? (
+          <HomeScreen
+            currentUser={currentUser}
+            onNavigateToMatches={() => setCurrentScreen('matches')}
+            onNavigateToProfile={() => setCurrentScreen('profile')}
+          />
+        ) : null;
+      
+      case 'matches':
+        return (
+          <MatchesScreen
+            onBack={() => setCurrentScreen('home')}
+            onSelectMatch={() => {}}
+          />
+        );
+      
+      case 'profile':
+        return currentUser ? (
+          <ProfileScreen
+            user={currentUser}
+            onBack={() => setCurrentScreen('home')}
+            onVerification={() => setCurrentScreen('verification')}
+          />
+        ) : null;
+      
+      case 'verification':
+        return (
+          <VerificationScreen
+            onBack={() => setCurrentScreen('profile')}
+            onComplete={handleVerificationComplete}
+          />
+        );
+      
+      default:
+        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+    }
+  };
 
   return (
-    <View style={[
-      styles.container,
-      { backgroundColor: theme === 'light' ? '#ffffff' : '#1a1a2e' }
-    ]}>
-      <Animated.View style={[
-        styles.content,
-        { 
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }]
-        }
-      ]}>
-        <Image 
-          source={require('./assets/images/icon.png')} 
-          style={styles.logo} 
-          resizeMode="contain"
-        />
-        
-        <Text style={[
-          styles.title,
-          { 
-            color: theme === 'light' ? '#333' : '#fff',
-            fontFamily: 'PlayfairDisplay_400Regular',
-            fontWeight: '300'
-          }
-        ]}>
-          welcome to kiki
-        </Text>
-        
-        <Text style={[
-          styles.subtitle,
-          { 
-            color: theme === 'light' ? '#666' : '#ccc',
-            fontFamily: 'Inter_300Light'
-          }
-        ]}>
-          tell the ai what to make!
-        </Text>
-
-        <View style={styles.reactContainer}>
-          <Text style={[
-            styles.poweredBy,
-            { 
-              color: theme === 'light' ? '#666' : '#ccc',
-              fontFamily: 'Inter_300Light'
-            }
-          ]}>
-            powered by
-          </Text>
-          <Image 
-            source={require('./assets/images/react-logo.png')} 
-            style={styles.reactLogo} 
-            resizeMode="contain"
-          />
-        </View>
-      </Animated.View>
-
-      <TouchableOpacity 
-        style={[
-          styles.themeToggle,
-          { backgroundColor: theme === 'light' ? '#333' : '#f0f8ff' }
-        ]} 
-        onPress={toggleTheme}
-      >
-        <Text style={{ 
-          color: theme === 'light' ? '#fff' : '#333',
-          fontWeight: 'bold'
-        }}>
-          {theme === 'light' ? '🌙' : '☀️'}
-        </Text>
-      </TouchableOpacity>
-      
-      <StatusBar style={theme === 'light' ? 'dark' : 'light'} />
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        {renderScreen()}
+        <StatusBar style="dark" />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  content: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  logo: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 20,
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  reactContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 40,
-  },
-  poweredBy: {
-    fontSize: 16,
-    marginRight: 6,
-  },
-  reactLogo: {
-    width: 24,
-    height: 24,
-  },
-  themeToggle: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    padding: 10,
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
