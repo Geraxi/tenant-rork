@@ -24,6 +24,7 @@ export interface User {
   phone?: string;
   userType: UserType;
   age: number;
+  dateOfBirth: string; // Format: YYYY-MM-DD
   bio: string;
   photos: string[];
   location: string;

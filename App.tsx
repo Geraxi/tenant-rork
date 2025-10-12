@@ -76,15 +76,39 @@ export default function App() {
     setCurrentScreen('preferences');
   };
 
+  // Helper function to calculate age from date of birth
+  const calculateAge = (dateOfBirth: string): number => {
+    // dateOfBirth format: DD/MM/YYYY
+    const parts = dateOfBirth.split('/');
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+    const year = parseInt(parts[2], 10);
+    
+    const birthDate = new Date(year, month, day);
+    const today = new Date();
+    
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   const handlePreferencesComplete = (preferences: any) => {
     if (tempProfileData && tempIdData && selectedUserType) {
+      const age = calculateAge(tempProfileData.dateOfBirth);
+      
       const newUser: User = {
         id: 'current-user',
         name: tempProfileData.name,
         email: 'user@example.com',
         phone: tempProfileData.phone,
         userType: selectedUserType,
-        age: parseInt(tempProfileData.age),
+        age: age,
+        dateOfBirth: tempProfileData.dateOfBirth,
         bio: tempProfileData.bio,
         photos: tempProfileData.photos,
         location: tempProfileData.location,

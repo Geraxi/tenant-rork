@@ -28,6 +28,7 @@ const mockMatches: Match[] = [
       email: 'sarah@example.com',
       userType: 'homeowner',
       age: 32,
+      dateOfBirth: '15/03/1992',
       bio: 'Renting out a cozy 2BR apartment',
       photos: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'],
       location: 'Downtown, Seattle',

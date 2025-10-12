@@ -23,15 +23,21 @@ export const translations = {
   roommateDescription: 'Trova qualcuno con cui condividere',
   continue: 'Continua',
   skip: 'Salta',
+  backgroundChecks: 'Controlli Background',
+  scamFree: 'Senza Truffe',
   
   // Personal Info
   personalInfo: 'Informazioni Personali',
   fullName: 'Nome Completo',
   age: 'Età',
+  dateOfBirth: 'Data di Nascita',
+  dateOfBirthPlaceholder: 'GG/MM/AAAA',
   phone: 'Telefono',
   location: 'Posizione',
   bio: 'Biografia',
   bioPlaceholder: 'Raccontaci qualcosa su di te...',
+  setPreferences: 'Imposta Preferenze',
+  preferencesSubtitle: 'Aiutaci a trovare la corrispondenza perfetta per te',
   
   // Photos
   uploadPhotos: 'Carica Foto',

@@ -16,7 +16,7 @@ import { t } from '../utils/translations';
 
 export interface ProfileData {
   name: string;
-  age: string;
+  dateOfBirth: string;
   phone: string;
   location: string;
   bio: string;
@@ -31,13 +31,59 @@ interface ProfileSetupScreenProps {
 
 export default function ProfileSetupScreen({ userType, onComplete, onBack }: ProfileSetupScreenProps) {
   const [name, setName] = useState('');
-  const [age, setAge] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [phone, setPhone] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
 
   const minPhotos = 3;
+
+  // Helper function to validate date format and calculate age
+  const validateDateOfBirth = (date: string): { valid: boolean; age?: number; error?: string } => {
+    // Check format DD/MM/YYYY
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = date.match(dateRegex);
+    
+    if (!match) {
+      return { valid: false, error: 'Formato data non valido. Usa GG/MM/AAAA' };
+    }
+
+    const day = parseInt(match[1], 10);
+    const month = parseInt(match[2], 10);
+    const year = parseInt(match[3], 10);
+
+    // Validate date values
+    if (month < 1 || month > 12) {
+      return { valid: false, error: 'Mese non valido' };
+    }
+    if (day < 1 || day > 31) {
+      return { valid: false, error: 'Giorno non valido' };
+    }
+
+    // Create date object
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
+
+    // Check if date is in the future
+    if (birthDate > today) {
+      return { valid: false, error: 'La data di nascita non può essere nel futuro' };
+    }
+
+    // Calculate age
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    // Check minimum age (18)
+    if (age < 18) {
+      return { valid: false, error: 'Devi avere almeno 18 anni' };
+    }
+
+    return { valid: true, age };
+  };
 
   const handleAddPhoto = () => {
     Alert.alert(
@@ -79,8 +125,15 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
   };
 
   const handleContinue = () => {
-    if (!name.trim() || !age.trim() || !phone.trim() || !location.trim()) {
+    if (!name.trim() || !dateOfBirth.trim() || !phone.trim() || !location.trim()) {
       Alert.alert(t('error'), t('fillAllFields'));
+      return;
+    }
+
+    // Validate date of birth
+    const validation = validateDateOfBirth(dateOfBirth);
+    if (!validation.valid) {
+      Alert.alert(t('error'), validation.error || 'Data di nascita non valida');
       return;
     }
 
@@ -91,7 +144,7 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
 
     onComplete({
       name,
-      age,
+      dateOfBirth,
       phone,
       location,
       bio,
@@ -127,14 +180,15 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
 
           <View style={styles.row}>
             <View style={[styles.inputContainer, styles.halfWidth]}>
-              <Text style={styles.label}>{t('age')}</Text>
+              <Text style={styles.label}>{t('dateOfBirth')}</Text>
               <TextInput
                 style={styles.input}
-                value={age}
-                onChangeText={setAge}
-                placeholder="25"
+                value={dateOfBirth}
+                onChangeText={setDateOfBirth}
+                placeholder={t('dateOfBirthPlaceholder')}
                 keyboardType="number-pad"
                 placeholderTextColor="#999"
+                maxLength={10}
               />
             </View>
 
@@ -205,9 +259,9 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
         </View>
 
         <TouchableOpacity
-          style={[styles.continueButton, (photos.length < minPhotos || !name || !age || !phone || !location) && styles.continueButtonDisabled]}
+          style={[styles.continueButton, (photos.length < minPhotos || !name || !dateOfBirth || !phone || !location) && styles.continueButtonDisabled]}
           onPress={handleContinue}
-          disabled={photos.length < minPhotos || !name || !age || !phone || !location}
+          disabled={photos.length < minPhotos || !name || !dateOfBirth || !phone || !location}
         >
           <Text style={styles.continueButtonText}>{t('continue')}</Text>
           <MaterialIcons name="arrow-forward" size={24} color="#fff" />

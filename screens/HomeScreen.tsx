@@ -23,6 +23,7 @@ const mockHomeowners: User[] = [
     email: 'sarah@example.com',
     userType: 'homeowner',
     age: 32,
+    dateOfBirth: '15/03/1992',
     bio: 'Renting out a cozy 2BR apartment near downtown. Pet-friendly and close to public transport.',
     photos: [
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
@@ -49,6 +50,7 @@ const mockHomeowners: User[] = [
     email: 'michael@example.com',
     userType: 'homeowner',
     age: 45,
+    dateOfBirth: '22/08/1979',
     bio: 'Monolocale moderno vicino all\'aeroporto. Perfetto per equipaggio di cabina e piloti.',
     photos: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
@@ -75,6 +77,7 @@ const mockHomeowners: User[] = [
     email: 'emma@example.com',
     userType: 'homeowner',
     age: 38,
+    dateOfBirth: '10/11/1986',
     bio: 'Bellissima casa con 3 camere e giardino. Quartiere adatto alle famiglie.',
     photos: [
       'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
@@ -104,6 +107,7 @@ const mockTenants: User[] = [
     email: 'marco@example.com',
     userType: 'tenant',
     age: 28,
+    dateOfBirth: '05/06/1996',
     bio: 'Software engineer looking for a quiet place near the city center. Non-smoker, no pets.',
     photos: [
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
@@ -128,6 +132,7 @@ const mockTenants: User[] = [
     email: 'laura@example.com',
     userType: 'tenant',
     age: 24,
+    dateOfBirth: '18/09/2000',
     bio: 'University student studying architecture. Looking for a cozy place with good natural light.',
     photos: [
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
@@ -152,6 +157,7 @@ const mockTenants: User[] = [
     email: 'alessandro@example.com',
     userType: 'tenant',
     age: 35,
+    dateOfBirth: '12/04/1989',
     bio: 'Airline pilot seeking accommodation near the airport. Flexible schedule, clean and responsible.',
     photos: [
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
