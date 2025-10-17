@@ -24,7 +24,7 @@ export default function VerificationBadge({
   return (
     <View style={styles.container}>
       <View style={[styles.badge, styles[`badge_${size}`]]}>
-        <MaterialIcons name="verified" size={iconSize} color="#4CAF50" />
+        <MaterialIcons name="verified" size={iconSize} color="#2196F3" />
         <Text style={[styles.text, { fontSize }]}>Verified</Text>
       </View>
       {idVerified && (
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   text: {
-    color: '#4CAF50',
+    color: '#2196F3',
     fontWeight: '600',
   },
 });

@@ -92,12 +92,7 @@ export default function CardDetailModal({ visible, user, onClose }: CardDetailMo
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Tap photo area to close */}
-            <TouchableOpacity 
-              activeOpacity={0.9} 
-              onPress={onClose}
-              style={styles.photosContainer}
-            >
+            <View style={styles.photosContainer}>
               <ScrollView
                 horizontal
                 pagingEnabled
@@ -131,9 +126,18 @@ export default function CardDetailModal({ visible, user, onClose }: CardDetailMo
               {/* Close hint overlay */}
               <View style={styles.closeHintOverlay}>
                 <MaterialIcons name="keyboard-arrow-down" size={32} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.closeHintText}>Tocca per chiudere</Text>
+                <Text style={styles.closeHintText}>Scorri per vedere più foto</Text>
               </View>
-            </TouchableOpacity>
+              
+              {/* Close button overlay */}
+              <TouchableOpacity 
+                style={styles.closeOverlayButton}
+                onPress={onClose}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons name="close" size={24} color="rgba(255,255,255,0.9)" />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.content}>
               <View style={styles.nameRow}>
@@ -182,27 +186,27 @@ export default function CardDetailModal({ visible, user, onClose }: CardDetailMo
                   <Text style={styles.sectionTitle}>{t('propertyInfo')}</Text>
                   <View style={styles.propertyGrid}>
                     <View style={styles.propertyItem}>
-                      <MaterialIcons name="attach-money" size={24} color="#4ECDC4" />
+                      <MaterialIcons name="attach-money" size={24} color="#2196F3" />
                       <Text style={styles.propertyValue}>€{user.preferences.rent}</Text>
                       <Text style={styles.propertyLabel}>{t('perMonth')}</Text>
                     </View>
                     {user.preferences.bedrooms && (
                       <View style={styles.propertyItem}>
-                        <MaterialIcons name="bed" size={24} color="#4ECDC4" />
+                        <MaterialIcons name="bed" size={24} color="#2196F3" />
                         <Text style={styles.propertyValue}>{user.preferences.bedrooms}</Text>
                         <Text style={styles.propertyLabel}>{t('bedrooms')}</Text>
                       </View>
                     )}
                     {user.preferences.bathrooms && (
                       <View style={styles.propertyItem}>
-                        <MaterialIcons name="bathtub" size={24} color="#4ECDC4" />
+                        <MaterialIcons name="bathtub" size={24} color="#2196F3" />
                         <Text style={styles.propertyValue}>{user.preferences.bathrooms}</Text>
                         <Text style={styles.propertyLabel}>{t('bathrooms')}</Text>
                       </View>
                     )}
                     {user.preferences.squareMeters && (
                       <View style={styles.propertyItem}>
-                        <MaterialIcons name="square-foot" size={24} color="#4ECDC4" />
+                        <MaterialIcons name="square-foot" size={24} color="#2196F3" />
                         <Text style={styles.propertyValue}>{user.preferences.squareMeters}</Text>
                         <Text style={styles.propertyLabel}>{t('squareMeters')}</Text>
                       </View>
@@ -217,7 +221,7 @@ export default function CardDetailModal({ visible, user, onClose }: CardDetailMo
                   <View style={styles.amenitiesContainer}>
                     {user.preferences.amenities.map((amenity, index) => (
                       <View key={index} style={styles.amenityChip}>
-                        <MaterialIcons name="check-circle" size={16} color="#4ECDC4" />
+                        <MaterialIcons name="check-circle" size={16} color="#2196F3" />
                         <Text style={styles.amenityText}>{amenity}</Text>
                       </View>
                     ))}
@@ -314,6 +318,17 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
+  closeOverlayButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     padding: 20,
   },
@@ -392,11 +407,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
   },
   amenityText: {
     fontSize: 14,
-    color: '#4ECDC4',
+    color: '#2196F3',
     fontWeight: '500',
   },
 });

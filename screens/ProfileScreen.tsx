@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,18 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { User, Property } from '../types';
 import VerificationBadge from '../components/VerificationBadge';
+import Logo from '../components/Logo';
+import SettingsScreen from './SettingsScreen';
+import EditProfileScreen from './EditProfileScreen';
+import AccountDeletionScreen from './AccountDeletionScreen';
+import HelpCenterScreen from './HelpCenterScreen';
+import SendFeedbackScreen from './SendFeedbackScreen';
 
 interface ProfileScreenProps {
   user: User;
@@ -18,17 +25,109 @@ interface ProfileScreenProps {
   onBack: () => void;
   onVerification: () => void;
   onCreateListing?: () => void;
+  onHomeGoal?: () => void;
+  onLogout: () => void;
+  onUpdateUser: (updatedUser: Partial<User>) => void;
+  onDeleteAccount: (feedback: any) => void;
+  onToggleAccountType: () => void;
 }
 
-export default function ProfileScreen({ user, properties = [], onBack, onVerification, onCreateListing }: ProfileScreenProps) {
+export default function ProfileScreen({ 
+  user, 
+  properties = [], 
+  onBack, 
+  onVerification, 
+  onCreateListing,
+  onHomeGoal,
+  onLogout,
+  onUpdateUser,
+  onDeleteAccount,
+  onToggleAccountType
+}: ProfileScreenProps) {
+  const [currentView, setCurrentView] = useState<'profile' | 'settings' | 'edit' | 'delete' | 'help' | 'feedback'>('profile');
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign Out', style: 'destructive', onPress: onLogout },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = (feedback: any) => {
+    onDeleteAccount(feedback);
+    setCurrentView('profile');
+  };
+
+  const handleSaveProfile = (updatedUser: Partial<User>) => {
+    onUpdateUser(updatedUser);
+    setCurrentView('profile');
+  };
+
+  if (currentView === 'settings') {
+    return (
+      <SettingsScreen
+        user={user}
+        onBack={() => setCurrentView('profile')}
+        onEditProfile={() => setCurrentView('edit')}
+        onToggleAccountType={onToggleAccountType}
+        onDeleteAccount={() => setCurrentView('delete')}
+        onLogout={onLogout}
+        onHelpCenter={() => setCurrentView('help')}
+        onSendFeedback={() => setCurrentView('feedback')}
+      />
+    );
+  }
+
+  if (currentView === 'edit') {
+    return (
+      <EditProfileScreen
+        user={user}
+        onBack={() => setCurrentView('profile')}
+        onSave={handleSaveProfile}
+      />
+    );
+  }
+
+  if (currentView === 'delete') {
+    return (
+      <AccountDeletionScreen
+        onBack={() => setCurrentView('profile')}
+        onConfirmDeletion={handleDeleteAccount}
+      />
+    );
+  }
+
+  if (currentView === 'help') {
+    return (
+      <HelpCenterScreen
+        onBack={() => setCurrentView('profile')}
+      />
+    );
+  }
+
+  if (currentView === 'feedback') {
+    return (
+      <SendFeedbackScreen
+        onBack={() => setCurrentView('profile')}
+      />
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack}>
           <MaterialIcons name="arrow-back" size={28} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Logo size="small" showBackground={false} />
+          <Text style={styles.headerTitle}>Profile</Text>
+        </View>
+        <TouchableOpacity onPress={() => setCurrentView('settings')}>
           <MaterialIcons name="settings" size={28} color="#333" />
         </TouchableOpacity>
       </View>
@@ -59,6 +158,18 @@ export default function ProfileScreen({ user, properties = [], onBack, onVerific
           >
             <MaterialIcons name="verified-user" size={24} color="#fff" />
             <Text style={styles.verifyButtonText}>Complete Verification</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* HomeGoal Section */}
+        {user.userType === 'tenant' && onHomeGoal && (
+          <TouchableOpacity 
+            style={styles.homeGoalButton}
+            onPress={onHomeGoal}
+          >
+            <MaterialIcons name="savings" size={24} color="#fff" />
+            <Text style={styles.homeGoalButtonText}>HomeGoal</Text>
+            <Text style={styles.homeGoalButtonSubtext}>Risparmia per la tua prima casa</Text>
           </TouchableOpacity>
         )}
 
@@ -144,14 +255,14 @@ export default function ProfileScreen({ user, properties = [], onBack, onVerific
           <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <MaterialIcons name="person" size={20} color="#4ECDC4" />
+              <MaterialIcons name="person" size={20} color="#2196F3" />
               <Text style={styles.infoLabel}>User Type:</Text>
               <Text style={styles.infoValue}>
                 {user.userType.charAt(0).toUpperCase() + user.userType.slice(1)}
               </Text>
             </View>
             <View style={styles.infoRow}>
-              <MaterialIcons name="location-on" size={20} color="#4ECDC4" />
+              <MaterialIcons name="location-on" size={20} color="#2196F3" />
               <Text style={styles.infoLabel}>Location:</Text>
               <Text style={styles.infoValue}>{user.location}</Text>
             </View>
@@ -165,7 +276,7 @@ export default function ProfileScreen({ user, properties = [], onBack, onVerific
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <MaterialIcons name="logout" size={20} color="#F44336" />
           <Text style={styles.logoutButtonText}>Sign Out</Text>
         </TouchableOpacity>
@@ -187,6 +298,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   headerTitle: {
     fontSize: 20,
@@ -222,7 +338,7 @@ const styles = StyleSheet.create({
   },
   verifyButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -235,6 +351,32 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  homeGoalButton: {
+    backgroundColor: '#2196F3',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  homeGoalButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 12,
+    flex: 1,
+  },
+  homeGoalButtonSubtext: {
+    color: '#E3F2FD',
+    fontSize: 14,
+    marginLeft: 12,
   },
   section: {
     marginBottom: 24,
@@ -252,7 +394,7 @@ const styles = StyleSheet.create({
   },
   addListingButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -287,7 +429,7 @@ const styles = StyleSheet.create({
   },
   createFirstListingButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 25,
@@ -328,7 +470,7 @@ const styles = StyleSheet.create({
   listingPrice: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#4ECDC4',
+    color: '#2196F3',
     marginBottom: 12,
   },
   listingDetails: {
@@ -363,7 +505,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4ECDC4',
+    color: '#2196F3',
   },
   infoCard: {
     backgroundColor: '#fff',

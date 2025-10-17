@@ -3,320 +3,513 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
-  Switch,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { UserPreferences } from '../types';
-import { t } from '../utils/translations';
-import Slider from '../components/Slider';
+import RangeSlider from '../components/RangeSlider';
 
 interface TenantPreferencesScreenProps {
-  onComplete: (preferences: UserPreferences) => void;
-  onBack: () => void;
+  onComplete: (preferences: any) => void;
+  onSkip: () => void;
 }
 
-export default function TenantPreferencesScreen({ onComplete, onBack }: TenantPreferencesScreenProps) {
-  const [minBudget, setMinBudget] = useState(500);
-  const [maxBudget, setMaxBudget] = useState(2000);
-  const [bedrooms, setBedrooms] = useState(2);
-  const [bathrooms, setBathrooms] = useState(1);
-  const [minSquareMeters, setMinSquareMeters] = useState(50);
-  const [maxSquareMeters, setMaxSquareMeters] = useState(150);
-  const [balconyOrTerrace, setBalconyOrTerrace] = useState(false);
-  const [speseCondominiali, setSpeseCondominiali] = useState(100);
-  const [petFriendly, setPetFriendly] = useState(false);
-  const [smoking, setSmoking] = useState(false);
-  const [hasChildren, setHasChildren] = useState(false);
-  const [furnished, setFurnished] = useState(false);
-  const [parkingAvailable, setParkingAvailable] = useState(false);
-  const [lookingForRoommate, setLookingForRoommate] = useState(false);
+interface PropertyPreferences {
+  budget: {
+    min: number;
+    max: number;
+  };
+  propertyType: string[];
+  bedrooms: number[];
+  bathrooms: number[];
+  furnished: boolean | null;
+  petFriendly: boolean | null;
+  parking: boolean | null;
+  balcony: boolean | null;
+  garden: boolean | null;
+  elevator: boolean | null;
+  energyClass: string[];
+  location: string[];
+  amenities: string[];
+}
 
-  const handleContinue = () => {
-    const preferences: UserPreferences = {
-      minBudget,
-      maxBudget,
-      bedrooms,
-      bathrooms,
-      minSquareMeters,
-      maxSquareMeters,
-      balconyOrTerrace,
-      speseCondominiali,
-      petFriendly,
-      smoking,
-      hasChildren,
-      furnished,
-      parkingAvailable,
-    };
-    
+export default function TenantPreferencesScreen({ onComplete, onSkip }: TenantPreferencesScreenProps) {
+  const [preferences, setPreferences] = useState<PropertyPreferences>({
+    budget: { min: 500, max: 2000 },
+    propertyType: [],
+    bedrooms: [],
+    bathrooms: [],
+    furnished: null,
+    petFriendly: null,
+    parking: null,
+    balcony: null,
+    garden: null,
+    elevator: null,
+    energyClass: [],
+    location: [],
+    amenities: [],
+  });
+
+  const propertyTypes = [
+    { id: 'appartamento', label: 'Appartamento', icon: 'apartment' },
+    { id: 'casa', label: 'Casa', icon: 'home' },
+    { id: 'monolocale', label: 'Monolocale', icon: 'single-bed' },
+    { id: 'bilo', label: 'Bilocale', icon: 'bed' },
+    { id: 'trilocale', label: 'Trilocale', icon: 'king-bed' },
+    { id: 'quadrilocale', label: 'Quadrilocale', icon: 'hotel' },
+  ];
+
+  const bedroomOptions = [1, 2, 3, 4, 5];
+  const bathroomOptions = [1, 2, 3, 4];
+  const energyClasses = ['A+', 'A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  const amenities = [
+    'Wi-Fi', 'Aria Condizionata', 'Riscaldamento', 'Lavatrice', 
+    'Dishwasher', 'TV', 'Balcone', 'Terrazza', 'Giardino', 
+    'Cantina', 'Soffitta', 'Ascensore', 'Portiere', 'Videocitofono'
+  ];
+
+  const locations = [
+    'Centro', 'Zona Universitaria', 'Zona Residenziale', 'Vicino Metro',
+    'Vicino Stazione', 'Zona Commerciale', 'Zona Verde', 'Periferia'
+  ];
+
+  const toggleArray = (array: any[], value: any) => {
+    if (array.includes(value)) {
+      return array.filter(item => item !== value);
+    } else {
+      return [...array, value];
+    }
+  };
+
+  const handleComplete = () => {
+    if (preferences.propertyType.length === 0) {
+      Alert.alert('Attenzione', 'Seleziona almeno un tipo di immobile');
+      return;
+    }
     onComplete(preferences);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack}>
-          <MaterialIcons name="arrow-back" size={28} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('housingPreferences')}</Text>
-        <View style={{ width: 28 }} />
-      </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.content}>
+        <Text style={styles.sectionTitle}>Tipo di Immobile</Text>
+        <View style={styles.optionsGrid}>
+          {propertyTypes.map((type) => (
+            <TouchableOpacity
+              key={type.id}
+              style={[
+                styles.optionCard,
+                preferences.propertyType.includes(type.id) && styles.optionCardSelected
+              ]}
+              onPress={() => setPreferences(prev => ({
+                ...prev,
+                propertyType: toggleArray(prev.propertyType, type.id)
+              }))}
+            >
+              <MaterialIcons 
+                name={type.icon as any} 
+                size={24} 
+                color={preferences.propertyType.includes(type.id) ? '#2196F3' : '#666'} 
+              />
+              <Text style={[
+                styles.optionText,
+                preferences.propertyType.includes(type.id) && styles.optionTextSelected
+              ]}>
+                {type.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Slider
-          label={t('priceRange')}
-          value={minBudget}
+        <RangeSlider
+          label="Budget Mensile"
           minValue={300}
           maxValue={5000}
+          currentMin={preferences.budget.min}
+          currentMax={preferences.budget.max}
           step={50}
-          unit="€"
-          onValueChange={setMinBudget}
+          unit=" €"
+          onMinChange={(value) => setPreferences(prev => ({
+            ...prev,
+            budget: { ...prev.budget, min: value }
+          }))}
+          onMaxChange={(value) => setPreferences(prev => ({
+            ...prev,
+            budget: { ...prev.budget, max: value }
+          }))}
         />
 
-        <Slider
-          label={`${t('max')} ${t('budget')}`}
-          value={maxBudget}
-          minValue={minBudget}
-          maxValue={5000}
-          step={50}
-          unit="€"
-          onValueChange={setMaxBudget}
-        />
-
-        <Slider
-          label={t('bedrooms')}
-          value={bedrooms}
-          minValue={1}
-          maxValue={5}
-          step={1}
-          unit=""
-          onValueChange={setBedrooms}
-        />
-
-        <Slider
-          label={t('bathrooms')}
-          value={bathrooms}
-          minValue={1}
-          maxValue={3}
-          step={1}
-          unit=""
-          onValueChange={setBathrooms}
-        />
-
-        <Slider
-          label={`${t('min')} ${t('squareMeters')}`}
-          value={minSquareMeters}
-          minValue={20}
-          maxValue={300}
-          step={10}
-          unit="m²"
-          onValueChange={setMinSquareMeters}
-        />
-
-        <Slider
-          label={`${t('max')} ${t('squareMeters')}`}
-          value={maxSquareMeters}
-          minValue={minSquareMeters}
-          maxValue={300}
-          step={10}
-          unit="m²"
-          onValueChange={setMaxSquareMeters}
-        />
-
-        <Slider
-          label={t('speseCondominiali')}
-          value={speseCondominiali}
-          minValue={0}
-          maxValue={500}
-          step={10}
-          unit="€"
-          onValueChange={setSpeseCondominiali}
-        />
-
-        <View style={styles.switchContainer}>
-          <View style={styles.switchRow}>
-            <MaterialIcons name="balcony" size={24} color="#4ECDC4" />
-            <Text style={styles.switchLabel}>{t('balconyOrTerrace')}</Text>
-          </View>
-          <Switch
-            value={balconyOrTerrace}
-            onValueChange={setBalconyOrTerrace}
-            trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-            thumbColor="#fff"
-          />
+        <Text style={styles.sectionTitle}>Camere da Letto</Text>
+        <View style={styles.optionsRow}>
+          {bedroomOptions.map((num) => (
+            <TouchableOpacity
+              key={num}
+              style={[
+                styles.optionButton,
+                preferences.bedrooms.includes(num) && styles.optionButtonSelected
+              ]}
+              onPress={() => setPreferences(prev => ({
+                ...prev,
+                bedrooms: toggleArray(prev.bedrooms, num)
+              }))}
+            >
+              <Text style={[
+                styles.optionButtonText,
+                preferences.bedrooms.includes(num) && styles.optionButtonTextSelected
+              ]}>
+                {num}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <View style={styles.switchContainer}>
-          <View style={styles.switchRow}>
-            <MaterialIcons name="pets" size={24} color="#4ECDC4" />
-            <Text style={styles.switchLabel}>{t('petFriendly')}</Text>
-          </View>
-          <Switch
-            value={petFriendly}
-            onValueChange={setPetFriendly}
-            trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-            thumbColor="#fff"
-          />
+        <Text style={styles.sectionTitle}>Bagni</Text>
+        <View style={styles.optionsRow}>
+          {bathroomOptions.map((num) => (
+            <TouchableOpacity
+              key={num}
+              style={[
+                styles.optionButton,
+                preferences.bathrooms.includes(num) && styles.optionButtonSelected
+              ]}
+              onPress={() => setPreferences(prev => ({
+                ...prev,
+                bathrooms: toggleArray(prev.bathrooms, num)
+              }))}
+            >
+              <Text style={[
+                styles.optionButtonText,
+                preferences.bathrooms.includes(num) && styles.optionButtonTextSelected
+              ]}>
+                {num}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <View style={styles.switchContainer}>
-          <View style={styles.switchRow}>
-            <MaterialIcons name="smoking-rooms" size={24} color="#4ECDC4" />
-            <Text style={styles.switchLabel}>{t('smoking')}</Text>
-          </View>
-          <Switch
-            value={smoking}
-            onValueChange={setSmoking}
-            trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-            thumbColor="#fff"
-          />
+        <Text style={styles.sectionTitle}>Caratteristiche</Text>
+        <View style={styles.characteristicsContainer}>
+          {[
+            { key: 'furnished', label: 'Arredato' },
+            { key: 'petFriendly', label: 'Animali Ammessi' },
+            { key: 'parking', label: 'Parcheggio' },
+            { key: 'balcony', label: 'Balcone' },
+            { key: 'garden', label: 'Giardino' },
+            { key: 'elevator', label: 'Ascensore' },
+          ].map((char) => (
+            <TouchableOpacity
+              key={char.key}
+              style={styles.characteristicRow}
+              onPress={() => setPreferences(prev => ({
+                ...prev,
+                [char.key]: prev[char.key as keyof PropertyPreferences] === null 
+                  ? true 
+                  : prev[char.key as keyof PropertyPreferences] === true 
+                    ? false 
+                    : null
+              }))}
+            >
+              <Text style={styles.characteristicLabel}>{char.label}</Text>
+              <View style={styles.characteristicOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.characteristicOption,
+                    preferences[char.key as keyof PropertyPreferences] === true && styles.characteristicOptionSelected
+                  ]}
+                  onPress={() => setPreferences(prev => ({
+                    ...prev,
+                    [char.key]: true
+                  }))}
+                >
+                  <Text style={[
+                    styles.characteristicOptionText,
+                    preferences[char.key as keyof PropertyPreferences] === true && styles.characteristicOptionTextSelected
+                  ]}>
+                    Sì
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.characteristicOption,
+                    preferences[char.key as keyof PropertyPreferences] === false && styles.characteristicOptionSelected
+                  ]}
+                  onPress={() => setPreferences(prev => ({
+                    ...prev,
+                    [char.key]: false
+                  }))}
+                >
+                  <Text style={[
+                    styles.characteristicOptionText,
+                    preferences[char.key as keyof PropertyPreferences] === false && styles.characteristicOptionTextSelected
+                  ]}>
+                    No
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.characteristicOption,
+                    preferences[char.key as keyof PropertyPreferences] === null && styles.characteristicOptionSelected
+                  ]}
+                  onPress={() => setPreferences(prev => ({
+                    ...prev,
+                    [char.key]: null
+                  }))}
+                >
+                  <Text style={[
+                    styles.characteristicOptionText,
+                    preferences[char.key as keyof PropertyPreferences] === null && styles.characteristicOptionTextSelected
+                  ]}>
+                    Indifferente
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <View style={styles.switchContainer}>
-          <View style={styles.switchRow}>
-            <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
-            <Text style={styles.switchLabel}>{t('hasChildren')}</Text>
-          </View>
-          <Switch
-            value={hasChildren}
-            onValueChange={setHasChildren}
-            trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-            thumbColor="#fff"
-          />
+        <Text style={styles.sectionTitle}>Zona Preferita</Text>
+        <View style={styles.optionsGrid}>
+          {locations.map((location) => (
+            <TouchableOpacity
+              key={location}
+              style={[
+                styles.optionChip,
+                preferences.location.includes(location) && styles.optionChipSelected
+              ]}
+              onPress={() => setPreferences(prev => ({
+                ...prev,
+                location: toggleArray(prev.location, location)
+              }))}
+            >
+              <Text style={[
+                styles.optionChipText,
+                preferences.location.includes(location) && styles.optionChipTextSelected
+              ]}>
+                {location}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <View style={styles.switchContainer}>
-          <View style={styles.switchRow}>
-            <MaterialIcons name="weekend" size={24} color="#4ECDC4" />
-            <Text style={styles.switchLabel}>{t('furnished')}</Text>
-          </View>
-          <Switch
-            value={furnished}
-            onValueChange={setFurnished}
-            trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-            thumbColor="#fff"
-          />
+        <Text style={styles.sectionTitle}>Servizi Aggiuntivi</Text>
+        <View style={styles.optionsGrid}>
+          {amenities.map((amenity) => (
+            <TouchableOpacity
+              key={amenity}
+              style={[
+                styles.optionChip,
+                preferences.amenities.includes(amenity) && styles.optionChipSelected
+              ]}
+              onPress={() => setPreferences(prev => ({
+                ...prev,
+                amenities: toggleArray(prev.amenities, amenity)
+              }))}
+            >
+              <Text style={[
+                styles.optionChipText,
+                preferences.amenities.includes(amenity) && styles.optionChipTextSelected
+              ]}>
+                {amenity}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
+      </View>
 
-        <View style={styles.switchContainer}>
-          <View style={styles.switchRow}>
-            <MaterialIcons name="local-parking" size={24} color="#4ECDC4" />
-            <Text style={styles.switchLabel}>{t('parkingAvailable')}</Text>
-          </View>
-          <Switch
-            value={parkingAvailable}
-            onValueChange={setParkingAvailable}
-            trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-            thumbColor="#fff"
-          />
-        </View>
-
-        <View style={styles.roommateSection}>
-          <Text style={styles.roommateQuestion}>{t('lookingForRoommateQuestion')}</Text>
-          <View style={styles.switchContainer}>
-            <View style={styles.switchRow}>
-              <MaterialIcons name="people" size={24} color="#4ECDC4" />
-              <Text style={styles.switchLabel}>{t('lookingForRoommate')}</Text>
-            </View>
-            <Switch
-              value={lookingForRoommate}
-              onValueChange={setLookingForRoommate}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
-              thumbColor="#fff"
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.continueButton}
-          onPress={handleContinue}
-        >
-          <Text style={styles.continueButtonText}>{t('continue')}</Text>
-          <MaterialIcons name="arrow-forward" size={24} color="#fff" />
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.skipButton} onPress={onSkip}>
+          <Text style={styles.skipButtonText}>Salta per ora</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+        <TouchableOpacity style={styles.continueButton} onPress={handleComplete}>
+          <Text style={styles.continueButtonText}>Continua</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F5F5F5',
   },
-  header: {
+  content: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+    marginTop: 20,
+  },
+  optionsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  headerTitle: {
-    fontSize: 20,
+  optionCard: {
+    width: '30%',
+    aspectRatio: 1,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  optionCardSelected: {
+    borderColor: '#2196F3',
+    backgroundColor: '#E3F2FD',
+  },
+  optionText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  optionTextSelected: {
+    color: '#2196F3',
+    fontWeight: '600',
+  },
+  budgetContainer: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  budgetInput: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  budgetLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  budgetValue: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
   },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  switchContainer: {
+  optionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 10,
+  },
+  optionButton: {
+    width: 50,
+    height: 50,
+    backgroundColor: 'white',
+    borderRadius: 25,
     alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+  },
+  optionButtonSelected: {
+    borderColor: '#2196F3',
+    backgroundColor: '#E3F2FD',
+  },
+  optionButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  optionButtonTextSelected: {
+    color: '#2196F3',
+  },
+  characteristicsContainer: {
+    backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    padding: 15,
+  },
+  characteristicRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  characteristicLabel: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  characteristicOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  characteristicOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  switchRow: {
+  characteristicOptionSelected: {
+    borderColor: '#2196F3',
+    backgroundColor: '#E3F2FD',
+  },
+  characteristicOptionText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  characteristicOptionTextSelected: {
+    color: '#2196F3',
+    fontWeight: '600',
+  },
+  optionChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  optionChipSelected: {
+    borderColor: '#2196F3',
+    backgroundColor: '#E3F2FD',
+  },
+  optionChipText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  optionChipTextSelected: {
+    color: '#2196F3',
+    fontWeight: '600',
+  },
+  footer: {
     flexDirection: 'row',
+    padding: 20,
+    gap: 15,
+  },
+  skipButton: {
+    flex: 1,
+    paddingVertical: 15,
     alignItems: 'center',
-    gap: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  switchLabel: {
+  skipButtonText: {
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  roommateSection: {
-    marginTop: 24,
-    marginBottom: 24,
-  },
-  roommateQuestion: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
+    color: '#666',
   },
   continueButton: {
-    flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
+    flex: 2,
+    paddingVertical: 15,
+    backgroundColor: '#2196F3',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    borderRadius: 8,
   },
   continueButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
+    color: 'white',
     fontWeight: '600',
   },
 });

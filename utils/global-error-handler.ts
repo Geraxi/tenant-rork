@@ -10,12 +10,14 @@ const webTargetOrigins = [
 // This function will be exported and used by the ErrorBoundary component later
 export function sendErrorToIframeParent(errorSource: any, errorInfo?: { componentStack?: string } | React.ErrorInfo) {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.parent && window.parent !== window) {
-    console.debug('[GlobalErrorHandler] Attempting to send error to parent:', {
+    if (__DEV__) {
+      console.debug('[GlobalErrorHandler] Attempting to send error to parent:', {
       errorSource,
       errorInfo,
       currentReferrer: document.referrer,
       currentOrigin: window.location.origin,
     });
+    }
 
     let message = 'Unknown error';
     let stack = undefined;
@@ -56,37 +58,55 @@ export function sendErrorToIframeParent(errorSource: any, errorInfo?: { componen
         if (webTargetOrigins.includes(referrerURL.origin)) {
           targetOrigin = referrerURL.origin;
         } else {
+          if (__DEV__) {
           console.warn(`[GlobalErrorHandler] Referrer origin "${referrerURL.origin}" not in webTargetOrigins. Defaulting to '*' for postMessage. Valid targets:`, webTargetOrigins);
         }
+        }
       } catch (e) {
-        console.warn('[GlobalErrorHandler] Could not parse document.referrer or determine target origin:', e, document.referrer);
+        if (__DEV__) {
+          console.warn('[GlobalErrorHandler] Could not parse document.referrer or determine target origin:', e, document.referrer);
+        }
       }
     } else {
-        console.warn('[GlobalErrorHandler] document.referrer is empty. Defaulting to "*" for postMessage. This might happen if the iframe is navigated to directly or due to referrer policy.');
+        if (__DEV__) {
+          console.warn('[GlobalErrorHandler] document.referrer is empty. Defaulting to "*" for postMessage. This might happen if the iframe is navigated to directly or due to referrer policy.');
+        }
     }
     
-    console.debug(`[GlobalErrorHandler] Using targetOrigin: "${targetOrigin}" for postMessage.`);
+    if (__DEV__) {
+      console.debug(`[GlobalErrorHandler] Using targetOrigin: "${targetOrigin}" for postMessage.`);
+    }
 
     try {
       window.parent.postMessage(errorMessagePayload, targetOrigin);
-      console.debug('[GlobalErrorHandler] Error message posted to parent.', errorMessagePayload);
+      if (__DEV__) {
+        console.debug('[GlobalErrorHandler] Error message posted to parent.', errorMessagePayload);
+      }
     } catch (postMessageError) {
-      console.error('[GlobalErrorHandler] Failed to send error to parent via postMessage:', postMessageError);
+      if (__DEV__) {
+        console.error('[GlobalErrorHandler] Failed to send error to parent via postMessage:', postMessageError);
+      }
     }
   } else if (Platform.OS === 'web') {
     let reason = "Not in an iframe (window.parent === window or window.parent is null)";
     if (!window.parent) reason = "window.parent is null";
     else if (window.parent === window) reason = "window.parent is the same as window (not in iframe)";
-    console.debug(`[GlobalErrorHandler] Not sending to parent. Platform: ${Platform.OS}, Reason: ${reason}`);
+    if (__DEV__) {
+      console.debug(`[GlobalErrorHandler] Not sending to parent. Platform: ${Platform.OS}, Reason: ${reason}`);
+    }
   }
 }
 
 // Immediately setup global error handlers if on web
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  console.log('[GlobalErrorHandler] Initializing global error listeners for web.');
+  if (__DEV__) {
+    console.log('[GlobalErrorHandler] Initializing global error listeners for web.');
+  }
 
   window.addEventListener('error', (event: ErrorEvent) => {
-    console.log('[GlobalErrorHandler] Global window.onerror caught:', event);
+    if (__DEV__) {
+      console.log('[GlobalErrorHandler] Global window.onerror caught:', event);
+    }
     const error = event.error || new Error(event.message || 'Unknown error from window.onerror');
     // Attach additional info if available
     if(!error.hasOwnProperty('filename') && event.filename) (error as any).filename = event.filename;
@@ -97,7 +117,9 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
   }, true); // Use capture phase
 
   window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-    console.log('[GlobalErrorHandler] Global unhandledrejection caught:', event);
+    if (__DEV__) {
+      console.log('[GlobalErrorHandler] Global unhandledrejection caught:', event);
+    }
     sendErrorToIframeParent(event.reason || 'Unhandled promise rejection', { componentStack: undefined });
   }, true); // Use capture phase
 
@@ -105,7 +127,9 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
   console.error = (...args: any[]) => {
     // Call original first so it always appears in the console
     originalConsoleError.apply(console, args);
-    console.log('[GlobalErrorHandler] console.error intercepted:', args);
+    if (__DEV__) {
+      console.log('[GlobalErrorHandler] console.error intercepted:', args);
+    }
     const errorArg = args.find(arg => arg instanceof Error);
     if (errorArg) {
       sendErrorToIframeParent(errorArg);
@@ -119,7 +143,11 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
       sendErrorToIframeParent(message);
     }
   };
-  console.log('[GlobalErrorHandler] Global error listeners initialized.');
+  if (__DEV__) {
+    console.log('[GlobalErrorHandler] Global error listeners initialized.');
+  }
 } else {
-  console.log(`[GlobalErrorHandler] Not initializing web error listeners. Platform: ${Platform.OS}, window: ${typeof window}`);
+  if (__DEV__) {
+    console.log(`[GlobalErrorHandler] Not initializing web error listeners. Platform: ${Platform.OS}, window: ${typeof window}`);
+  }
 }

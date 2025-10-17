@@ -13,24 +13,28 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { UserType, UserPreferences, JobType, EmploymentStatus } from '../types';
 import { t } from '../utils/translations';
 import Slider from '../components/Slider';
+import RangeSlider from '../components/RangeSlider';
 
 interface PreferencesScreenProps {
   userType: UserType;
   onComplete: (preferences: UserPreferences) => void;
+  onBack?: () => void;
 }
 
-export default function PreferencesScreen({ userType, onComplete }: PreferencesScreenProps) {
+export default function PreferencesScreen({ userType, onComplete, onBack }: PreferencesScreenProps) {
   // Tenant preferences
   const [budget, setBudget] = useState('');
   const [petFriendly, setPetFriendly] = useState(false);
   const [smoking, setSmoking] = useState(false);
-  const [hasChildren, setHasChildren] = useState(false);
+  const [childFriendlyProperties, setChildFriendlyProperties] = useState(false);
   const [furnished, setFurnished] = useState(false);
   const [parkingAvailable, setParkingAvailable] = useState(false);
 
   // Homeowner preferences - focused on finding ideal tenant
   const [requiresEmployed, setRequiresEmployed] = useState(false);
   const [minimumIncome, setMinimumIncome] = useState('');
+  const [minIncome, setMinIncome] = useState(1500);
+  const [maxIncome, setMaxIncome] = useState(5000);
   const [selectedJobTypes, setSelectedJobTypes] = useState<JobType[]>([]);
   const [selectedEmploymentStatuses, setSelectedEmploymentStatuses] = useState<EmploymentStatus[]>([]);
   const [petsAllowed, setPetsAllowed] = useState(false);
@@ -85,7 +89,7 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
       if (budget) preferences.budget = parseInt(budget);
       preferences.petFriendly = petFriendly;
       preferences.smoking = smoking;
-      preferences.hasChildren = hasChildren;
+      preferences.childFriendlyProperties = childFriendlyProperties;
       preferences.furnished = furnished;
       preferences.parkingAvailable = parkingAvailable;
     } else if (userType === 'homeowner') {
@@ -113,7 +117,12 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <MaterialIcons name="tune" size={64} color="#4ECDC4" />
+          {onBack && (
+            <TouchableOpacity style={styles.backButton} onPress={onBack}>
+              <MaterialIcons name="arrow-back" size={28} color="#333" />
+            </TouchableOpacity>
+          )}
+          <MaterialIcons name="tune" size={64} color="#2196F3" />
           <Text style={styles.title}>
             {userType === 'homeowner' ? 'Trova l\'Inquilino Ideale' : t('setPreferences')}
           </Text>
@@ -142,65 +151,65 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
 
               <View style={styles.switchContainer}>
                 <View style={styles.switchRow}>
-                  <MaterialIcons name="pets" size={24} color="#4ECDC4" />
+                  <MaterialIcons name="pets" size={24} color="#2196F3" />
                   <Text style={styles.switchLabel}>{t('petFriendly')}</Text>
                 </View>
                 <Switch
                   value={petFriendly}
                   onValueChange={setPetFriendly}
-                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                   thumbColor="#fff"
                 />
               </View>
 
               <View style={styles.switchContainer}>
                 <View style={styles.switchRow}>
-                  <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
-                  <Text style={styles.switchLabel}>{t('hasChildren')}</Text>
+                  <MaterialIcons name="child-care" size={24} color="#2196F3" />
+                  <Text style={styles.switchLabel}>{t('childFriendlyProperties')}</Text>
                 </View>
                 <Switch
-                  value={hasChildren}
-                  onValueChange={setHasChildren}
-                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  value={childFriendlyProperties}
+                  onValueChange={setChildFriendlyProperties}
+                  trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                   thumbColor="#fff"
                 />
               </View>
 
               <View style={styles.switchContainer}>
                 <View style={styles.switchRow}>
-                  <MaterialIcons name="smoking-rooms" size={24} color="#4ECDC4" />
+                  <MaterialIcons name="smoking-rooms" size={24} color="#2196F3" />
                   <Text style={styles.switchLabel}>{t('smoking')}</Text>
                 </View>
                 <Switch
                   value={smoking}
                   onValueChange={setSmoking}
-                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                   thumbColor="#fff"
                 />
               </View>
 
               <View style={styles.switchContainer}>
                 <View style={styles.switchRow}>
-                  <MaterialIcons name="weekend" size={24} color="#4ECDC4" />
+                  <MaterialIcons name="weekend" size={24} color="#2196F3" />
                   <Text style={styles.switchLabel}>{t('furnished')}</Text>
                 </View>
                 <Switch
                   value={furnished}
                   onValueChange={setFurnished}
-                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                   thumbColor="#fff"
                 />
               </View>
 
               <View style={styles.switchContainer}>
                 <View style={styles.switchRow}>
-                  <MaterialIcons name="local-parking" size={24} color="#4ECDC4" />
+                  <MaterialIcons name="local-parking" size={24} color="#2196F3" />
                   <Text style={styles.switchLabel}>{t('parkingAvailable')}</Text>
                 </View>
                 <Switch
                   value={parkingAvailable}
                   onValueChange={setParkingAvailable}
-                  trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                  trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                   thumbColor="#fff"
                 />
               </View>
@@ -227,7 +236,7 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                         <MaterialIcons 
                           name={status.icon as any} 
                           size={18} 
-                          color={selectedEmploymentStatuses.includes(status.value) ? '#fff' : '#4ECDC4'} 
+                          color={selectedEmploymentStatuses.includes(status.value) ? '#fff' : '#2196F3'} 
                         />
                         <Text style={[
                           styles.chipText,
@@ -256,7 +265,7 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                         <MaterialIcons 
                           name={job.icon as any} 
                           size={18} 
-                          color={selectedJobTypes.includes(job.value) ? '#fff' : '#4ECDC4'} 
+                          color={selectedJobTypes.includes(job.value) ? '#fff' : '#2196F3'} 
                         />
                         <Text style={[
                           styles.chipText,
@@ -269,42 +278,33 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                   </View>
                 </View>
 
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Reddito Minimo Mensile (€)</Text>
-                  <Text style={styles.helperText}>Lascia vuoto se non richiesto</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={minimumIncome}
-                    onChangeText={setMinimumIncome}
-                    placeholder="2000"
-                    keyboardType="number-pad"
-                    placeholderTextColor="#999"
-                  />
-                </View>
+                <RangeSlider
+                  label="Fascia di Reddito Mensile"
+                  minValue={500}
+                  maxValue={10000}
+                  currentMin={minIncome}
+                  currentMax={maxIncome}
+                  step={100}
+                  unit=" €"
+                  onMinChange={setMinIncome}
+                  onMaxChange={setMaxIncome}
+                />
               </View>
 
               {/* Demographic Preferences */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>👥 Preferenze Demografiche</Text>
                 
-                <Slider
-                  label="Età Minima"
-                  value={minAge}
+                <RangeSlider
+                  label="Età"
                   minValue={18}
                   maxValue={65}
+                  currentMin={minAge}
+                  currentMax={maxAge}
                   step={1}
                   unit=" anni"
-                  onValueChange={setMinAge}
-                />
-
-                <Slider
-                  label="Età Massima"
-                  value={maxAge}
-                  minValue={18}
-                  maxValue={65}
-                  step={1}
-                  unit=" anni"
-                  onValueChange={setMaxAge}
+                  onMinChange={setMinAge}
+                  onMaxChange={setMaxAge}
                 />
 
                 <View style={styles.inputContainer}>
@@ -320,7 +320,7 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                       <MaterialIcons 
                         name="people" 
                         size={24} 
-                        color={preferredGender === 'any' ? '#fff' : '#4ECDC4'} 
+                        color={preferredGender === 'any' ? '#fff' : '#2196F3'} 
                       />
                       <Text style={[
                         styles.genderButtonText,
@@ -339,7 +339,7 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                       <MaterialIcons 
                         name="man" 
                         size={24} 
-                        color={preferredGender === 'male' ? '#fff' : '#4ECDC4'} 
+                        color={preferredGender === 'male' ? '#fff' : '#2196F3'} 
                       />
                       <Text style={[
                         styles.genderButtonText,
@@ -358,7 +358,7 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                       <MaterialIcons 
                         name="woman" 
                         size={24} 
-                        color={preferredGender === 'female' ? '#fff' : '#4ECDC4'} 
+                        color={preferredGender === 'female' ? '#fff' : '#2196F3'} 
                       />
                       <Text style={[
                         styles.genderButtonText,
@@ -387,39 +387,39 @@ export default function PreferencesScreen({ userType, onComplete }: PreferencesS
                 
                 <View style={styles.switchContainer}>
                   <View style={styles.switchRow}>
-                    <MaterialIcons name="pets" size={24} color="#4ECDC4" />
+                    <MaterialIcons name="pets" size={24} color="#2196F3" />
                     <Text style={styles.switchLabel}>Animali Ammessi</Text>
                   </View>
                   <Switch
                     value={petsAllowed}
                     onValueChange={setPetsAllowed}
-                    trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                    trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                     thumbColor="#fff"
                   />
                 </View>
 
                 <View style={styles.switchContainer}>
                   <View style={styles.switchRow}>
-                    <MaterialIcons name="child-care" size={24} color="#4ECDC4" />
+                    <MaterialIcons name="child-care" size={24} color="#2196F3" />
                     <Text style={styles.switchLabel}>Bambini Ammessi</Text>
                   </View>
                   <Switch
                     value={childrenAllowed}
                     onValueChange={setChildrenAllowed}
-                    trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                    trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                     thumbColor="#fff"
                   />
                 </View>
 
                 <View style={styles.switchContainer}>
                   <View style={styles.switchRow}>
-                    <MaterialIcons name="smoking-rooms" size={24} color="#4ECDC4" />
+                    <MaterialIcons name="smoking-rooms" size={24} color="#2196F3" />
                     <Text style={styles.switchLabel}>Fumatori Ammessi</Text>
                   </View>
                   <Switch
                     value={smokingAllowed}
                     onValueChange={setSmokingAllowed}
-                    trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                    trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -571,15 +571,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
   },
   chipSelected: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
   },
   chipText: {
     fontSize: 14,
-    color: '#4ECDC4',
+    color: '#2196F3',
     fontWeight: '600',
   },
   chipTextSelected: {
@@ -598,15 +598,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
   },
   genderButtonSelected: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
   },
   genderButtonText: {
     fontSize: 14,
-    color: '#4ECDC4',
+    color: '#2196F3',
     fontWeight: '600',
   },
   genderButtonTextSelected: {
@@ -623,15 +623,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
   },
   durationButtonSelected: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
   },
   durationButtonText: {
     fontSize: 14,
-    color: '#4ECDC4',
+    color: '#2196F3',
     fontWeight: '600',
   },
   durationButtonTextSelected: {
@@ -639,14 +639,14 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#4ECDC4',
+    shadowColor: '#2196F3',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -656,5 +656,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    padding: 8,
+    zIndex: 1,
   },
 });

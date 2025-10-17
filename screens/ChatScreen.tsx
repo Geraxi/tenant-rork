@@ -94,7 +94,7 @@ export default function ChatScreen({ match, currentUserId, onBack }: ChatScreenP
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{match.name}</Text>
           {match.verified === 'verified' && (
-            <MaterialIcons name="verified" size={16} color="#4CAF50" />
+            <MaterialIcons name="verified" size={16} color="#2196F3" />
           )}
         </View>
         <View style={{ width: 28 }} />
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   currentUserBubble: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     borderBottomRightRadius: 4,
   },
   otherUserBubble: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     alignItems: 'center',
     justifyContent: 'center',
   },

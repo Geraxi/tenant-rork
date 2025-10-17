@@ -11,8 +11,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { UserType } from '../types';
 import { t } from '../utils/translations';
+import { showPermissionDeniedAlert } from '../utils/permissionUtils';
 
 export interface ProfileData {
   name: string;
@@ -106,33 +108,63 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
     return { valid: true, age };
   };
 
-  const handleAddPhoto = () => {
+  const handleAddPhoto = async () => {
     Alert.alert(
       t('addPhoto'),
-      t('chooseFromLibrary'),
+      'Choose how to add a photo',
       [
         {
           text: t('takePhoto'),
-          onPress: () => {
-            // Simulate photo capture
-            const newPhoto = `https://images.unsplash.com/photo-${Date.now()}?w=400`;
-            setPhotos([...photos, newPhoto]);
-            Alert.alert(t('success'), t('uploadSuccess'));
+          onPress: async () => {
+            try {
+              const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+              
+              if (permissionResult.granted === false) {
+                showPermissionDeniedAlert('camera', () => handleAddPhoto());
+                return;
+              }
+
+              const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+              });
+
+              if (!result.canceled && result.assets[0]) {
+                setPhotos([...photos, result.assets[0].uri]);
+                Alert.alert(t('success'), t('uploadSuccess'));
+              }
+            } catch (error) {
+              Alert.alert('Errore', 'Impossibile scattare la foto');
+            }
           },
         },
         {
           text: t('chooseFromLibrary'),
-          onPress: () => {
-            // Simulate photo selection
-            const photoUrls = [
-              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-              'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-              'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-            ];
-            const randomPhoto = photoUrls[Math.floor(Math.random() * photoUrls.length)];
-            setPhotos([...photos, randomPhoto]);
-            Alert.alert(t('success'), t('uploadSuccess'));
+          onPress: async () => {
+            try {
+              const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              
+              if (permissionResult.granted === false) {
+                showPermissionDeniedAlert('photos', () => handleAddPhoto());
+                return;
+              }
+
+              const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 0.8,
+              });
+
+              if (!result.canceled && result.assets[0]) {
+                setPhotos([...photos, result.assets[0].uri]);
+                Alert.alert(t('success'), t('uploadSuccess'));
+              }
+            } catch (error) {
+              Alert.alert('Errore', 'Impossibile selezionare la foto');
+            }
           },
         },
         { text: t('cancel'), style: 'cancel' },
@@ -272,7 +304,7 @@ export default function ProfileSetupScreen({ userType, onComplete, onBack }: Pro
                 </View>
               ))}
               <TouchableOpacity style={styles.addPhotoButton} onPress={handleAddPhoto}>
-                <MaterialIcons name="add-a-photo" size={32} color="#4ECDC4" />
+                <MaterialIcons name="add-a-photo" size={32} color="#2196F3" />
                 <Text style={styles.addPhotoText}>{t('addPhoto')}</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -376,7 +408,7 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -384,20 +416,20 @@ const styles = StyleSheet.create({
   },
   addPhotoText: {
     fontSize: 12,
-    color: '#4ECDC4',
+    color: '#2196F3',
     marginTop: 4,
     fontWeight: '600',
   },
   continueButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#4ECDC4',
+    shadowColor: '#2196F3',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

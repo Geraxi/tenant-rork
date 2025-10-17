@@ -1,44 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
-  Animated,
-  Dimensions,
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { UserType } from '../types';
-import { t } from '../utils/translations';
-
-const { width } = Dimensions.get('window');
+import Logo from '../components/Logo';
 
 interface OnboardingScreenProps {
   onComplete: (userType: UserType) => void;
+  onBack?: () => void;
 }
 
-export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+export default function OnboardingScreen({ onComplete, onBack }: OnboardingScreenProps) {
   const [selectedType, setSelectedType] = useState<UserType | null>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
 
   const handleContinue = () => {
     if (selectedType) {
@@ -46,100 +25,119 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
     }
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        bounces={true}
       >
-        <Animated.View 
-          style={[
-            styles.content,
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-          ]}
-        >
-          <Image 
-            source={require('../assets/images/tenant-logo.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          
-          <Text style={styles.title}>{t('welcomeTitle')}</Text>
-          <Text style={styles.subtitle}>
-            {t('welcomeSubtitle')}
-          </Text>
-
-          <View style={styles.typesContainer}>
-            <TouchableOpacity
-              style={[
-                styles.typeCard,
-                selectedType === 'tenant' && styles.typeCardSelected,
-              ]}
-              onPress={() => setSelectedType('tenant')}
-            >
-              <MaterialIcons 
-                name="person-search" 
-                size={48} 
-                color={selectedType === 'tenant' ? '#4ECDC4' : '#666'} 
-              />
-              <Text style={[
-                styles.typeTitle,
-                selectedType === 'tenant' && styles.typeTitleSelected,
-              ]}>
-                {t('imTenant')}
-              </Text>
-              <Text style={styles.typeDescription}>
-                {t('tenantDescription')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.typeCard,
-                selectedType === 'homeowner' && styles.typeCardSelected,
-              ]}
-              onPress={() => setSelectedType('homeowner')}
-            >
+        <View style={styles.header}>
+          <Logo size="large" showBackground={false} />
+          <Text style={styles.title}>Scegli il tuo ruolo</Text>
+          <Text style={styles.subtitle}>Come vuoi utilizzare l'app?</Text>
+        </View>
+        
+        <View style={styles.typesContainer}>
+          <TouchableOpacity
+            style={[
+              styles.typeCard,
+              selectedType === 'tenant' && styles.typeCardSelected,
+            ]}
+            onPress={() => setSelectedType('tenant')}
+          >
+            <View style={styles.iconContainer}>
               <MaterialIcons 
                 name="home" 
-                size={48} 
-                color={selectedType === 'homeowner' ? '#4ECDC4' : '#666'} 
+                size={24} 
+                color="#3F51B5" 
               />
-              <Text style={[
-                styles.typeTitle,
-                selectedType === 'homeowner' && styles.typeTitleSelected,
-              ]}>
-                {t('imHomeowner')}
-              </Text>
-              <Text style={styles.typeDescription}>
-                {t('homeownerDescription')}
-              </Text>
-            </TouchableOpacity>
+              <MaterialIcons 
+                name="keyboard-arrow-up" 
+                size={16} 
+                color="#3F51B5" 
+                style={styles.arrowIcon}
+              />
+            </View>
+            <Text style={[
+              styles.typeTitle,
+              selectedType === 'tenant' && styles.typeTitleSelected,
+            ]}>
+              Inquilino
+            </Text>
+            <Text style={[
+              styles.typeDescription,
+              selectedType === 'tenant' && styles.typeDescriptionSelected,
+            ]}>
+              Cerco una casa in affitto - Vedrò annunci di proprietari
+            </Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.typeCard,
-                selectedType === 'roommate' && styles.typeCardSelected,
-              ]}
-              onPress={() => setSelectedType('roommate')}
-            >
+          <TouchableOpacity
+            style={[
+              styles.typeCard,
+              selectedType === 'homeowner' && styles.typeCardSelected,
+            ]}
+            onPress={() => setSelectedType('homeowner')}
+          >
+            <View style={styles.iconContainer}>
+              <MaterialIcons 
+                name="vpn-key" 
+                size={24} 
+                color="#fff" 
+              />
+            </View>
+            <Text style={[
+              styles.typeTitle,
+              selectedType === 'homeowner' && styles.typeTitleSelected,
+            ]}>
+              Proprietario
+            </Text>
+            <Text style={[
+              styles.typeDescription,
+              selectedType === 'homeowner' && styles.typeDescriptionSelected,
+            ]}>
+              Affitto la mia proprietà - Vedrò profili di inquilini
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.typeCard,
+              selectedType === 'roommate' && styles.typeCardSelected,
+            ]}
+            onPress={() => setSelectedType('roommate')}
+          >
+            <View style={styles.iconContainer}>
               <MaterialIcons 
                 name="people" 
-                size={48} 
-                color={selectedType === 'roommate' ? '#4ECDC4' : '#666'} 
+                size={24} 
+                color="#fff" 
               />
-              <Text style={[
-                styles.typeTitle,
-                selectedType === 'roommate' && styles.typeTitleSelected,
-              ]}>
-                {t('lookingForRoommate')}
-              </Text>
-              <Text style={styles.typeDescription}>
-                {t('roommateDescription')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+            </View>
+            <Text style={[
+              styles.typeTitle,
+              selectedType === 'roommate' && styles.typeTitleSelected,
+            ]}>
+              Coinquilino
+            </Text>
+            <Text style={[
+              styles.typeDescription,
+              selectedType === 'roommate' && styles.typeDescriptionSelected,
+            ]}>
+              Cerco coinquilini - Vedrò altri che cercano coinquilini
+            </Text>
+          </TouchableOpacity>
+        </View>
 
+        <View style={styles.buttonsContainer}>
           <TouchableOpacity
             style={[
               styles.continueButton,
@@ -148,25 +146,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
             onPress={handleContinue}
             disabled={!selectedType}
           >
-            <Text style={styles.continueButtonText}>{t('continue')}</Text>
-            <MaterialIcons name="arrow-forward" size={24} color="#fff" />
+            <Text style={styles.continueButtonText}>Continua</Text>
           </TouchableOpacity>
 
-          <View style={styles.featuresContainer}>
-            <View style={styles.feature}>
-              <MaterialIcons name="verified-user" size={20} color="#4ECDC4" />
-              <Text style={styles.featureText}>{t('idVerification')}</Text>
-            </View>
-            <View style={styles.feature}>
-              <MaterialIcons name="security" size={20} color="#4ECDC4" />
-              <Text style={styles.featureText}>{t('backgroundChecks')}</Text>
-            </View>
-            <View style={styles.feature}>
-              <MaterialIcons name="shield" size={20} color="#4ECDC4" />
-              <Text style={styles.featureText}>{t('scamFree')}</Text>
-            </View>
-          </View>
-        </Animated.View>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>Indietro</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -175,108 +161,116 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#3F51B5',
   },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 20,
+  scrollView: {
+    flex: 1,
   },
   content: {
-    padding: 20,
-    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
+    minHeight: '100%',
   },
-  logo: {
-    width: 100,
-    height: 100,
-    marginTop: 10,
-    marginBottom: 16,
+  header: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingTop: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: '#fff',
     textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#666',
+    fontSize: 16,
+    color: '#fff',
     textAlign: 'center',
-    marginBottom: 32,
-    paddingHorizontal: 20,
-    lineHeight: 22,
+    opacity: 0.9,
+    marginBottom: 20,
   },
   typesContainer: {
-    width: '100%',
-    gap: 16,
-    marginBottom: 30,
+    gap: 12,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   typeCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E0E0E0',
+    marginBottom: 16,
   },
   typeCardSelected: {
-    borderColor: '#4ECDC4',
-    backgroundColor: '#E8F9F7',
+    backgroundColor: '#4A63D0',
+  },
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    position: 'relative',
+  },
+  arrowIcon: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
   },
   typeTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 12,
-    marginBottom: 4,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#3F51B5',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   typeTitleSelected: {
-    color: '#4ECDC4',
+    color: '#fff',
   },
   typeDescription: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+    lineHeight: 20,
+  },
+  typeDescriptionSelected: {
+    color: '#fff',
+  },
+  buttonsContainer: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    alignItems: 'center',
   },
   continueButton: {
-    flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#fff',
     paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    marginTop: 10,
+    marginBottom: 16,
+    width: '100%',
+    maxWidth: 200,
   },
   continueButtonDisabled: {
     backgroundColor: '#CCC',
-    shadowOpacity: 0,
   },
   continueButtonText: {
-    color: '#fff',
+    color: '#3F51B5',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-  featuresContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 40,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+  backButton: {
+    paddingVertical: 12,
   },
-  feature: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  featureText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

@@ -39,6 +39,13 @@ export interface User {
   idDocument?: string;
   selfiePhoto?: string;
   createdAt: number;
+  // Additional properties for ADE integration
+  fiscalCode?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  province?: string;
+  fullName?: string;
 }
 
 export interface UserPreferences {
@@ -50,7 +57,7 @@ export interface UserPreferences {
   leaseDuration?: string;
   petFriendly?: boolean;
   smoking?: boolean;
-  hasChildren?: boolean;
+  childFriendlyProperties?: boolean;
   numberOfOccupants?: number;
   employmentStatus?: EmploymentStatus;
   jobType?: JobType;
@@ -70,6 +77,7 @@ export interface UserPreferences {
   childrenAllowed?: boolean;
   smokingAllowed?: boolean;
   ageRange?: { min: number; max: number };
+  minRent?: number;
   gender?: string;
   maxOccupants?: number;
   minLeaseDuration?: string;
@@ -162,4 +170,78 @@ export interface OnboardingData {
   jobType?: JobType;
   lookingForRoommate?: boolean;
   properties?: Property[];
+}
+
+// HomeGoal System Types
+export interface HomeGoal {
+  id: string;
+  userId: string;
+  goalAmount: number;
+  deadline: string; // ISO date string
+  nickname?: string;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+}
+
+export interface HomeGoalWallet {
+  id: string;
+  userId: string;
+  cashbackBalance: number;
+  manualDeposits: number;
+  bonuses: number;
+  totalBalance: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HomeGoalTransaction {
+  id: string;
+  userId: string;
+  type: 'cashback' | 'deposit' | 'bonus' | 'redeem';
+  amount: number;
+  source: 'rent' | 'referral' | 'manual' | 'streak' | 'milestone' | 'withdrawal' | 'partner_deposit';
+  description: string;
+  createdAt: string;
+  metadata?: {
+    rentPaymentId?: string;
+    referralUserId?: string;
+    milestonePercentage?: number;
+    partnerAgencyId?: string;
+  };
+}
+
+export interface HomeGoalProgress {
+  goalAmount: number;
+  totalBalance: number;
+  progressPercentage: number;
+  remainingAmount: number;
+  daysRemaining: number;
+  monthlyTarget: number;
+  milestones: {
+    percentage: number;
+    amount: number;
+    achieved: boolean;
+    achievedAt?: string;
+  }[];
+}
+
+export interface HomeGoalRedeemRequest {
+  id: string;
+  userId: string;
+  amount: number;
+  method: 'bank_transfer' | 'partner_deposit';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  bankDetails?: {
+    accountHolder: string;
+    iban: string;
+    bankName: string;
+  };
+  partnerDetails?: {
+    agencyId: string;
+    agencyName: string;
+    contactInfo: string;
+  };
+  createdAt: string;
+  processedAt?: string;
 }

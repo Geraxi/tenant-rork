@@ -173,14 +173,14 @@ export default function CreateContractScreen({ onBack, onSave }: CreateContractS
 
             <View style={styles.registrationContainer}>
               <View style={styles.registrationHeader}>
-                <MaterialIcons name="account-balance" size={24} color="#4ECDC4" />
+                <MaterialIcons name="account-balance" size={24} color="#2196F3" />
                 <Text style={styles.registrationTitle}>{t('registerWithAgency')}</Text>
               </View>
               <Text style={styles.registrationInfo}>{t('registrationInfo')}</Text>
               <Switch
                 value={registerWithAgency}
                 onValueChange={setRegisterWithAgency}
-                trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+                trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
                 thumbColor="#fff"
               />
             </View>
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
   },
   registrationHeader: {
     flexDirection: 'row',
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   saveButton: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
   },
   shareButton: {
     backgroundColor: '#2196F3',

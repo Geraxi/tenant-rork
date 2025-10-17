@@ -5,81 +5,455 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { t } from '../utils/translations';
+import { SPIDAuthScreen } from './SPIDAuthScreen';
+import { ContractPreviewScreen } from './ContractPreviewScreen';
+import { ADEIntegrationScreen } from './ADEIntegrationScreen';
+import { ContractSigningScreen } from './ContractSigningScreen';
 
-interface Contract {
+export interface Contract {
   id: string;
   propertyAddress: string;
   tenantName: string;
+  homeownerName: string;
   monthlyRent: number;
   startDate: string;
   endDate: string;
-  status: 'draft' | 'sent' | 'signed';
+  status: 'draft' | 'sent' | 'signed_by_owner' | 'signed_by_tenant' | 'signed' | 'pending_review' | 'published_ade';
+  role: 'tenant' | 'homeowner';
+  // Dual signing support
+  ownerSignature?: {
+    signatureId: string;
+    signatureHash: string;
+    timestamp: string;
+    provider: string;
+    signerFiscalCode: string;
+  };
+  tenantSignature?: {
+    signatureId: string;
+    signatureHash: string;
+    timestamp: string;
+    provider: string;
+    signerFiscalCode: string;
+  };
+  // Notification support
+  needsADESubmission?: boolean;
+  adeSubmissionReminder?: boolean;
 }
 
 interface ContractsScreenProps {
+  currentUser: any;
   onBack: () => void;
   onCreateContract: () => void;
   onViewContract: (contract: Contract) => void;
+  onDownloadPDF: (contract: Contract) => void;
 }
 
 export default function ContractsScreen({ 
+  currentUser,
   onBack, 
   onCreateContract,
-  onViewContract 
+  onViewContract,
+  onDownloadPDF
 }: ContractsScreenProps) {
+  const [showSPIDAuth, setShowSPIDAuth] = useState(false);
+  const [selectedContractForSPID, setSelectedContractForSPID] = useState<Contract | null>(null);
+  const [showContractPreview, setShowContractPreview] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const [showADEIntegration, setShowADEIntegration] = useState(false);
+  const [selectedContractForADE, setSelectedContractForADE] = useState<Contract | null>(null);
+  const [showContractSigning, setShowContractSigning] = useState(false);
+  const [selectedContractForSigning, setSelectedContractForSigning] = useState<Contract | null>(null);
+  
   const [contracts] = useState<Contract[]>([
     {
       id: '1',
       propertyAddress: 'Via Roma 123, Milano',
       tenantName: 'Mario Rossi',
+      homeownerName: 'Giulia Bianchi',
       monthlyRent: 1500,
       startDate: '2024-02-01',
       endDate: '2025-02-01',
       status: 'signed',
+      role: currentUser?.userType === 'tenant' ? 'tenant' : 'homeowner',
+    },
+    {
+      id: '2',
+      propertyAddress: 'Corso Italia 456, Roma',
+      tenantName: 'Luca Verdi',
+      homeownerName: 'Anna Neri',
+      monthlyRent: 1200,
+      startDate: '2024-03-01',
+      endDate: '2025-03-01',
+      status: 'pending_review',
+      role: currentUser?.userType === 'tenant' ? 'tenant' : 'homeowner',
     },
   ]);
 
-  const renderContract = ({ item }: { item: Contract }) => (
-    <TouchableOpacity 
-      style={styles.contractCard}
-      onPress={() => onViewContract(item)}
-    >
-      <View style={styles.contractHeader}>
-        <MaterialIcons name="description" size={32} color="#4ECDC4" />
-        <View style={[
-          styles.statusBadge,
-          styles[`status_${item.status}`]
-        ]}>
-          <Text style={styles.statusText}>
-            {item.status === 'draft' ? 'Bozza' : 
-             item.status === 'sent' ? 'Inviato' : 'Firmato'}
-          </Text>
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'draft': return 'Bozza';
+      case 'sent': return 'Inviato';
+      case 'signed_by_owner': return 'Firmato dal Proprietario';
+      case 'signed_by_tenant': return 'Firmato dall\'Inquilino';
+      case 'signed': return 'Firmato da Entrambi';
+      case 'pending_review': return 'In Revisione';
+      case 'published_ade': return 'Pubblicato ADE';
+      default: return status;
+    }
+  };
+
+  const handlePublishWithSPID = (contract: Contract) => {
+    setSelectedContractForSPID(contract);
+    setShowSPIDAuth(true);
+  };
+
+  const handleSPIDAuthSuccess = (user: any) => {
+    setShowSPIDAuth(false);
+    setSelectedContractForSPID(null);
+    
+    Alert.alert(
+      'Pubblicazione Completata',
+      'Il contratto è stato pubblicato con successo all\'Agenzia delle Entrate.',
+      [{ text: 'OK' }]
+    );
+    
+    // In a real implementation, you would update the contract status here
+    // and make an API call to publish to ADE
+  };
+
+  const handleSPIDAuthBack = () => {
+    setShowSPIDAuth(false);
+    setSelectedContractForSPID(null);
+  };
+
+  const handleContractPress = (contract: Contract) => {
+    setSelectedContract(contract);
+    setShowContractPreview(true);
+  };
+
+  const handleClosePreview = () => {
+    setShowContractPreview(false);
+    setSelectedContract(null);
+  };
+
+  const handleDownloadPDF = (contract: Contract) => {
+    onDownloadPDF(contract);
+    setShowContractPreview(false);
+    setSelectedContract(null);
+  };
+
+  const handlePublishToADE = (contract: Contract) => {
+    setSelectedContractForADE(contract);
+    setShowADEIntegration(true);
+  };
+
+  const handleADESuccess = (contractNumber: string) => {
+    setShowADEIntegration(false);
+    setSelectedContractForADE(null);
+    
+    Alert.alert(
+      'Successo!',
+      `Contratto registrato con successo all'Agenzia delle Entrate.\nNumero Contratto: ${contractNumber}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleADEBack = () => {
+    setShowADEIntegration(false);
+    setSelectedContractForADE(null);
+  };
+
+  const handleStartSigning = (contract: Contract) => {
+    setSelectedContractForSigning(contract);
+    setShowContractSigning(true);
+  };
+
+  const handleSigningComplete = async (signature: any) => {
+    if (!selectedContractForSigning) return;
+
+    try {
+      // Update contract with signature
+      const updatedContract: Contract = {
+        ...selectedContractForSigning,
+        status: currentUser?.userType === 'homeowner' ? 'signed_by_owner' : 'signed_by_tenant',
+        [currentUser?.userType === 'homeowner' ? 'ownerSignature' : 'tenantSignature']: signature,
+      };
+
+      // Check if both parties have signed
+      const hasOwnerSignature = updatedContract.ownerSignature || 
+        (currentUser?.userType === 'homeowner' && signature);
+      const hasTenantSignature = updatedContract.tenantSignature || 
+        (currentUser?.userType === 'tenant' && signature);
+
+      if (hasOwnerSignature && hasTenantSignature) {
+        // Both parties have signed
+        updatedContract.status = 'signed';
+        updatedContract.needsADESubmission = true;
+        
+        // Send notification to owner about ADE submission
+        const { sendContractFullySignedNotification } = await import('../utils/notificationService');
+        await sendContractFullySignedNotification(updatedContract);
+        
+        Alert.alert(
+          'Contratto Completamente Firmato!',
+          'Entrambe le parti hanno firmato il contratto. È ora di inviarlo all\'Agenzia delle Entrate.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // Only one party has signed, notify the other
+        const { scheduleSignatureRequiredNotification } = await import('../utils/notificationService');
+        await scheduleSignatureRequiredNotification(
+          updatedContract,
+          currentUser?.userType === 'homeowner' ? 'tenant' : 'owner',
+          1 // 1 minute delay
+        );
+        
+        Alert.alert(
+          'Firma Completata',
+          'Il contratto è stato firmato. L\'altra parte riceverà una notifica per firmare a sua volta.',
+          [{ text: 'OK' }]
+        );
+      }
+
+      setShowContractSigning(false);
+      setSelectedContractForSigning(null);
+    } catch (error) {
+      if (__DEV__) {
+        console.error('Error handling signing completion:', error);
+      }
+      Alert.alert('Errore', 'Si è verificato un errore durante il salvataggio della firma');
+    }
+  };
+
+  const handleSigningBack = () => {
+    setShowContractSigning(false);
+    setSelectedContractForSigning(null);
+  };
+
+  const handleEditContract = (contract: Contract) => {
+    Alert.alert(
+      'Modifica Contratto',
+      'La modifica del contratto aprirà l\'editor di contratti.',
+      [
+        { text: 'Annulla', style: 'cancel' },
+        { 
+          text: 'Modifica', 
+          onPress: () => {
+            // Basic edit functionality - show input dialog for rent amount
+            Alert.prompt(
+              'Modifica Affitto',
+              'Inserisci il nuovo importo dell\'affitto mensile:',
+              [
+                { text: 'Annulla', style: 'cancel' },
+                { 
+                  text: 'Salva', 
+                  onPress: (newRent) => {
+                    if (newRent && !isNaN(parseFloat(newRent))) {
+                      // Update the contract rent
+                      setContracts(prev => prev.map(c => 
+                        c.id === contract.id 
+                          ? { ...c, monthlyRent: parseFloat(newRent) }
+                          : c
+                      ));
+                      Alert.alert('Successo', 'Contratto modificato con successo!');
+                    } else {
+                      Alert.alert('Errore', 'Importo non valido');
+                    }
+                  }
+                }
+              ],
+              'plain-text',
+              contract.monthlyRent.toString()
+            );
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeleteContract = (contract: Contract) => {
+    Alert.alert(
+      'Elimina Contratto',
+      `Sei sicuro di voler eliminare il contratto per ${contract.propertyAddress}?`,
+      [
+        { text: 'Annulla', style: 'cancel' },
+        { 
+          text: 'Elimina', 
+          style: 'destructive',
+          onPress: () => {
+            // Remove contract from state
+            setContracts(prev => prev.filter(c => c.id !== contract.id));
+            Alert.alert('Successo', 'Contratto eliminato con successo!');
+          }
+        }
+      ]
+    );
+  };
+
+  const renderContract = ({ item }: { item: Contract }) => {
+    const isTenant = currentUser?.userType === 'tenant';
+    const otherPartyName = isTenant ? item.homeownerName : item.tenantName;
+    const otherPartyLabel = isTenant ? 'Proprietario' : 'Inquilino';
+    
+    return (
+      <TouchableOpacity 
+        style={styles.contractCard}
+        onPress={() => handleContractPress(item)}
+      >
+        <View style={styles.contractHeader}>
+          <MaterialIcons name="description" size={32} color="#2196F3" />
+          <View style={[
+            styles.statusBadge,
+            styles[`status_${item.status}`]
+          ]}>
+            <Text style={styles.statusText}>
+              {getStatusText(item.status)}
+            </Text>
+          </View>
         </View>
-      </View>
-      
-      <Text style={styles.propertyAddress}>{item.propertyAddress}</Text>
-      <Text style={styles.tenantName}>{item.tenantName}</Text>
-      
-      <View style={styles.contractDetails}>
-        <View style={styles.detailRow}>
-          <MaterialIcons name="attach-money" size={16} color="#666" />
-          <Text style={styles.detailText}>€{item.monthlyRent}/mese</Text>
+        
+        <Text style={styles.propertyAddress}>{item.propertyAddress}</Text>
+        <Text style={styles.otherPartyName}>
+          {otherPartyLabel}: {otherPartyName}
+        </Text>
+        
+        <View style={styles.contractDetails}>
+          <View style={styles.detailRow}>
+            <MaterialIcons name="attach-money" size={16} color="#666" />
+            <Text style={styles.detailText}>€{item.monthlyRent}/mese</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <MaterialIcons name="calendar-today" size={16} color="#666" />
+            <Text style={styles.detailText}>
+              {new Date(item.startDate).toLocaleDateString('it-IT')}
+            </Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <MaterialIcons name="calendar-today" size={16} color="#666" />
-          <Text style={styles.detailText}>
-            {new Date(item.startDate).toLocaleDateString('it-IT')}
-          </Text>
-        </View>
-      </View>
-      
-      <MaterialIcons name="chevron-right" size={24} color="#CCC" style={styles.chevron} />
-    </TouchableOpacity>
-  );
+
+        {/* Action Buttons for contracts */}
+        {(item.status === 'sent' || item.status === 'draft' || 
+          (item.status === 'signed_by_owner' && currentUser?.userType === 'tenant') ||
+          (item.status === 'signed_by_tenant' && currentUser?.userType === 'homeowner')) && (
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.signingButton}
+              onPress={() => handleStartSigning(item)}
+            >
+              <MaterialIcons name="edit" size={16} color="#fff" />
+              <Text style={styles.signingButtonText}>
+                {item.status === 'signed_by_owner' || item.status === 'signed_by_tenant' 
+                  ? 'Completa Firma' 
+                  : 'Firma con SPID'
+                }
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Edit/Delete buttons for draft contracts */}
+        {item.status === 'draft' && (
+          <View style={styles.editButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => handleEditContract(item)}
+            >
+              <MaterialIcons name="edit" size={16} color="#2196F3" />
+              <Text style={styles.editButtonText}>Modifica</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.deleteButton}
+              onPress={() => handleDeleteContract(item)}
+            >
+              <MaterialIcons name="delete" size={16} color="#F44336" />
+              <Text style={styles.deleteButtonText}>Elimina</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ADE Submission Reminder for fully signed contracts */}
+        {item.status === 'signed' && item.needsADESubmission && currentUser?.userType === 'homeowner' && (
+          <View style={styles.adeReminderContainer}>
+            <MaterialIcons name="notifications" size={20} color="#FF9800" />
+            <Text style={styles.adeReminderText}>
+              Contratto pronto per l'invio all'Agenzia delle Entrate
+            </Text>
+          </View>
+        )}
+
+        {/* ADE Registration Button for signed contracts */}
+        {item.status === 'signed' && currentUser?.userType === 'homeowner' && (
+          <View style={styles.actionButtonsContainer}>
+            <TouchableOpacity 
+              style={styles.spidButton}
+              onPress={() => handlePublishWithSPID(item)}
+            >
+              <MaterialIcons name="public" size={16} color="#fff" />
+              <Text style={styles.spidButtonText}>Pubblica con SPID</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.adeButton}
+              onPress={() => handlePublishToADE(item)}
+            >
+              <MaterialIcons name="account-balance" size={16} color="#fff" />
+              <Text style={styles.adeButtonText}>Registra ADE</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        
+        <MaterialIcons name="chevron-right" size={24} color="#CCC" style={styles.chevron} />
+      </TouchableOpacity>
+    );
+  };
+
+  if (showSPIDAuth) {
+    return (
+      <SPIDAuthScreen
+        onAuthSuccess={handleSPIDAuthSuccess}
+        onBack={handleSPIDAuthBack}
+        purpose="contract"
+      />
+    );
+  }
+
+  if (showContractPreview && selectedContract) {
+    return (
+      <ContractPreviewScreen
+        contract={selectedContract}
+        currentUser={currentUser}
+        onClose={handleClosePreview}
+        onDownloadPDF={handleDownloadPDF}
+      />
+    );
+  }
+
+  if (showADEIntegration && selectedContractForADE) {
+    return (
+      <ADEIntegrationScreen
+        contract={selectedContractForADE}
+        currentUser={currentUser}
+        onSuccess={handleADESuccess}
+        onBack={handleADEBack}
+      />
+    );
+  }
+
+  if (showContractSigning && selectedContractForSigning) {
+    return (
+      <ContractSigningScreen
+        contract={selectedContractForSigning}
+        currentUser={currentUser}
+        onSigningComplete={handleSigningComplete}
+        onBack={handleSigningBack}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -87,23 +461,34 @@ export default function ContractsScreen({
         <TouchableOpacity onPress={onBack}>
           <MaterialIcons name="arrow-back" size={28} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('rentalContracts')}</Text>
+        <Text style={styles.headerTitle}>
+          {currentUser?.userType === 'tenant' ? 'I Miei Contratti' : t('rentalContracts')}
+        </Text>
         <TouchableOpacity onPress={onCreateContract}>
-          <MaterialIcons name="add" size={28} color="#4ECDC4" />
+          <MaterialIcons name="add" size={28} color="#2196F3" />
         </TouchableOpacity>
       </View>
 
       {contracts.length === 0 ? (
         <View style={styles.emptyContainer}>
           <MaterialIcons name="description" size={80} color="#CCC" />
-          <Text style={styles.emptyTitle}>{t('noContracts')}</Text>
-          <Text style={styles.emptySubtitle}>{t('createFirstContract')}</Text>
+          <Text style={styles.emptyTitle}>
+            {currentUser?.userType === 'tenant' ? 'Nessun Contratto' : t('noContracts')}
+          </Text>
+          <Text style={styles.emptySubtitle}>
+            {currentUser?.userType === 'tenant' 
+              ? 'Non hai ancora ricevuto contratti dai proprietari'
+              : t('createFirstContract')
+            }
+          </Text>
           <TouchableOpacity 
             style={styles.createButton}
             onPress={onCreateContract}
           >
             <MaterialIcons name="add" size={24} color="#fff" />
-            <Text style={styles.createButtonText}>{t('createContract')}</Text>
+            <Text style={styles.createButtonText}>
+              {currentUser?.userType === 'tenant' ? 'Richiedi Contratto' : t('createContract')}
+            </Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -171,6 +556,18 @@ const styles = StyleSheet.create({
   status_signed: {
     backgroundColor: '#E8F5E9',
   },
+  status_pending_review: {
+    backgroundColor: '#FFF8E1',
+  },
+  status_published_ade: {
+    backgroundColor: '#E8F5E9',
+  },
+  status_signed_by_owner: {
+    backgroundColor: '#FF9800',
+  },
+  status_signed_by_tenant: {
+    backgroundColor: '#FF9800',
+  },
   statusText: {
     fontSize: 12,
     fontWeight: '600',
@@ -186,6 +583,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 12,
+  },
+  otherPartyName: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  placeholder: {
+    width: 28,
   },
   contractDetails: {
     flexDirection: 'row',
@@ -227,7 +632,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 25,
@@ -237,6 +642,112 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  spidButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4CAF50',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+    gap: 8,
+  },
+  spidButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  signingButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF9800',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  signingButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  editButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    gap: 12,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  editButtonText: {
+    color: '#2196F3',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flex: 1,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: '#F44336',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  adeReminderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF9800',
+  },
+  adeReminderText: {
+    color: '#E65100',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+    flex: 1,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  adeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF9800',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  adeButtonText: {
+    color: '#fff',
+    fontSize: 14,
     fontWeight: '600',
   },
 });

@@ -45,7 +45,7 @@ export default function Slider({
             <MaterialIcons
               name="remove-circle-outline"
               size={32}
-              color={value > minValue ? '#4ECDC4' : '#CCC'}
+              color={value > minValue ? '#2196F3' : '#CCC'}
               onPress={handleDecrease}
             />
             <Text style={styles.value}>
@@ -54,7 +54,7 @@ export default function Slider({
             <MaterialIcons
               name="add-circle-outline"
               size={32}
-              color={value < maxValue ? '#4ECDC4' : '#CCC'}
+              color={value < maxValue ? '#2196F3' : '#CCC'}
               onPress={handleIncrease}
             />
           </View>
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#4ECDC4',
+    color: '#2196F3',
     minWidth: 80,
     textAlign: 'center',
   },
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     borderRadius: 3,
   },
 });

@@ -1,371 +1,471 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TouchableOpacity,
+  RefreshControl,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import SwipeCard from '../components/SwipeCard';
-import MatchAnimation from '../components/MatchAnimation';
-import CardDetailModal from '../components/CardDetailModal';
-import { User } from '../types';
-import { t } from '../utils/translations';
+import Logo from '../components/Logo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSupabaseAuth } from '../src/hooks/useSupabaseAuth';
+import { usePayments } from '../src/hooks/usePayments';
+import { useNotifications } from '../src/hooks/useNotifications';
+import { Utente, Bolletta } from '../src/types';
+import { FadeIn, ScaleIn, GradientCard, Shimmer } from '../components/AnimatedComponents';
 
-// Mock data - includes both tenants and homeowners
-const mockHomeowners: User[] = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    userType: 'homeowner',
-    age: 32,
-    dateOfBirth: '15/03/1992',
-    bio: 'Renting out a cozy 2BR apartment near downtown. Pet-friendly and close to public transport.',
-    photos: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400',
-    ],
-    location: 'Milano, Italia',
-    verified: 'verified',
-    idVerified: true,
-    backgroundCheckPassed: true,
-    preferences: {
-      rent: 1800,
-      bedrooms: 2,
-      bathrooms: 1,
-      amenities: ['Parcheggio', 'Palestra', 'Animali ammessi'],
-      nearAirport: false,
-      preferredTenantTypes: ['professionals', 'students'],
-    },
-    createdAt: Date.now(),
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    email: 'michael@example.com',
-    userType: 'homeowner',
-    age: 45,
-    dateOfBirth: '22/08/1979',
-    bio: 'Monolocale moderno vicino all\'aeroporto. Perfetto per equipaggio di cabina e piloti.',
-    photos: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-      'https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=400',
-      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400',
-    ],
-    location: 'Roma, Italia',
-    verified: 'verified',
-    idVerified: true,
-    backgroundCheckPassed: true,
-    preferences: {
-      rent: 1500,
-      bedrooms: 1,
-      bathrooms: 1,
-      amenities: ['WiFi', 'Arredato', 'Parcheggio'],
-      nearAirport: true,
-      preferredTenantTypes: ['cabin crew', 'pilots'],
-    },
-    createdAt: Date.now(),
-  },
-  {
-    id: '3',
-    name: 'Emma Davis',
-    email: 'emma@example.com',
-    userType: 'homeowner',
-    age: 38,
-    dateOfBirth: '10/11/1986',
-    bio: 'Bellissima casa con 3 camere e giardino. Quartiere adatto alle famiglie.',
-    photos: [
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-      'https://images.unsplash.com/photo-1502672023488-70e25813eb80?w=400',
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400',
-    ],
-    location: 'Firenze, Italia',
-    verified: 'verified',
-    idVerified: true,
-    backgroundCheckPassed: true,
-    preferences: {
-      rent: 2500,
-      bedrooms: 3,
-      bathrooms: 2,
-      amenities: ['Giardino', 'Garage', 'Animali ammessi'],
-      nearAirport: false,
-      preferredTenantTypes: ['families', 'professionals'],
-    },
-    createdAt: Date.now(),
-  },
-];
-
-const mockTenants: User[] = [
-  {
-    id: '4',
-    name: 'Marco Rossi',
-    email: 'marco@example.com',
-    userType: 'tenant',
-    age: 28,
-    dateOfBirth: '05/06/1996',
-    bio: 'Software engineer looking for a quiet place near the city center. Non-smoker, no pets.',
-    photos: [
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-    ],
-    location: 'Milano, Italia',
-    verified: 'verified',
-    idVerified: true,
-    backgroundCheckPassed: true,
-    employmentStatus: 'employed',
-    jobType: 'tech',
-    preferences: {
-      budget: 1500,
-      petFriendly: false,
-      smoking: false,
-    },
-    createdAt: Date.now(),
-  },
-  {
-    id: '5',
-    name: 'Laura Bianchi',
-    email: 'laura@example.com',
-    userType: 'tenant',
-    age: 24,
-    dateOfBirth: '18/09/2000',
-    bio: 'University student studying architecture. Looking for a cozy place with good natural light.',
-    photos: [
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-    ],
-    location: 'Roma, Italia',
-    verified: 'verified',
-    idVerified: true,
-    backgroundCheckPassed: true,
-    employmentStatus: 'student',
-    jobType: 'student',
-    preferences: {
-      budget: 1200,
-      petFriendly: false,
-      smoking: false,
-    },
-    createdAt: Date.now(),
-  },
-  {
-    id: '6',
-    name: 'Alessandro Conti',
-    email: 'alessandro@example.com',
-    userType: 'tenant',
-    age: 35,
-    dateOfBirth: '12/04/1989',
-    bio: 'Airline pilot seeking accommodation near the airport. Flexible schedule, clean and responsible.',
-    photos: [
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-    ],
-    location: 'Roma, Italia',
-    verified: 'verified',
-    idVerified: true,
-    backgroundCheckPassed: true,
-    employmentStatus: 'employed',
-    jobType: 'pilot',
-    preferences: {
-      budget: 1600,
-      petFriendly: false,
-      smoking: false,
-      nearAirport: true,
-    },
-    createdAt: Date.now(),
-  },
-];
+const { width } = Dimensions.get('window');
 
 interface HomeScreenProps {
-  currentUser: User;
-  onNavigateToMatches: () => void;
+  onNavigateToBills: () => void;
+  onNavigateToPayments: () => void;
   onNavigateToProfile: () => void;
+  onNavigateToNotifications: () => void;
+  onNavigateToHelp: () => void;
   onNavigateToContracts: () => void;
+  onNavigateToContractSignature: () => void;
 }
 
 export default function HomeScreen({ 
-  currentUser, 
-  onNavigateToMatches,
+  onNavigateToBills,
+  onNavigateToPayments,
   onNavigateToProfile,
-  onNavigateToContracts
+  onNavigateToNotifications,
+  onNavigateToHelp,
+  onNavigateToContracts,
+  onNavigateToContractSignature,
 }: HomeScreenProps) {
-  // Filter users based on current user type
-  // Tenants see homeowners, homeowners see tenants
-  const getFilteredUsers = (): User[] => {
-    if (currentUser.userType === 'tenant') {
-      return mockHomeowners;
-    } else if (currentUser.userType === 'homeowner') {
-      return mockTenants;
+  const { user } = useSupabaseAuth();
+  console.log('HomeScreen - User data:', user);
+  console.log('HomeScreen - User name:', user?.nome);
+  console.log('HomeScreen - User role:', user?.ruolo);
+  console.log('HomeScreen - User email:', user?.email);
+  console.log('HomeScreen - User ID:', user?.id);
+  console.log('HomeScreen - User type:', typeof user?.nome);
+  const { 
+    getUpcomingBills, 
+    getOverdueBills, 
+    getMonthlyStats, 
+    getTotalCashback,
+    fetchBollette 
+  } = usePayments(user?.id || '');
+  const { unreadCount } = useNotifications(user?.id || '');
+  
+  const [refreshing, setRefreshing] = useState(false);
+  const [upcomingBills, setUpcomingBills] = useState<Bolletta[]>([]);
+  const [overdueBills, setOverdueBills] = useState<Bolletta[]>([]);
+  const [monthlyStats, setMonthlyStats] = useState({
+    totalePagato: 0,
+    totaleDaPagare: 0,
+    cashbackGuadagnato: 0,
+    bollettePagate: 0,
+  });
+  const [totalCashback, setTotalCashback] = useState(0);
+  const [hasBills, setHasBills] = useState(true); // This would come from user data
+
+  useEffect(() => {
+    if (user?.id) {
+      loadData();
     }
-    // For roommates, show other roommates (not implemented in mock data yet)
-    return [];
-  };
+  }, [user?.id]);
 
-  const [users] = useState<User[]>(getFilteredUsers());
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showMatchAnimation, setShowMatchAnimation] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-
-  const handleSwipeLeft = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCurrentIndex(prev => prev + 1);
-  };
-
-  const handleSwipeRight = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    // Simulate match (50% chance)
-    const isMatch = Math.random() > 0.5;
-    
-    if (isMatch) {
-      setShowMatchAnimation(true);
-    } else {
-      setCurrentIndex(prev => prev + 1);
+  const loadData = async () => {
+    try {
+      await fetchBollette();
+      const upcoming = getUpcomingBills();
+      const overdue = getOverdueBills();
+      const stats = getMonthlyStats();
+      const cashback = getTotalCashback();
+      
+      setUpcomingBills(upcoming);
+      setOverdueBills(overdue);
+      setMonthlyStats(stats);
+      setTotalCashback(cashback);
+    } catch (error) {
+      console.error('Error loading home data:', error);
     }
   };
 
-  const handleMatchAnimationComplete = () => {
-    setShowMatchAnimation(false);
-    setCurrentIndex(prev => prev + 1);
-    Alert.alert(
-      t('itsAMatch'),
-      t('canStartChatting'),
-      [
-        { text: t('keepSwipingButton'), style: 'cancel' },
-        { text: t('viewMatches'), onPress: onNavigateToMatches },
-      ]
-    );
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   };
 
-  const handleCardPress = (user: User) => {
-    setSelectedUser(user);
-    setShowDetailModal(true);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('it-IT', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(amount);
   };
 
-  // Get browsing context text
-  const getBrowsingText = () => {
-    if (currentUser.userType === 'tenant') {
-      return 'Sfoglia Proprietà';
-    } else if (currentUser.userType === 'homeowner') {
-      return 'Sfoglia Inquilini';
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat('it-IT', {
+      day: 'numeric',
+      month: 'short',
+    }).format(new Date(dateString));
+  };
+
+  const getBillIcon = (categoria: string) => {
+    switch (categoria) {
+      case 'affitto':
+        return 'home';
+      case 'luce':
+        return 'lightbulb';
+      case 'gas':
+        return 'local-fire-department';
+      case 'acqua':
+        return 'water-drop';
+      case 'riscaldamento':
+        return 'thermostat';
+      case 'condominio':
+        return 'apartment';
+      case 'tasse':
+        return 'receipt';
+      default:
+        return 'receipt';
     }
-    return 'Sfoglia';
   };
 
-  if (currentIndex >= users.length) {
-    return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onNavigateToProfile}>
-            <MaterialIcons name="person" size={28} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Tenant</Text>
-          <View style={styles.headerRight}>
-            {currentUser.userType === 'homeowner' && (
-              <TouchableOpacity onPress={onNavigateToContracts} style={styles.headerButton}>
-                <MaterialIcons name="description" size={28} color="#333" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={onNavigateToMatches}>
-              <MaterialIcons name="chat-bubble" size={28} color="#333" />
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <View style={styles.emptyContainer}>
-          <MaterialIcons name="check-circle" size={80} color="#4ECDC4" />
-          <Text style={styles.emptyTitle}>{t('allCaughtUp')}</Text>
-          <Text style={styles.emptySubtitle}>
-            {t('checkBackLater')}
-          </Text>
-          <TouchableOpacity 
-            style={styles.refreshButton}
-            onPress={() => setCurrentIndex(0)}
-          >
-            <MaterialIcons name="refresh" size={24} color="#fff" />
-            <Text style={styles.refreshButtonText}>{t('startOver')}</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const getBillColor = (categoria: string) => {
+    switch (categoria) {
+      case 'affitto':
+        return '#2196F3';
+      case 'luce':
+        return '#FFC107';
+      case 'gas':
+        return '#FF5722';
+      case 'acqua':
+        return '#00BCD4';
+      case 'riscaldamento':
+        return '#FF9800';
+      case 'condominio':
+        return '#9C27B0';
+      case 'tasse':
+        return '#795548';
+      default:
+        return '#607D8B';
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {showMatchAnimation && (
-        <MatchAnimation onComplete={handleMatchAnimationComplete} />
-      )}
-
-      {selectedUser && (
-        <CardDetailModal
-          visible={showDetailModal}
-          user={selectedUser}
-          onClose={() => setShowDetailModal(false)}
-        />
-      )}
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onNavigateToProfile}>
-          <MaterialIcons name="person" size={28} color="#333" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Tenant</Text>
-          <Text style={styles.headerSubtitle}>{getBrowsingText()}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          {currentUser.userType === 'homeowner' && (
-            <TouchableOpacity onPress={onNavigateToContracts} style={styles.headerButton}>
-              <MaterialIcons name="description" size={28} color="#333" />
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        {/* Header */}
+        <FadeIn delay={200} from="top">
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Logo size="small" showText={false} />
+              <Text style={styles.greeting}>
+                Ciao, {user?.nome || user?.email?.split('@')[0] || 'Utente'}!
+              </Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.profileButton}
+              onPress={onNavigateToProfile}
+            >
+              <MaterialIcons name="person" size={24} color="#333" />
             </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={onNavigateToMatches}>
-            <MaterialIcons name="chat-bubble" size={28} color="#333" />
-          </TouchableOpacity>
-        </View>
-      </View>
+          </View>
+        </FadeIn>
 
-      <View style={styles.cardContainer}>
-        {users.slice(currentIndex, currentIndex + 2).reverse().map((user, index) => (
-          <SwipeCard
-            key={`${user.id}-${currentIndex}`}
-            user={user}
-            onSwipeLeft={handleSwipeLeft}
-            onSwipeRight={handleSwipeRight}
-            onPress={() => handleCardPress(user)}
-            isFirst={index === 1}
-          />
-        ))}
-      </View>
+        {/* Quick Overview */}
+        <FadeIn delay={1000} from="bottom">
+          <View style={styles.section}>
+            <View style={styles.centeredSectionHeader}>
+              <Text style={styles.sectionTitle}>Quick Overview</Text>
+            </View>
+            <View style={styles.quickOverviewContainer}>
+              <View style={styles.overviewCard}>
+                <MaterialIcons name="people" size={24} color="#2196F3" />
+                <Text style={styles.overviewNumber}>3</Text>
+                <Text style={styles.overviewLabel}>
+                  {user?.ruolo === 'tenant' ? 'Proprietà' : 'Inquilini'}
+                </Text>
+              </View>
+              <View style={styles.overviewCard}>
+                <MaterialIcons name="notifications" size={24} color="#2196F3" />
+                <Text style={styles.overviewNumber}>{unreadCount}</Text>
+                <Text style={styles.overviewLabel}>Notifiche</Text>
+              </View>
+            </View>
+          </View>
+        </FadeIn>
 
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.nopeButton]}
-          onPress={handleSwipeLeft}
-        >
-          <MaterialIcons name="close" size={32} color="#F44336" />
-        </TouchableOpacity>
+        {/* Spese Mensili */}
+        <FadeIn delay={1200} from="bottom">
+          <View style={styles.section}>
+            <View style={styles.centeredSectionHeader}>
+              <Text style={styles.sectionTitle}>Spese Mensili</Text>
+            </View>
+            <View style={styles.chartContainer}>
+              <View style={styles.donutChart}>
+                <View style={styles.donutChartInner}>
+                  <Text style={styles.chartCenterText}>€{monthlyStats.totalePagato + monthlyStats.totaleDaPagare}</Text>
+                  <Text style={styles.chartCenterSubtext}>Totale</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </FadeIn>
 
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.superLikeButton]}
-          onPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            Alert.alert('Super Like!', 'Questa funzione sarà presto disponibile!');
-          }}
-        >
-          <MaterialIcons name="star" size={28} color="#2196F3" />
-        </TouchableOpacity>
+        {/* Prossimi Pagamenti */}
+        <FadeIn delay={1400} from="bottom">
+          <View style={styles.section}>
+            <View style={styles.centeredSectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {user?.ruolo === 'tenant' ? 'Prossimi Pagamenti' : 'Entrate Previste'}
+              </Text>
+            </View>
+            
+            {/* Rent Subsection - Different for tenants vs landlords */}
+            <View style={styles.subsection}>
+              <View style={styles.subsectionHeader}>
+                <MaterialIcons name="home" size={20} color="#2196F3" />
+                <Text style={styles.subsectionTitle}>
+                  {user?.ruolo === 'tenant' ? 'Affitto' : 'Affitti'}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.paymentCard}>
+                <View style={styles.paymentIconContainer}>
+                  <MaterialIcons name="home" size={20} color="#2196F3" />
+                </View>
+                <View style={styles.paymentInfo}>
+                  <Text style={styles.paymentTitle}>
+                    {user?.ruolo === 'tenant' ? 'Affitto Mensile' : 'Affitto Appartamento A'}
+                  </Text>
+                  <Text style={styles.paymentDate}>
+                    {user?.ruolo === 'tenant' ? 'Scadenza: 01/07/2024' : 'Entrata: 01/07/2024'}
+                  </Text>
+                </View>
+                <Text style={styles.paymentAmount}>€800</Text>
+              </TouchableOpacity>
+            </View>
 
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={handleSwipeRight}
-        >
-          <MaterialIcons name="favorite" size={32} color="#4CAF50" />
-        </TouchableOpacity>
-      </View>
+            {/* Bills/Expenses Subsection - Different for tenants vs landlords */}
+            {hasBills && (
+              <View style={styles.subsection}>
+                <View style={styles.subsectionHeader}>
+                  <MaterialIcons name="receipt" size={20} color="#FF9800" />
+                  <Text style={styles.subsectionTitle}>
+                    {user?.ruolo === 'tenant' ? 'Bollette' : 'Spese Immobili'}
+                  </Text>
+                </View>
+                <View style={styles.billsContainer}>
+                  {user?.ruolo === 'tenant' ? (
+                    // Tenant bills
+                    <>
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="water-drop" size={18} color="#00BCD4" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Acqua</Text>
+                          <Text style={styles.billDate}>15/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€45</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="lightbulb" size={18} color="#FFC107" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Elettricità</Text>
+                          <Text style={styles.billDate}>20/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€75</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="local-fire-department" size={18} color="#FF5722" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Gas</Text>
+                          <Text style={styles.billDate}>25/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€60</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="apartment" size={18} color="#9C27B0" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Spese Condominiali</Text>
+                          <Text style={styles.billDate}>30/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€120</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    // Landlord property expenses
+                    <>
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="build" size={18} color="#FF9800" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Manutenzione</Text>
+                          <Text style={styles.billDate}>15/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€200</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="security" size={18} color="#4CAF50" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Assicurazione</Text>
+                          <Text style={styles.billDate}>20/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€150</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="account-balance" size={18} color="#2196F3" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Tasse Immobili</Text>
+                          <Text style={styles.billDate}>25/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€300</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity style={styles.billCard}>
+                        <View style={styles.billIconContainer}>
+                          <MaterialIcons name="cleaning-services" size={18} color="#9C27B0" />
+                        </View>
+                        <View style={styles.billInfo}>
+                          <Text style={styles.billTitle}>Pulizie</Text>
+                          <Text style={styles.billDate}>30/07/2024</Text>
+                        </View>
+                        <Text style={styles.billAmount}>€80</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              </View>
+            )}
+          </View>
+        </FadeIn>
+
+        {/* Contratti Condivisi */}
+        <FadeIn delay={1600} from="bottom">
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {user?.ruolo === 'tenant' ? 'Contratti Condivisi' : 'I Miei Contratti'}
+              </Text>
+              <View style={styles.sectionHeaderActions}>
+                <TouchableOpacity 
+                  style={styles.signContractButton}
+                  onPress={onNavigateToContractSignature}
+                >
+                  <MaterialIcons name="edit" size={16} color="#2196F3" />
+                  <Text style={styles.signContractText}>Firma</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onNavigateToContracts}>
+                  <Text style={styles.sectionLink}>Vedi tutti</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={styles.contractsContainer}>
+              {user?.ruolo === 'tenant' ? (
+                // Tenant contracts (shared by landlords)
+                <>
+                  <TouchableOpacity style={styles.contractCard} onPress={onNavigateToContracts}>
+                    <View style={styles.contractIconContainer}>
+                      <MaterialIcons name="description" size={20} color="#4CAF50" />
+                    </View>
+                    <View style={styles.contractInfo}>
+                      <Text style={styles.contractTitle}>Contratto di Affitto</Text>
+                      <Text style={styles.contractProperty}>Via Roma 123, Milano</Text>
+                      <Text style={styles.contractOwner}>Proprietario: Mario Rossi</Text>
+                    </View>
+                    <View style={styles.contractStatus}>
+                      <Text style={styles.contractStatusText}>Attivo</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.contractCard} onPress={onNavigateToContracts}>
+                    <View style={styles.contractIconContainer}>
+                      <MaterialIcons name="description" size={20} color="#FF9800" />
+                    </View>
+                    <View style={styles.contractInfo}>
+                      <Text style={styles.contractTitle}>Contratto di Rinnovo</Text>
+                      <Text style={styles.contractProperty}>Via Garibaldi 45, Milano</Text>
+                      <Text style={styles.contractOwner}>Proprietario: Anna Bianchi</Text>
+                    </View>
+                    <View style={styles.contractStatus}>
+                      <Text style={styles.contractStatusText}>In Revisione</Text>
+                    </View>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                // Landlord contracts (their own contracts)
+                <>
+                  <TouchableOpacity style={styles.contractCard} onPress={onNavigateToContracts}>
+                    <View style={styles.contractIconContainer}>
+                      <MaterialIcons name="description" size={20} color="#4CAF50" />
+                    </View>
+                    <View style={styles.contractInfo}>
+                      <Text style={styles.contractTitle}>Contratto Appartamento A</Text>
+                      <Text style={styles.contractProperty}>Via Roma 123, Milano</Text>
+                      <Text style={styles.contractOwner}>Inquilino: Mario Rossi</Text>
+                    </View>
+                    <View style={styles.contractStatus}>
+                      <Text style={styles.contractStatusText}>Attivo</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.contractCard} onPress={onNavigateToContracts}>
+                    <View style={styles.contractIconContainer}>
+                      <MaterialIcons name="description" size={20} color="#FF9800" />
+                    </View>
+                    <View style={styles.contractInfo}>
+                      <Text style={styles.contractTitle}>Contratto Appartamento B</Text>
+                      <Text style={styles.contractProperty}>Via Garibaldi 45, Milano</Text>
+                      <Text style={styles.contractOwner}>Inquilino: Anna Bianchi</Text>
+                    </View>
+                    <View style={styles.contractStatus}>
+                      <Text style={styles.contractStatusText}>In Revisione</Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.contractCard} onPress={onNavigateToContracts}>
+                    <View style={styles.contractIconContainer}>
+                      <MaterialIcons name="description" size={20} color="#2196F3" />
+                    </View>
+                    <View style={styles.contractInfo}>
+                      <Text style={styles.contractTitle}>Contratto Ufficio</Text>
+                      <Text style={styles.contractProperty}>Via Dante 78, Milano</Text>
+                      <Text style={styles.contractOwner}>Inquilino: Luca Verdi</Text>
+                    </View>
+                    <View style={styles.contractStatus}>
+                      <Text style={styles.contractStatusText}>Firmato</Text>
+                    </View>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </View>
+        </FadeIn>
+
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -373,120 +473,378 @@ export default function HomeScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#f5f5f5',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    zIndex: 10,
+    padding: 20,
+    paddingTop: 10,
   },
-  headerCenter: {
+  headerLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  headerTitle: {
+  greeting: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginLeft: 12,
+  },
+  profileButton: {
+    padding: 8,
+  },
+  alertContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F44336',
+  },
+  alertText: {
+    flex: 1,
+    marginLeft: 12,
+    color: '#D32F2F',
+    fontWeight: '500',
+  },
+  alertLink: {
+    color: '#F44336',
+    fontWeight: '600',
+  },
+  section: {
+    marginBottom: 24,
+    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  quickOverviewContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  overviewCard: {
+    flex: 1,
+    backgroundColor: '#f0f4f8',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  overviewNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#4ECDC4',
+    color: '#333',
+    marginTop: 8,
   },
-  headerSubtitle: {
+  overviewLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  chartContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  donutChart: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#2196F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  donutChartInner: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chartCenterText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  chartCenterSubtext: {
     fontSize: 12,
     color: '#666',
     marginTop: 2,
   },
-  headerRight: {
+  paymentsContainer: {
+    gap: 12,
+  },
+  paymentCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-  },
-  headerButton: {
-    marginRight: 0,
-  },
-  cardContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingBottom: 30,
-    gap: 20,
     backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  actionButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    alignItems: 'center',
+  paymentIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#e3f2fd',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    alignItems: 'center',
+    marginRight: 12,
   },
-  nopeButton: {
-    borderWidth: 2,
-    borderColor: '#F44336',
-  },
-  likeButton: {
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-  },
-  superLikeButton: {
-    width: 50,
-    height: 50,
-    borderWidth: 2,
-    borderColor: '#2196F3',
-  },
-  emptyContainer: {
+  paymentInfo: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
   },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  emptySubtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  refreshButton: {
-    flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 30,
-    alignItems: 'center',
-    gap: 8,
-    shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  refreshButtonText: {
-    color: '#fff',
+  paymentTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#333',
+  },
+  paymentDate: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  paymentAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  subsection: {
+    marginBottom: 20,
+  },
+  subsectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 8,
+  },
+  billsContainer: {
+    gap: 8,
+  },
+  billCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#e0e0e0',
+  },
+  billIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  billInfo: {
+    flex: 1,
+  },
+  billTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  billDate: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  billAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  contractsContainer: {
+    gap: 12,
+  },
+  contractCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  contractIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f8f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  contractInfo: {
+    flex: 1,
+  },
+  contractTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  contractProperty: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  contractOwner: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  contractStatus: {
+    backgroundColor: '#e8f5e8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  contractStatusText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#4CAF50',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  signContractButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  signContractText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2196F3',
+  },
+  centeredSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionLinkContainer: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sectionLink: {
+    fontSize: 16,
+    color: '#2196F3',
+    fontWeight: '500',
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+    marginHorizontal: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 16,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  billCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  billIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  billInfo: {
+    flex: 1,
+  },
+  billTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  billCategory: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+  billAmount: {
+    alignItems: 'flex-end',
+  },
+  billAmountText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  billDate: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
 });

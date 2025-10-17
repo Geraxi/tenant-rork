@@ -14,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Property } from '../types';
 import { t } from '../utils/translations';
+import ListingAnalyzerWebView from '../components/ListingAnalyzerWebView';
+import ListingAnalyzer, { PropertyData } from '../utils/listingAnalyzer';
 
 interface CreateListingScreenProps {
   onBack: () => void;
@@ -36,6 +38,12 @@ export default function CreateListingScreen({ onBack, onSave }: CreateListingScr
   const [nearAirport, setNearAirport] = useState(false);
   const [available, setAvailable] = useState(true);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  
+  // Listing analyzer states
+  const [analyzerUrl, setAnalyzerUrl] = useState('');
+  const [showAnalyzer, setShowAnalyzer] = useState(false);
+  const [analyzerLoading, setAnalyzerLoading] = useState(false);
+  const analyzer = ListingAnalyzer.getInstance();
 
   const minPhotos = 5;
 
@@ -130,6 +138,137 @@ export default function CreateListingScreen({ onBack, onSave }: CreateListingScr
     onSave(property);
   };
 
+  // Listing analyzer functions
+  const handleAnalyzeListing = async () => {
+    if (!analyzerUrl.trim()) {
+      Alert.alert('Errore', 'Inserisci un URL valido');
+      return;
+    }
+
+    if (!analyzer.isUrlSupported(analyzerUrl)) {
+      Alert.alert(
+        'Piattaforma non supportata',
+        'Le piattaforme supportate sono: Subito, Idealista, Immobiliare'
+      );
+      return;
+    }
+
+    setAnalyzerLoading(true);
+    try {
+      const propertyData = await analyzer.analyzeListing(analyzerUrl);
+      if (propertyData) {
+        // Fill in the form with extracted data
+        setTitle(propertyData.title);
+        setDescription(propertyData.description);
+        setLocation(propertyData.location);
+        setRent(propertyData.price.toString());
+        setBedrooms(propertyData.bedrooms.toString());
+        setBathrooms(propertyData.bathrooms.toString());
+        setSquareMeters(propertyData.squareMeters.toString());
+        
+        // Add extracted images
+        if (propertyData.images.length > 0) {
+          setPhotos(propertyData.images);
+        }
+        
+        // Map features to amenities
+        const extractedAmenities: string[] = [];
+        propertyData.features.forEach(feature => {
+          const lowerFeature = feature.toLowerCase();
+          if (lowerFeature.includes('wifi') || lowerFeature.includes('internet')) {
+            extractedAmenities.push('WiFi');
+          }
+          if (lowerFeature.includes('parcheggio') || lowerFeature.includes('garage')) {
+            extractedAmenities.push('Parcheggio');
+          }
+          if (lowerFeature.includes('ascensore')) {
+            extractedAmenities.push('Ascensore');
+          }
+          if (lowerFeature.includes('aria condizionata') || lowerFeature.includes('climatizzato')) {
+            extractedAmenities.push('Aria Condizionata');
+          }
+          if (lowerFeature.includes('balcone') || lowerFeature.includes('terrazzo')) {
+            setBalconyOrTerrace(true);
+          }
+          if (lowerFeature.includes('arredato') || lowerFeature.includes('mobilizzato')) {
+            setFurnished(true);
+          }
+        });
+        setSelectedAmenities(extractedAmenities);
+        
+        Alert.alert(
+          'Successo!',
+          'Dati del listing estratti con successo. Verifica e modifica se necessario.',
+          [{ text: 'OK', onPress: () => setAnalyzerUrl('') }]
+        );
+      }
+    } catch (error) {
+      console.error('Error analyzing listing:', error);
+      Alert.alert('Errore', 'Impossibile analizzare il listing. Riprova.');
+    } finally {
+      setAnalyzerLoading(false);
+    }
+  };
+
+  const handleOpenAnalyzer = () => {
+    if (!analyzerUrl.trim()) {
+      Alert.alert('Errore', 'Inserisci un URL valido');
+      return;
+    }
+    setShowAnalyzer(true);
+  };
+
+  const handleDataExtracted = (data: PropertyData) => {
+    // Fill in the form with extracted data
+    setTitle(data.title);
+    setDescription(data.description);
+    setLocation(data.location);
+    setRent(data.price.toString());
+    setBedrooms(data.bedrooms.toString());
+    setBathrooms(data.bathrooms.toString());
+    setSquareMeters(data.squareMeters.toString());
+    
+    // Add extracted images
+    if (data.images.length > 0) {
+      setPhotos(data.images);
+    }
+    
+    // Map features to amenities
+    const extractedAmenities: string[] = [];
+    data.features.forEach(feature => {
+      const lowerFeature = feature.toLowerCase();
+      if (lowerFeature.includes('wifi') || lowerFeature.includes('internet')) {
+        extractedAmenities.push('WiFi');
+      }
+      if (lowerFeature.includes('parcheggio') || lowerFeature.includes('garage')) {
+        extractedAmenities.push('Parcheggio');
+      }
+      if (lowerFeature.includes('ascensore')) {
+        extractedAmenities.push('Ascensore');
+      }
+      if (lowerFeature.includes('aria condizionata') || lowerFeature.includes('climatizzato')) {
+        extractedAmenities.push('Aria Condizionata');
+      }
+      if (lowerFeature.includes('balcone') || lowerFeature.includes('terrazzo')) {
+        setBalconyOrTerrace(true);
+      }
+      if (lowerFeature.includes('arredato') || lowerFeature.includes('mobilizzato')) {
+        setFurnished(true);
+      }
+    });
+    setSelectedAmenities(extractedAmenities);
+    
+    Alert.alert(
+      'Successo!',
+      'Dati del listing estratti con successo. Verifica e modifica se necessario.',
+      [{ text: 'OK', onPress: () => setAnalyzerUrl('') }]
+    );
+  };
+
+  const handleAnalyzerError = (error: string) => {
+    Alert.alert('Errore', error);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -166,10 +305,56 @@ export default function CreateListingScreen({ onBack, onSave }: CreateListingScr
               </View>
             ))}
             <TouchableOpacity style={styles.addPhotoButton} onPress={handleAddPhoto}>
-              <MaterialIcons name="add-a-photo" size={32} color="#4ECDC4" />
+              <MaterialIcons name="add-a-photo" size={32} color="#2196F3" />
               <Text style={styles.addPhotoText}>{t('addPhoto')}</Text>
             </TouchableOpacity>
           </ScrollView>
+        </View>
+
+        {/* Listing Analyzer Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🔗 Analizza Listing Esistente</Text>
+          <Text style={styles.sectionSubtitle}>
+            Incolla il link del tuo annuncio da Subito, Idealista o Immobiliare per estrarre automaticamente i dati
+          </Text>
+          
+          <View style={styles.analyzerContainer}>
+            <TextInput
+              style={styles.analyzerInput}
+              value={analyzerUrl}
+              onChangeText={setAnalyzerUrl}
+              placeholder="https://www.subito.it/annunci/..."
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+            
+            <View style={styles.analyzerButtons}>
+              <TouchableOpacity
+                style={[styles.analyzerButton, styles.analyzerButtonSecondary]}
+                onPress={handleOpenAnalyzer}
+                disabled={analyzerLoading}
+              >
+                <MaterialIcons name="open-in-browser" size={20} color="#667eea" />
+                <Text style={styles.analyzerButtonText}>Apri in Browser</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.analyzerButton, styles.analyzerButtonPrimary]}
+                onPress={handleAnalyzeListing}
+                disabled={analyzerLoading}
+              >
+                {analyzerLoading ? (
+                  <MaterialIcons name="hourglass-empty" size={20} color="white" />
+                ) : (
+                  <MaterialIcons name="auto-awesome" size={20} color="white" />
+                )}
+                <Text style={[styles.analyzerButtonText, styles.analyzerButtonTextPrimary]}>
+                  {analyzerLoading ? 'Analizzando...' : 'Analizza Automaticamente'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -296,52 +481,52 @@ export default function CreateListingScreen({ onBack, onSave }: CreateListingScr
 
           <View style={styles.switchContainer}>
             <View style={styles.switchRow}>
-              <MaterialIcons name="weekend" size={24} color="#4ECDC4" />
+              <MaterialIcons name="weekend" size={24} color="#2196F3" />
               <Text style={styles.switchLabel}>Arredato</Text>
             </View>
             <Switch
               value={furnished}
               onValueChange={setFurnished}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
               thumbColor="#fff"
             />
           </View>
 
           <View style={styles.switchContainer}>
             <View style={styles.switchRow}>
-              <MaterialIcons name="deck" size={24} color="#4ECDC4" />
+              <MaterialIcons name="deck" size={24} color="#2196F3" />
               <Text style={styles.switchLabel}>Balcone/Terrazza</Text>
             </View>
             <Switch
               value={balconyOrTerrace}
               onValueChange={setBalconyOrTerrace}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
               thumbColor="#fff"
             />
           </View>
 
           <View style={styles.switchContainer}>
             <View style={styles.switchRow}>
-              <MaterialIcons name="flight" size={24} color="#4ECDC4" />
+              <MaterialIcons name="flight" size={24} color="#2196F3" />
               <Text style={styles.switchLabel}>Vicino Aeroporto</Text>
             </View>
             <Switch
               value={nearAirport}
               onValueChange={setNearAirport}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
               thumbColor="#fff"
             />
           </View>
 
           <View style={styles.switchContainer}>
             <View style={styles.switchRow}>
-              <MaterialIcons name="check-circle" size={24} color="#4ECDC4" />
+              <MaterialIcons name="check-circle" size={24} color="#2196F3" />
               <Text style={styles.switchLabel}>Disponibile Ora</Text>
             </View>
             <Switch
               value={available}
               onValueChange={setAvailable}
-              trackColor={{ false: '#E0E0E0', true: '#4ECDC4' }}
+              trackColor={{ false: '#E0E0E0', true: '#2196F3' }}
               thumbColor="#fff"
             />
           </View>
@@ -362,7 +547,7 @@ export default function CreateListingScreen({ onBack, onSave }: CreateListingScr
                 <MaterialIcons
                   name={amenity.icon as any}
                   size={24}
-                  color={selectedAmenities.includes(amenity.label) ? '#fff' : '#4ECDC4'}
+                  color={selectedAmenities.includes(amenity.label) ? '#fff' : '#2196F3'}
                 />
                 <Text style={[
                   styles.amenityButtonText,
@@ -387,6 +572,15 @@ export default function CreateListingScreen({ onBack, onSave }: CreateListingScr
           <Text style={styles.saveButtonText}>Pubblica Annuncio</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Listing Analyzer WebView */}
+      <ListingAnalyzerWebView
+        visible={showAnalyzer}
+        url={analyzerUrl}
+        onClose={() => setShowAnalyzer(false)}
+        onDataExtracted={handleDataExtracted}
+        onError={handleAnalyzerError}
+      />
     </SafeAreaView>
   );
 }
@@ -454,7 +648,7 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -462,7 +656,7 @@ const styles = StyleSheet.create({
   },
   addPhotoText: {
     fontSize: 12,
-    color: '#4ECDC4',
+    color: '#2196F3',
     marginTop: 8,
     fontWeight: '600',
   },
@@ -533,16 +727,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4ECDC4',
+    borderColor: '#2196F3',
     minWidth: '45%',
   },
   amenityButtonSelected: {
-    backgroundColor: '#4ECDC4',
-    borderColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
   },
   amenityButtonText: {
     fontSize: 14,
-    color: '#4ECDC4',
+    color: '#2196F3',
     fontWeight: '600',
   },
   amenityButtonTextSelected: {
@@ -550,14 +744,14 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#4ECDC4',
+    shadowColor: '#2196F3',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -572,5 +766,57 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  // Analyzer styles
+  analyzerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  analyzerInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: '#F8F9FA',
+    marginBottom: 16,
+  },
+  analyzerButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  analyzerButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  analyzerButtonPrimary: {
+    backgroundColor: '#667eea',
+  },
+  analyzerButtonSecondary: {
+    backgroundColor: '#F0F4FF',
+    borderWidth: 1,
+    borderColor: '#667eea',
+  },
+  analyzerButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#667eea',
+  },
+  analyzerButtonTextPrimary: {
+    color: '#fff',
   },
 });

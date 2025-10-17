@@ -76,7 +76,7 @@ export default function VerificationScreen({ onBack, onComplete }: VerificationS
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.introSection}>
-          <MaterialIcons name="security" size={64} color="#4ECDC4" />
+          <MaterialIcons name="security" size={64} color="#2196F3" />
           <Text style={styles.introTitle}>Stay Safe & Verified</Text>
           <Text style={styles.introText}>
             Complete these verification steps to build trust and ensure a scam-free experience for everyone.
@@ -89,7 +89,7 @@ export default function VerificationScreen({ onBack, onComplete }: VerificationS
               <MaterialIcons 
                 name={idVerified ? "check-circle" : "badge"} 
                 size={32} 
-                color={idVerified ? "#4CAF50" : "#4ECDC4"} 
+                color={idVerified ? "#2196F3" : "#2196F3"} 
               />
             </View>
             <View style={styles.stepInfo}>
@@ -109,7 +109,7 @@ export default function VerificationScreen({ onBack, onComplete }: VerificationS
             </TouchableOpacity>
           ) : (
             <View style={styles.completedBadge}>
-              <MaterialIcons name="check" size={20} color="#4CAF50" />
+              <MaterialIcons name="check" size={20} color="#2196F3" />
               <Text style={styles.completedText}>Completed</Text>
             </View>
           )}
@@ -121,7 +121,7 @@ export default function VerificationScreen({ onBack, onComplete }: VerificationS
               <MaterialIcons 
                 name={backgroundCheck ? "check-circle" : "verified-user"} 
                 size={32} 
-                color={backgroundCheck ? "#4CAF50" : "#4ECDC4"} 
+                color={backgroundCheck ? "#2196F3" : "#2196F3"} 
               />
             </View>
             <View style={styles.stepInfo}>
@@ -141,7 +141,7 @@ export default function VerificationScreen({ onBack, onComplete }: VerificationS
             </TouchableOpacity>
           ) : (
             <View style={styles.completedBadge}>
-              <MaterialIcons name="check" size={20} color="#4CAF50" />
+              <MaterialIcons name="check" size={20} color="#2196F3" />
               <Text style={styles.completedText}>Completed</Text>
             </View>
           )}
@@ -150,15 +150,15 @@ export default function VerificationScreen({ onBack, onComplete }: VerificationS
         <View style={styles.benefitsSection}>
           <Text style={styles.benefitsTitle}>Benefits of Verification</Text>
           <View style={styles.benefit}>
-            <MaterialIcons name="shield" size={24} color="#4ECDC4" />
+            <MaterialIcons name="shield" size={24} color="#2196F3" />
             <Text style={styles.benefitText}>Increased trust from other users</Text>
           </View>
           <View style={styles.benefit}>
-            <MaterialIcons name="trending-up" size={24} color="#4ECDC4" />
+            <MaterialIcons name="trending-up" size={24} color="#2196F3" />
             <Text style={styles.benefitText}>Higher match rate</Text>
           </View>
           <View style={styles.benefit}>
-            <MaterialIcons name="security" size={24} color="#4ECDC4" />
+            <MaterialIcons name="security" size={24} color="#2196F3" />
             <Text style={styles.benefitText}>Scam-free environment</Text>
           </View>
         </View>
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   verifyButton: {
     flexDirection: 'row',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   completedText: {
-    color: '#4CAF50',
+    color: '#2196F3',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   completeButton: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#2196F3',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
