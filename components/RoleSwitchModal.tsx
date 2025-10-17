@@ -34,7 +34,7 @@ export default function RoleSwitchModal({
     }
 
     Alert.alert(
-      'Cambia Account',
+      'Cambia Ruolo',
       `Sei sicuro di voler passare a ${newRole === 'tenant' ? 'Inquilino' : 'Proprietario'}?`,
       [
         {
@@ -64,7 +64,7 @@ export default function RoleSwitchModal({
           <View style={styles.modalContainer}>
             <ScaleIn delay={100}>
               <View style={styles.header}>
-                <Text style={styles.title}>Cambia Account</Text>
+                <Text style={styles.title}>Cambia Ruolo</Text>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                   <MaterialIcons name="close" size={24} color="#666" />
                 </TouchableOpacity>

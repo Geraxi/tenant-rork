@@ -80,6 +80,20 @@ export const useSupabaseAuth = () => {
       console.log('🔧 Fixing user role - adding ruolo field');
       const updatedUser = { ...user, ruolo: user.userType };
       setUser(updatedUser);
+      // Also save to storage
+      AsyncStorage.setItem('current_user', JSON.stringify(updatedUser));
+    }
+    
+    // Also ensure userType is set if only ruolo exists
+    if (user && user.ruolo && !user.userType) {
+      console.log('🔧 Fixing user type - adding userType field');
+      const updatedUser = { 
+        ...user, 
+        userType: user.ruolo === 'landlord' ? 'homeowner' : user.ruolo 
+      };
+      setUser(updatedUser);
+      // Also save to storage
+      AsyncStorage.setItem('current_user', JSON.stringify(updatedUser));
     }
   }, [user]);
 
@@ -346,13 +360,17 @@ export const useSupabaseAuth = () => {
 
   const switchRole = async (newRole: 'tenant' | 'landlord') => {
     try {
-      if (!user) return { success: false, error: 'No user logged in' };
+      console.log('🔄 switchRole called with newRole:', newRole);
+      
+      if (!user) {
+        console.log('❌ No user logged in');
+        return { success: false, error: 'No user logged in' };
+      }
 
       console.log('🔄 Switching role from', user.ruolo, 'to', newRole);
 
       // Check if this is the first time switching to this role
       const isFirstTimeSwitch = !user[`${newRole}_onboarding_completed`];
-      console.log(`First time switching to ${newRole}:`, isFirstTimeSwitch);
 
       // Update local user state immediately
       const updatedUser = { 
@@ -360,10 +378,6 @@ export const useSupabaseAuth = () => {
         ruolo: newRole,
         userType: newRole === 'tenant' ? 'tenant' as const : 'homeowner' as const
       };
-      
-      console.log('🔄 Updated user object:', updatedUser);
-      console.log('🔄 New role:', updatedUser.ruolo);
-      console.log('🔄 New userType:', updatedUser.userType);
       
       // Set user state first
       setUser(updatedUser);
@@ -381,8 +395,16 @@ export const useSupabaseAuth = () => {
       await AsyncStorage.removeItem('user_role_preference');
       await AsyncStorage.setItem('user_role_preference', newRole);
       
+      // Force multiple state updates to ensure propagation
+      setTimeout(() => {
+        setUser(updatedUser);
+      }, 50);
+      
+      setTimeout(() => {
+        setUser(updatedUser);
+      }, 100);
+      
       console.log('✅ Role switched successfully to:', newRole);
-      console.log('✅ Updated user state:', updatedUser);
 
       // Try to update in database, but don't fail if table doesn't exist
       try {
@@ -401,7 +423,7 @@ export const useSupabaseAuth = () => {
         newRole 
       };
     } catch (error: any) {
-      console.error('Switch role error:', error);
+      console.error('❌ Switch role error:', error);
       return { success: false, error: error.message };
     }
   };
@@ -599,10 +621,35 @@ export const useSupabaseAuth = () => {
         console.log('🔄 Final role (userType || ruolo):', userData.userType || userData.ruolo);
         console.log('🔄 User name from storage:', userData.name || userData.nome);
         
+        // ALWAYS ensure both fields are set
+        let needsUpdate = false;
+        
         // Fix the role if userType exists but ruolo doesn't
         if (userData.userType && !userData.ruolo) {
           console.log('🔧 Fixing stored user role - adding ruolo field');
           userData.ruolo = userData.userType;
+          needsUpdate = true;
+        }
+        
+        // Also ensure userType is set if only ruolo exists
+        if (userData.ruolo && !userData.userType) {
+          console.log('🔧 Fixing stored user type - adding userType field');
+          userData.userType = userData.ruolo === 'landlord' ? 'homeowner' : userData.ruolo;
+          needsUpdate = true;
+        }
+        
+        // If neither field exists, set both to tenant
+        if (!userData.userType && !userData.ruolo) {
+          console.log('🔧 No role fields found - setting both to tenant');
+          userData.userType = 'tenant';
+          userData.ruolo = 'tenant';
+          needsUpdate = true;
+        }
+        
+        // Save the fixed user back to storage if needed
+        if (needsUpdate) {
+          await AsyncStorage.setItem('current_user', JSON.stringify(userData));
+          console.log('🔧 User data updated and saved to storage');
         }
         
         setUser(userData);

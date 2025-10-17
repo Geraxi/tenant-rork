@@ -219,7 +219,7 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
               <View style={styles.nameRow}>
                 <Text style={styles.name}>{(item as Property).title}</Text>
                 <View style={styles.priceContainer}>
-                  <Text style={styles.price}>€{(item as Property).rent}</Text>
+                  <Text style={styles.price}>€{(item as Property).price}</Text>
                   <Text style={styles.priceUnit}>/mese</Text>
                 </View>
               </View>
@@ -362,7 +362,7 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
               <View style={styles.nameRow}>
                 <Text style={styles.name}>{(item as Property).title}</Text>
                 <View style={styles.priceContainer}>
-                  <Text style={styles.price}>€{(item as Property).rent}</Text>
+                  <Text style={styles.price}>€{(item as Property).price}</Text>
                   <Text style={styles.priceUnit}>/mese</Text>
                 </View>
               </View>
@@ -471,6 +471,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     overflow: 'hidden',
+    alignSelf: 'center',
   },
   nextCard: {
     transform: [{ scale: 0.95 }, { translateY: 10 }],
@@ -479,6 +480,7 @@ const styles = StyleSheet.create({
     height: height * 0.65, // Reduced height to match main card
     width: width - 40,
     borderRadius: 20,
+    alignSelf: 'center',
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

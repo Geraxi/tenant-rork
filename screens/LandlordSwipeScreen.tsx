@@ -17,6 +17,7 @@ interface LandlordSwipeScreenProps {
   onNavigateToFilters: () => void;
   onNavigateToOnboarding?: (role: 'tenant' | 'landlord') => void;
   onNavigateToDiscover?: () => void;
+  onRoleSwitch?: (newRole: 'tenant' | 'landlord') => void;
 }
 
 // Mock Data for Tenants
@@ -188,7 +189,9 @@ const MOCK_PROPERTIES: Property[] = [
   },
 ];
 
-export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToProfile, onNavigateToPreferences, onNavigateToFilters, onNavigateToOnboarding, onNavigateToDiscover }: LandlordSwipeScreenProps) {
+export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToProfile, onNavigateToPreferences, onNavigateToFilters, onNavigateToOnboarding, onNavigateToDiscover, onRoleSwitch }: LandlordSwipeScreenProps) {
+  console.log('👥 LandlordSwipeScreen - COMPONENT RENDERED!');
+  console.log('👥 LandlordSwipeScreen - Props received:', { onNavigateToMatches: !!onNavigateToMatches, onNavigateToProfile: !!onNavigateToProfile, onRoleSwitch: !!onRoleSwitch });
   const { user, switchRole } = useSupabaseAuth();
   console.log('👥 LandlordSwipeScreen - Component rendered');
   console.log('👥 LandlordSwipeScreen - User role:', user?.ruolo);
@@ -201,13 +204,19 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
   const [roleSwitchLoading, setRoleSwitchLoading] = useState(false);
 
   useEffect(() => {
-    console.log('👥 LandlordSwipeScreen - Loading tenants...');
+    console.log('👥 LandlordSwipeScreen - Loading tenants for user:', user?.id);
+    console.log('👥 LandlordSwipeScreen - User role:', user?.ruolo);
     console.log('👥 LandlordSwipeScreen - Mock tenants:', MOCK_TENANTS);
-    // In a real app, you would fetch tenants from Supabase here
-    setTenants(MOCK_TENANTS);
-    setLoading(false);
-    console.log('👥 LandlordSwipeScreen - Tenants loaded:', MOCK_TENANTS.length);
-  }, []);
+    setLoading(true);
+    
+    // Simulate API call with role-based filtering
+    setTimeout(() => {
+      setTenants(MOCK_TENANTS);
+      setCurrentIndex(0);
+      setLoading(false);
+      console.log('👥 LandlordSwipeScreen - Tenants loaded:', MOCK_TENANTS.length);
+    }, 1000);
+  }, [user?.id, user?.ruolo]); // Re-fetch when user or role changes
 
   const currentTenant = tenants[currentIndex];
   const nextTenant = tenants[currentIndex + 1];
@@ -256,66 +265,35 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
   };
 
   const handleRoleSwitch = async () => {
-    try {
-      setRoleSwitchLoading(true);
-      console.log('🔄 Role switch - Current user:', user);
-      console.log('🔄 Role switch - User role:', user?.ruolo);
-      console.log('🔄 Role switch - User ID:', user?.id);
-      
-      if (!user) {
-        console.log('🔄 Role switch - No user found, showing error');
-        Alert.alert('Errore', 'Utente non trovato. Effettua il login prima di cambiare account.');
-        return;
-      }
-      
-      if (!user.id) {
-        console.log('🔄 Role switch - User has no ID, showing error');
-        Alert.alert('Errore', 'ID utente non valido. Effettua il login nuovamente.');
-        return;
-      }
-      
-      const newRole = user.ruolo === 'tenant' ? 'landlord' : 'tenant';
-      console.log('🔄 Role switch - Switching to:', newRole);
-      
-      const result = await switchRole(newRole);
-      console.log('🔄 Role switch - Result:', result);
-      
-      if (result.success) {
-        if (result.needsOnboarding && onNavigateToOnboarding) {
-          // Navigate to onboarding for first-time role switch
-          onNavigateToOnboarding(newRole);
-        } else {
-          Alert.alert(
-            'Account Cambiato',
-            `Ora stai utilizzando l'app come ${newRole === 'tenant' ? 'Inquilino' : 'Proprietario'}. L'app si aggiornerà automaticamente.`,
-            [{ 
-              text: 'OK', 
-              onPress: () => {
-                console.log('🔄 Role switch - Navigating to discover...');
-                // Navigate to discover screen for immediate feedback
-                if (onNavigateToDiscover) {
-                  onNavigateToDiscover();
-                }
-              }
-            }]
-          );
-        }
-      } else {
-        Alert.alert('Errore', result.error || 'Impossibile cambiare account');
-      }
-    } catch (error) {
-      console.error('Error switching role:', error);
-      Alert.alert('Errore', 'Impossibile cambiare account');
-    } finally {
-      setRoleSwitchLoading(false);
+    if (!user) {
+      Alert.alert('Errore', 'Utente non trovato. Effettua il login prima di cambiare ruolo.');
+      return;
+    }
+    
+    const currentRole = user.userType || user.ruolo;
+    const newRole = currentRole === 'tenant' ? 'landlord' : 'tenant';
+    console.log('🔄 LandlordSwipeScreen - Current role:', currentRole);
+    console.log('🔄 LandlordSwipeScreen - Switching to:', newRole);
+    
+    if (onRoleSwitch) {
+      onRoleSwitch(newRole);
+    } else {
+      Alert.alert('Errore', 'Funzione di cambio ruolo non disponibile');
     }
   };
 
   if (loading) {
+    console.log('👥 LandlordSwipeScreen - Showing loading screen');
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2196F3" />
         <Text style={styles.loadingText}>Caricamento inquilini...</Text>
+        <Text style={{ fontSize: 14, color: '#666', marginTop: 10 }}>
+          Tenants count: {tenants.length}
+        </Text>
+        <Text style={{ fontSize: 14, color: '#666' }}>
+          Loading: {loading ? 'true' : 'false'}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -356,6 +334,13 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
       </SafeAreaView>
     );
   }
+
+  console.log('👥 LandlordSwipeScreen - RENDERED!');
+  console.log('👥 LandlordSwipeScreen - Current tenant:', tenants[currentIndex]);
+  console.log('👥 LandlordSwipeScreen - Tenants count:', tenants.length);
+  console.log('👥 LandlordSwipeScreen - Current index:', currentIndex);
+  console.log('👥 LandlordSwipeScreen - Loading state:', loading);
+  console.log('👥 LandlordSwipeScreen - About to return main render');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -441,13 +426,13 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
            disabled={!user || roleSwitchLoading}
          >
            <MaterialIcons
-             name={user?.ruolo === 'tenant' ? 'business' : 'home'}
+             name={(user?.userType || user?.ruolo) === 'tenant' ? 'business' : 'home'}
              size={16}
              color="#2196F3"
            />
            <Text style={styles.roleSwitchText}>
              {roleSwitchLoading ? '...' :
-              user?.ruolo === 'tenant' ? 'Proprietario' : 'Inquilino'}
+              (user?.userType || user?.ruolo) === 'tenant' ? 'Proprietario' : 'Inquilino'}
            </Text>
          </TouchableOpacity>
        </View>

@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler'; // Temporarily disabled
-import { View, StyleSheet, Alert, AppState, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Alert, AppState, ActivityIndicator, Text, TouchableOpacity, SafeAreaView } from 'react-native';
 import * as Updates from 'expo-updates';
 import { BackHandler } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // import 'react-native-reanimated'; // Temporarily disabled
 import './global.css';
 import { useSupabaseAuth } from './src/hooks/useSupabaseAuth';
 import { Utente } from './src/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -17,6 +17,9 @@ import OnboardingFlowScreen from './screens/OnboardingFlowScreen';
 import RoleSwitchOnboardingScreen from './screens/RoleSwitchOnboardingScreen';
 import HomeScreen from './screens/HomeScreen';
 import PropertySwipeScreen from './screens/PropertySwipeScreen';
+
+// Test if PropertySwipeScreen is imported correctly
+console.log('🔍 App.tsx - PropertySwipeScreen imported:', typeof PropertySwipeScreen);
 import LandlordSwipeScreen from './screens/LandlordSwipeScreen';
 import MatchesScreen from './screens/MatchesScreen';
 import LeMieBolletteScreen from './screens/LeMieBolletteScreen';
@@ -81,28 +84,6 @@ export default function App() {
       console.log('🔍 App.tsx - User role from ruolo:', user.ruolo);
       console.log('🔍 App.tsx - Final user role:', userRole);
       console.log('🔍 App.tsx - Current screen:', currentScreen);
-      
-      // Force re-render of discover screen when role changes
-      if (currentScreen === 'discover') {
-        console.log('🔍 App.tsx - User role changed while on discover screen - forcing refresh');
-        // Force a complete re-render by updating refresh key multiple times
-        setRefreshKey(prev => prev + 1);
-        setAppRefreshKey(prev => prev + 1);
-        
-        // Force multiple refreshes to ensure component re-renders
-        setTimeout(() => {
-          setRefreshKey(prev => prev + 1);
-          setAppRefreshKey(prev => prev + 1);
-        }, 50);
-        setTimeout(() => {
-          setRefreshKey(prev => prev + 1);
-          setAppRefreshKey(prev => prev + 1);
-        }, 100);
-        setTimeout(() => {
-          setRefreshKey(prev => prev + 1);
-          setAppRefreshKey(prev => prev + 1);
-        }, 200);
-      }
     }
   }, [user?.userType, user?.ruolo, authLoading, currentScreen]);
   const [showHomeownerOnboarding, setShowHomeownerOnboarding] = useState(false);
@@ -113,11 +94,18 @@ export default function App() {
   const [appRefreshKey, setAppRefreshKey] = useState(0);
   const [roleSwitchLoading, setRoleSwitchLoading] = useState(false);
   const [switchingToRole, setSwitchingToRole] = useState<'tenant' | 'landlord' | null>(null);
+  
+  // NEW: Centralized role state management - derive from user directly
+  const currentRole = user ? (
+    user.userType === 'homeowner' || user.ruolo === 'homeowner' ? 'landlord' : 
+    user.userType || user.ruolo
+  ) : null;
 
   // Debug user state changes in App
   useEffect(() => {
     console.log('App - User state changed:', user);
-  }, [user]);
+    console.log('App - Derived currentRole:', currentRole);
+  }, [user, currentRole]);
 
   useEffect(() => {
     // Initialize app
@@ -227,59 +215,28 @@ export default function App() {
   const handleRoleSwitch = async (newRole: 'tenant' | 'landlord') => {
     try {
       console.log('🔄 Starting role switch to:', newRole);
-      console.log('🔄 Current user before switch:', user);
-      console.log('🔄 Current user role before switch:', user?.ruolo);
       
-      // Show branded loading screen immediately
-      setRoleSwitchLoading(true);
-      setSwitchingToRole(newRole);
-      setIsRoleSwitching(true);
-      
-      // Switch the role
+      // Switch the role in the user object
       const result = await switchRole(newRole);
+      console.log('🔄 switchRole result:', result.success ? 'success' : 'failed');
+      
       if (result.success) {
-        console.log('✅ Role switch successful, using hard reload...');
-        console.log('✅ New user after switch:', result.user);
-        console.log('✅ New user role after switch:', result.user?.ruolo);
+        console.log('✅ Role switch successful');
         
-        // Wait for state to propagate
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Force refresh to ensure UI updates
+        setRefreshKey(prev => prev + 1);
+        setAppRefreshKey(prev => prev + 1);
         
-        // Force immediate refresh
-        console.log('🔄 Performing immediate refresh...');
-        setAppRefreshKey(prev => prev + 10000);
-        setRefreshKey(prev => prev + 10000);
+        // Navigate to home to see the changes
+        setCurrentScreen('home');
         
-        // Reset loading states
-        setRoleSwitchLoading(false);
-        setSwitchingToRole(null);
-        setIsRoleSwitching(false);
-        
-        // Force hard reload after a short delay
-        setTimeout(async () => {
-          try {
-            console.log('🔄 Attempting hard reload...');
-            await Updates.reloadAsync();
-          } catch (error) {
-            console.log('Hard reload failed, using fast refresh');
-            // Force another refresh if hard reload fails
-            setAppRefreshKey(prev => prev + 10000);
-            setRefreshKey(prev => prev + 10000);
-          }
-        }, 1000);
       } else {
-        console.error('Role switch failed:', result.error);
-        // Reset loading states on failure
-        setRoleSwitchLoading(false);
-        setSwitchingToRole(null);
-        setIsRoleSwitching(false);
+        console.error('❌ Role switch failed:', result.error);
+        Alert.alert('Errore', result.error || 'Impossibile cambiare account');
       }
     } catch (error) {
-      console.error('Role switch error:', error);
-      // Reset loading states on error
-      setRoleSwitchLoading(false);
-      setSwitchingToRole(null);
-      setIsRoleSwitching(false);
+      console.error('❌ Role switch error:', error);
+      Alert.alert('Errore', 'Impossibile cambiare account');
     }
   };
 
@@ -328,9 +285,7 @@ export default function App() {
         break;
       case 'discover':
         console.log('🔄 NAVIGATING TO DISCOVER SCREEN');
-        console.log('🔄 Current user role before navigation:', user?.userType || user?.ruolo);
-        console.log('🔄 Current user object before navigation:', user);
-        console.log('🔄 Auth loading state:', authLoading);
+        console.log('🔄 Current role:', currentRole);
         console.log('🔄 User exists:', !!user);
         
         // Reset role switching states when navigating to discover
@@ -338,33 +293,11 @@ export default function App() {
         setRoleSwitchLoading(false);
         setSwitchingToRole(null);
         
-        // Set screen first
-        console.log('🔄 Setting currentScreen to discover');
+        // Force refresh to ensure UI updates
+        setRefreshKey(prev => prev + 1);
+        setAppRefreshKey(prev => prev + 1);
+        
         setCurrentScreen('discover');
-        console.log('🔄 Current screen after setCurrentScreen:', currentScreen);
-        
-        // Force multiple refreshes
-        setRefreshKey(prev => prev + 1000);
-        setAppRefreshKey(prev => prev + 1000);
-        
-        // Force additional refreshes after navigation
-        setTimeout(() => {
-          console.log('🔄 First timeout refresh');
-          setRefreshKey(prev => prev + 1000);
-          setAppRefreshKey(prev => prev + 1000);
-        }, 50);
-        
-        setTimeout(() => {
-          console.log('🔄 Second timeout refresh');
-          setRefreshKey(prev => prev + 1000);
-          setAppRefreshKey(prev => prev + 1000);
-        }, 100);
-        
-        setTimeout(() => {
-          console.log('🔄 Third timeout refresh');
-          setRefreshKey(prev => prev + 1000);
-          setAppRefreshKey(prev => prev + 1000);
-        }, 200);
         break;
       case 'matches':
         setCurrentScreen('matches');
@@ -377,6 +310,9 @@ export default function App() {
         break;
       case 'profilo':
         setCurrentScreen('profilo');
+        break;
+      case 'filters':
+        setCurrentScreen('filters');
         break;
     }
   };
@@ -408,68 +344,31 @@ export default function App() {
   const shouldShowNavbar = showBottomNav || (currentScreen === 'home' && user) || forceNavbar;
   console.log('App - Should show navbar:', shouldShowNavbar);
   
-  // Monitor user state changes
+  // Simplified user state monitoring (no more complex refresh logic)
   useEffect(() => {
     console.log('App - User state changed:', { 
       user: !!user, 
-      userRole: user?.userType || user?.ruolo,
+      currentRole,
       userName: user?.name || user?.nome,
-      currentScreen, 
-      shouldShowNavbar 
+      currentScreen
     });
-    
-    // Check if user role is correct
-    if (user) {
-      const userRole = user.userType || user.ruolo;
-      console.log('🔍 User role check:', {
-        userType: user.userType,
-        ruolo: user.ruolo,
-        finalRole: userRole,
-        isTenant: userRole === 'tenant',
-        isLandlord: userRole === 'landlord' || userRole === 'homeowner',
-        roleType: typeof userRole
-      });
-      
-      // Force refresh when role changes and we're on discover screen
-      if (currentScreen === 'discover') {
-        console.log('🔄 Role change detected on discover screen - forcing refresh');
-        setRefreshKey(prev => prev + 1);
-        setAppRefreshKey(prev => prev + 1);
-      }
-    }
-  }, [user, currentScreen, shouldShowNavbar]);
+  }, [user, currentRole, currentScreen]);
   
-  // Additional effect to force refresh when user role changes
-  useEffect(() => {
-    if (user && currentScreen === 'discover') {
-      console.log('🔄 User role change detected - forcing complete refresh');
-      console.log('🔄 New role:', user.ruolo);
-      setRefreshKey(prev => prev + 1000);
-      setAppRefreshKey(prev => prev + 1000);
-      
-      // Force additional refreshes
-      setTimeout(() => {
-        console.log('🔄 First role change refresh');
-        setRefreshKey(prev => prev + 1000);
-        setAppRefreshKey(prev => prev + 1000);
-      }, 50);
-      
-      setTimeout(() => {
-        console.log('🔄 Second role change refresh');
-        setRefreshKey(prev => prev + 1000);
-        setAppRefreshKey(prev => prev + 1000);
-      }, 100);
-    }
-  }, [user?.ruolo, currentScreen]);
+  // Force refresh when currentRole changes - DISABLED TO PREVENT INFINITE LOOP
+  // useEffect(() => {
+  //   if (currentRole) {
+  //     console.log('🔄 currentRole changed to:', currentRole, '- forcing refresh');
+  //     setRefreshKey(prev => prev + 1);
+  //     setAppRefreshKey(prev => prev + 1);
+  //   }
+  // }, [currentRole]);
   
   // Debug logging
   console.log('App - Current screen:', currentScreen);
   console.log('App - User state:', !!user);
-  console.log('App - User object:', user);
+  console.log('App - Current role:', currentRole);
   console.log('App - Show bottom nav:', showBottomNav);
   console.log('App - Excluded screens check:', ['login', 'matches', 'settings', 'editProfile', 'help', 'preferences', 'filters'].includes(currentScreen));
-  console.log('App - User role:', user?.ruolo);
-  console.log('App - User name:', user?.nome);
 
   // Show loading screen while initializing
   if (showSplash) {
@@ -493,7 +392,7 @@ export default function App() {
   const renderScreen = () => {
     console.log('🔍 RENDERSCREEN - Current screen:', currentScreen);
     console.log('🔍 RENDERSCREEN - User exists:', !!user);
-    console.log('🔍 RENDERSCREEN - User role:', user?.userType || user?.ruolo);
+    console.log('🔍 RENDERSCREEN - Current role:', currentRole);
     console.log('🔍 RENDERSCREEN - About to switch on currentScreen:', currentScreen);
     switch (currentScreen) {
       case 'login':
@@ -579,48 +478,104 @@ export default function App() {
 
       case 'home':
         return (
-          <HomeScreen
-            onNavigateToBills={() => setCurrentScreen('bollette')}
-            onNavigateToPayments={() => setCurrentScreen('bollette')}
-            onNavigateToProfile={() => setCurrentScreen('profilo')}
-            onNavigateToNotifications={() => {
-              // TODO: Implement notifications screen
-              Alert.alert('Info', 'Schermata notifiche in arrivo');
-            }}
-            onNavigateToHelp={() => setCurrentScreen('help')}
-            onNavigateToContracts={() => setCurrentScreen('documenti')}
-            onNavigateToContractSignature={() => setCurrentScreen('contractSignature')}
-          />
+          <View style={{ flex: 1 }}>
+            <HomeScreen
+              onNavigateToBills={() => setCurrentScreen('bollette')}
+              onNavigateToPayments={() => setCurrentScreen('bollette')}
+              onNavigateToProfile={() => setCurrentScreen('profilo')}
+              onNavigateToNotifications={() => {
+                // TODO: Implement notifications screen
+                Alert.alert('Info', 'Schermata notifiche in arrivo');
+              }}
+              onNavigateToHelp={() => setCurrentScreen('help')}
+              onNavigateToContracts={() => setCurrentScreen('documenti')}
+              onNavigateToContractSignature={() => setCurrentScreen('contractSignature')}
+            />
+            
+          </View>
         );
 
       case 'discover':
         console.log('🔍 DISCOVER CASE - About to render discover screen');
-        console.log('🔍 DISCOVER CASE - User role:', user?.userType || user?.ruolo);
+        console.log('🔍 DISCOVER CASE - Current role:', currentRole);
         console.log('🔍 DISCOVER CASE - User exists:', !!user);
-        console.log('🔍 DISCOVER CASE - User object:', user);
-        console.log('🔍 DISCOVER CASE - Current screen state:', currentScreen);
         
-        // SUPER SIMPLE TEST FIRST - Just return a basic screen
-        return (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'green' }}>
-            <Text style={{ fontSize: 30, color: 'white' }}>DISCOVER WORKS!</Text>
-            <Text style={{ fontSize: 16, color: 'white', marginTop: 10 }}>
-              User: {user?.name || 'No name'}
-            </Text>
-            <Text style={{ fontSize: 16, color: 'white', marginTop: 5 }}>
-              Role: {user?.userType || user?.ruolo || 'No role'}
-            </Text>
-            <Text style={{ fontSize: 16, color: 'white', marginTop: 5 }}>
-              Screen: {currentScreen}
-            </Text>
-            <TouchableOpacity 
-              style={{ backgroundColor: 'white', padding: 10, marginTop: 20, borderRadius: 5 }}
-              onPress={() => setCurrentScreen('home')}
-            >
-              <Text style={{ color: 'black' }}>Go to Home</Text>
-            </TouchableOpacity>
-          </View>
-        );
+        // Show loading if auth is still loading or user is not available
+        if (authLoading || !user) {
+          console.log('🔍 DISCOVER CASE - Showing loading screen');
+          return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+              <ActivityIndicator size="large" color="#2196F3" />
+              <Text style={{ fontSize: 16, color: '#666', marginTop: 20 }}>
+                Caricamento...
+              </Text>
+            </View>
+          );
+        }
+
+        // Show appropriate content based on centralized role
+        console.log('🔍 DISCOVER CASE - Using currentRole:', currentRole);
+        
+        if (currentRole === 'tenant') {
+          console.log('🔍 DISCOVER CASE - Rendering PropertySwipeScreen for tenant');
+          
+          return (
+            <PropertySwipeScreen
+              key={`property-swipe-${currentRole}-${user?.id}-${refreshKey}`}
+              onNavigateToMatches={() => setCurrentScreen('matches')}
+              onNavigateToProfile={() => setCurrentScreen('profilo')}
+              onNavigateToDiscover={() => setCurrentScreen('discover')}
+              onNavigateToOnboarding={(role) => setCurrentScreen('onboarding')}
+              onRoleSwitch={handleRoleSwitch}
+            />
+          );
+        } else if (currentRole === 'landlord') {
+          console.log('🔍 DISCOVER CASE - Rendering LandlordSwipeScreen for landlord');
+          
+          return (
+            <LandlordSwipeScreen
+              key={`landlord-swipe-${currentRole}-${user?.id}-${refreshKey}`}
+              onNavigateToMatches={() => setCurrentScreen('matches')}
+              onNavigateToProfile={() => setCurrentScreen('profilo')}
+              onNavigateToDiscover={() => setCurrentScreen('discover')}
+              onNavigateToOnboarding={(role) => setCurrentScreen('onboarding')}
+              onRoleSwitch={handleRoleSwitch}
+            />
+          );
+        } else {
+          console.log('🔍 DISCOVER CASE - Unknown role, showing fallback');
+          console.log('🔍 DISCOVER CASE - currentRole value:', currentRole);
+          console.log('🔍 DISCOVER CASE - currentRole === undefined:', currentRole === undefined);
+          console.log('🔍 DISCOVER CASE - currentRole === null:', currentRole === null);
+          
+          // Show a simple fallback screen
+          return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff3cd' }}>
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 24, color: '#856404', marginBottom: 20 }}>
+                  ⚠️ FALLBACK SCREEN
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666', marginBottom: 10 }}>
+                  Current role: {currentRole || 'undefined'}
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666', marginBottom: 10 }}>
+                  This is a fallback screen
+                </Text>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#ffc107', padding: 15, borderRadius: 8, marginTop: 20 }}
+                  onPress={() => {
+                    console.log('🔍 FALLBACK - Button pressed');
+                    Alert.alert('Fallback', 'Fallback screen is working!');
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                    Fallback Button
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </SafeAreaView>
+          );
+        }
 
       case 'matches':
         return (
@@ -703,6 +658,7 @@ export default function App() {
             onNavigateToSettings={() => setCurrentScreen('settings')}
             onLogout={handleLogout}
             onBack={() => setCurrentScreen('home')}
+            onRoleSwitch={handleRoleSwitch}
           />
         );
 
@@ -783,20 +739,13 @@ export default function App() {
           <>
             {renderScreen()}
             {shouldShowNavbar && (
-              <>
-                {console.log('Rendering BottomNavigation with:', { 
-                  currentScreen: getCurrentNavScreen(), 
-                  userRole: user?.userType || user?.ruolo, 
-                  showContracts: (user?.userType || user?.ruolo) === 'landlord' || (user?.userType || user?.ruolo) === 'homeowner'
-                })}
-                <BottomNavigation
-                  key={`navbar-${appRefreshKey}`}
-                  currentScreen={getCurrentNavScreen()}
-                  onNavigate={handleNavigation}
-                  showContracts={(user?.userType || user?.ruolo) === 'landlord' || (user?.userType || user?.ruolo) === 'homeowner'}
-                  userRole={user?.userType || user?.ruolo}
-                />
-              </>
+              <BottomNavigation
+                key={`navbar-${currentRole}-${refreshKey}`}
+                currentScreen={getCurrentNavScreen()}
+                onNavigate={handleNavigation}
+                showContracts={currentRole === 'landlord'}
+                userRole={currentRole || 'tenant'}
+              />
             )}
           </>
         )}

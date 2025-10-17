@@ -29,6 +29,7 @@ interface ProfiloScreenProps {
   onNavigateToSettings: () => void;
   onLogout: () => void;
   onBack: () => void;
+  onRoleSwitch: (newRole: 'tenant' | 'landlord') => void;
 }
 
 export default function ProfiloScreen({
@@ -38,6 +39,7 @@ export default function ProfiloScreen({
   onNavigateToSettings,
   onLogout,
   onBack,
+  onRoleSwitch,
 }: ProfiloScreenProps) {
   const { user, updateProfile, uploadProfilePhoto, signOut, switchRole } = useSupabaseAuth();
   const [loading, setLoading] = useState(false);
@@ -144,19 +146,29 @@ export default function ProfiloScreen({
   const handleRoleSwitch = async (newRole: 'tenant' | 'landlord') => {
     try {
       setLoading(true);
-      const result = await switchRole(newRole);
-      if (result.success) {
-        Alert.alert(
-          'Account Cambiato',
-          `Ora stai utilizzando l'app come ${newRole === 'tenant' ? 'Inquilino' : 'Proprietario'}`,
-          [{ text: 'OK' }]
-        );
+      console.log('🔄 ProfiloScreen - Calling App handleRoleSwitch with:', newRole);
+      
+      if (onRoleSwitch) {
+        onRoleSwitch(newRole);
+        // Close the modal after calling the centralized role switch
+        setShowRoleSwitchModal(false);
       } else {
-        Alert.alert('Errore', result.error || 'Impossibile cambiare account');
+        // Fallback to local role switch if App function not available
+        const result = await switchRole(newRole);
+        if (result.success) {
+          Alert.alert(
+            'Ruolo Cambiato',
+            `Ora stai utilizzando l'app come ${newRole === 'tenant' ? 'Inquilino' : 'Proprietario'}`,
+            [{ text: 'OK' }]
+          );
+          setShowRoleSwitchModal(false);
+        } else {
+          Alert.alert('Errore', result.error || 'Impossibile cambiare ruolo');
+        }
       }
     } catch (error) {
       console.error('Error switching role:', error);
-      Alert.alert('Errore', 'Impossibile cambiare account');
+      Alert.alert('Errore', 'Impossibile cambiare ruolo');
     } finally {
       setLoading(false);
     }
@@ -189,6 +201,7 @@ export default function ProfiloScreen({
       case 'tenant':
         return 'Inquilino';
       case 'landlord':
+      case 'homeowner':
         return 'Proprietario';
       default:
         return ruolo;
@@ -200,6 +213,7 @@ export default function ProfiloScreen({
       case 'tenant':
         return '#4CAF50';
       case 'landlord':
+      case 'homeowner':
         return '#2196F3';
       default:
         return '#666';
@@ -285,14 +299,14 @@ export default function ProfiloScreen({
                 onPress={() => setShowRoleSwitchModal(true)}
                 disabled={loading}
               >
-                <View style={[styles.roleBadge, { backgroundColor: getRoleColor(user?.ruolo || '') }]}>
+                <View style={[styles.roleBadge, { backgroundColor: getRoleColor(user?.userType || user?.ruolo || '') }]}>
                   <MaterialIcons 
-                    name={user?.ruolo === 'landlord' ? 'business' : 'home'} 
+                    name={(user?.userType || user?.ruolo) === 'landlord' ? 'business' : 'home'} 
                     size={16} 
                     color="#fff" 
                   />
                   <Text style={styles.roleText}>
-                    {getRoleText(user?.ruolo || '')}
+                    {getRoleText(user?.userType || user?.ruolo || '')}
                   </Text>
                   <MaterialIcons 
                     name="swap-horiz" 
@@ -415,7 +429,7 @@ export default function ProfiloScreen({
           
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Tipo Account</Text>
-            <Text style={styles.infoValue}>{getRoleText(user?.ruolo || '')}</Text>
+            <Text style={styles.infoValue}>{getRoleText(user?.userType || user?.ruolo || '')}</Text>
           </View>
           
           <View style={styles.infoItem}>
@@ -441,7 +455,7 @@ export default function ProfiloScreen({
       {/* Role Switch Modal */}
       <RoleSwitchModal
         visible={showRoleSwitchModal}
-        currentRole={user?.ruolo || 'tenant'}
+        currentRole={(user?.userType || user?.ruolo) as 'tenant' | 'landlord' || 'tenant'}
         onClose={() => setShowRoleSwitchModal(false)}
         onSwitchRole={handleRoleSwitch}
       />
