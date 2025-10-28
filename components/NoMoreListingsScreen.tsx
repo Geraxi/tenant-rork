@@ -11,40 +11,23 @@ import { User } from '../types';
 import { t } from '../utils/translations';
 
 interface NoMoreListingsScreenProps {
-  currentUser: User;
-  onEditPreferences: () => void;
-  onEditFilters: () => void;
+  onBack: () => void;
   onRefresh: () => void;
-  onViewMatches: () => void;
-  onViewProfile: () => void;
+  onPreferences?: () => void;
+  onFilters?: () => void;
 }
 
 export default function NoMoreListingsScreen({
-  currentUser,
-  onEditPreferences,
-  onEditFilters,
+  onBack,
   onRefresh,
-  onViewMatches,
-  onViewProfile,
+  onPreferences,
+  onFilters,
 }: NoMoreListingsScreenProps) {
   const getEmptyStateText = () => {
-    if (currentUser.userType === 'tenant') {
-      return {
-        title: 'Nessuna Altra Proprietà',
-        subtitle: 'Hai visto tutte le proprietà disponibili che corrispondono alle tue preferenze attuali.',
-        suggestion: 'Prova ad aggiustare i tuoi filtri per vedere più opzioni!',
-      };
-    } else if (currentUser.userType === 'homeowner') {
-      return {
-        title: 'Nessun Altro Inquilino',
-        subtitle: 'Hai visto tutti gli inquilini disponibili che corrispondono ai tuoi criteri attuali.',
-        suggestion: 'Prova ad aggiustare i requisiti per gli inquilini per vedere più profili!',
-      };
-    }
     return {
-      title: 'Nessun Altro Annuncio',
-      subtitle: 'Hai visto tutti gli annunci disponibili.',
-      suggestion: 'Prova ad aggiustare le tue preferenze per vedere più opzioni!',
+      title: 'Nessuna Altra Proprietà',
+      subtitle: 'Hai visto tutte le proprietà disponibili che corrispondono alle tue preferenze attuali.',
+      suggestion: 'Prova ad aggiustare i tuoi filtri per vedere più opzioni!',
     };
   };
 
@@ -52,6 +35,11 @@ export default function NoMoreListingsScreen({
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <MaterialIcons name="arrow-back" size={24} color="#2196F3" />
+        <Text style={styles.backButtonText}>Indietro</Text>
+      </TouchableOpacity>
+      
       <View style={styles.iconContainer}>
         <MaterialIcons name="home-work" size={100} color="#2196F3" />
       </View>
@@ -61,37 +49,35 @@ export default function NoMoreListingsScreen({
       <Text style={styles.suggestion}>{emptyState.suggestion}</Text>
 
       <View style={styles.optionsContainer}>
-        <TouchableOpacity style={styles.optionButton} onPress={onEditPreferences}>
-          <View style={styles.optionIcon}>
-            <MaterialIcons name="tune" size={24} color="#2196F3" />
-          </View>
-          <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Modifica Preferenze</Text>
-            <Text style={styles.optionDescription}>
-              {currentUser.userType === 'tenant' 
-                ? 'Aggiusta le tue preferenze per le proprietà (budget, posizione, servizi)'
-                : 'Aggiusta i requisiti per gli inquilini (reddito, età, stile di vita)'
-              }
-            </Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={24} color="#CCC" />
-        </TouchableOpacity>
+        {onPreferences && (
+          <TouchableOpacity style={styles.optionButton} onPress={onPreferences}>
+            <View style={styles.optionIcon}>
+              <MaterialIcons name="tune" size={24} color="#2196F3" />
+            </View>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Modifica Preferenze</Text>
+              <Text style={styles.optionDescription}>
+                Aggiusta le tue preferenze per le proprietà (budget, posizione, servizi)
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color="#CCC" />
+          </TouchableOpacity>
+        )}
 
-        <TouchableOpacity style={styles.optionButton} onPress={onEditFilters}>
-          <View style={styles.optionIcon}>
-            <MaterialIcons name="filter-list" size={24} color="#2196F3" />
-          </View>
-          <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Modifica Filtri</Text>
-            <Text style={styles.optionDescription}>
-              {currentUser.userType === 'tenant'
-                ? 'Modifica i filtri di ricerca (distanza, tipo di proprietà, caratteristiche)'
-                : 'Modifica i filtri di ricerca (stato verifica, tipo di lavoro, disponibilità)'
-              }
-            </Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={24} color="#CCC" />
-        </TouchableOpacity>
+        {onFilters && (
+          <TouchableOpacity style={styles.optionButton} onPress={onFilters}>
+            <View style={styles.optionIcon}>
+              <MaterialIcons name="filter-list" size={24} color="#2196F3" />
+            </View>
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Modifica Filtri</Text>
+              <Text style={styles.optionDescription}>
+                Modifica i filtri di ricerca (distanza, tipo di proprietà, caratteristiche)
+              </Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color="#CCC" />
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity style={styles.optionButton} onPress={onRefresh}>
           <View style={styles.optionIcon}>
@@ -109,27 +95,10 @@ export default function NoMoreListingsScreen({
 
       <View style={styles.divider} />
 
-      <View style={styles.quickActions}>
-        <Text style={styles.quickActionsTitle}>Azioni Rapide</Text>
-        
-        <TouchableOpacity style={styles.quickActionButton} onPress={onViewMatches}>
-          <MaterialIcons name="favorite" size={20} color="#FF6B6B" />
-          <Text style={styles.quickActionText}>Visualizza Corrispondenze</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.quickActionButton} onPress={onViewProfile}>
-          <MaterialIcons name="person" size={20} color="#2196F3" />
-          <Text style={styles.quickActionText}>Modifica Profilo</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={styles.tipContainer}>
         <MaterialIcons name="lightbulb" size={20} color="#FFEAA7" />
         <Text style={styles.tipText}>
-          {currentUser.userType === 'tenant'
-            ? 'Suggerimento: Prova ad espandere il raggio di ricerca o ad aggiustare la fascia di budget per trovare più proprietà!'
-            : 'Suggerimento: Prova ad essere più flessibile con i requisiti per gli inquilini o ad espandere l\'area di ricerca!'
-          }
+          Suggerimento: Prova ad espandere il raggio di ricerca o ad aggiustare la fascia di budget per trovare più proprietà!
         </Text>
       </View>
     </ScrollView>
@@ -145,6 +114,18 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     paddingTop: 40,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 10,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#2196F3',
+    marginLeft: 8,
+    fontWeight: '600',
   },
   iconContainer: {
     alignItems: 'center',

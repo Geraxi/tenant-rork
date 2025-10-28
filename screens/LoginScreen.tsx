@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +17,9 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import Logo from '../components/Logo';
 import { useSupabaseAuth } from '../src/hooks/useSupabaseAuth';
 import { FadeIn, ScaleIn, AnimatedButton, GradientCard } from '../components/AnimatedComponents';
+import GoogleLogo from '../components/GoogleLogo';
+
+import { logger } from '../src/utils/logger';
 
 const { width, height } = Dimensions.get('window');
 
@@ -60,7 +62,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
 
   const handleAppleLogin = async () => {
     try {
-      console.log('Starting Apple Sign In...');
+      logger.debug('Starting Apple Sign In...');
       
       // Check if Apple Sign In is available
       const isAvailable = await AppleAuthentication.isAvailableAsync();
@@ -77,7 +79,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
         ],
       });
 
-      console.log('Apple Sign In successful:', credential);
+      logger.debug('Apple Sign In successful:', credential);
 
       if (credential.identityToken) {
         // Create user object for authentication
@@ -90,28 +92,28 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
           provider: 'apple'
         };
 
-        console.log('Apple user data:', appleUser);
+        logger.debug('Apple user data:', appleUser);
         
         // Use the signInWithApple function from the auth hook
         const result = await signInWithApple(credential.identityToken, appleUser);
         
         if (result.success) {
-          console.log('Apple Sign In successful!');
+          logger.debug('Apple Sign In successful!');
           
           // Add a longer delay to ensure user state is properly set and persisted
           setTimeout(() => {
             if (result.isNewUser) {
-              console.log('New Apple user - triggering onboarding');
+              logger.debug('New Apple user - triggering onboarding');
               onLoginSuccess();
               Alert.alert('Benvenuto!', 'Account creato con successo. Completa la configurazione del tuo profilo.');
             } else {
-              console.log('Existing Apple user - direct login');
+              logger.debug('Existing Apple user - direct login');
               onLoginSuccess();
               Alert.alert('Successo', 'Bentornato! Login completato.');
             }
           }, 1500);
         } else {
-          console.log('Apple Sign In failed:', result.error);
+          logger.debug('Apple Sign In failed:', result.error);
           Alert.alert('Errore', result.error || 'Errore durante il login con Apple');
         }
       }
@@ -120,7 +122,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
       
       if (error.code === 'ERR_REQUEST_CANCELED') {
         // User canceled the sign-in flow
-        console.log('User canceled Apple Sign In');
+        logger.debug('User canceled Apple Sign In');
       } else if (error.code === 'ERR_REQUEST_NOT_HANDLED') {
         Alert.alert('Errore', 'Apple Sign In non supportato in Expo Go. È necessario un development build.');
       } else if (error.code === 'ERR_REQUEST_NOT_INTERACTIVE') {
@@ -271,8 +273,8 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
                       style={styles.eyeButton}
                       onPress={() => setShowPassword(!showPassword)}
                     >
-                      <Ionicons
-                        name={showPassword ? "eye-off" : "eye"}
+                      <MaterialIcons
+                        name={showPassword ? "visibility-off" : "visibility"}
                         size={20}
                         color="#B0B0B0"
                       />
@@ -372,8 +374,8 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
                       style={styles.eyeButton}
                       onPress={() => setShowSignupPassword(!showSignupPassword)}
                     >
-                      <Ionicons
-                        name={showSignupPassword ? "eye-off" : "eye"}
+                      <MaterialIcons
+                        name={showSignupPassword ? "visibility-off" : "visibility"}
                         size={20}
                         color="#B0B0B0"
                       />
@@ -438,6 +440,7 @@ export default function LoginScreen({ onLoginSuccess, onNavigateToSignup }: Logi
                   onPress={handleGoogleLogin}
                   variant="primary"
                   style={styles.socialButton}
+                  icon={<GoogleLogo size={20} />}
                 />
               </FadeIn>
               
@@ -531,10 +534,6 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   socialButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    minWidth: 280,
     marginBottom: 20,
   },
   optionsContainer: {
@@ -545,10 +544,6 @@ const styles = StyleSheet.create({
     height: 50,
   },
   mainButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 2,
-    borderColor: 'white',
-    minWidth: 280,
     marginBottom: 30,
   },
   promptText: {
@@ -564,8 +559,6 @@ const styles = StyleSheet.create({
     padding: 24,
     marginHorizontal: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   formTitle: {
     fontSize: 18,

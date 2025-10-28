@@ -15,6 +15,8 @@ import { Property, Utente } from '../types';
 import { MatchingService, Match } from '../src/services/matchingService';
 import { useSupabaseAuth } from '../src/hooks/useSupabaseAuth';
 
+import { logger } from '../src/utils/logger';
+
 interface MatchesScreenProps {
   onNavigateBack: () => void;
 }
@@ -38,42 +40,42 @@ export default function MatchesScreen({ onNavigateBack }: MatchesScreenProps) {
   const loadMatches = async () => {
     if (user) {
       setLoading(true);
-      console.log('🔍 MatchesScreen - Loading matches for user:', user.id, 'role:', user.ruolo);
+      logger.debug('🔍 MatchesScreen - Loading matches for user:', user.id, 'role:', user.ruolo);
       try {
         const userMatches = await MatchingService.getMatches(user.id, user.ruolo);
-        console.log('🔍 MatchesScreen - Found matches:', userMatches.length);
+        logger.debug('🔍 MatchesScreen - Found matches:', userMatches.length);
         
         // If no matches found, show some sample matches for demo purposes
         if (userMatches.length === 0) {
-          console.log('🔍 MatchesScreen - No matches found, showing sample matches');
+          logger.debug('🔍 MatchesScreen - No matches found, showing sample matches');
           const sampleMatches = await MatchingService.getMatches('test_user_1', 'tenant');
-          console.log('🔍 MatchesScreen - Sample matches:', sampleMatches.length);
+          logger.debug('🔍 MatchesScreen - Sample matches:', sampleMatches.length);
           
           const sampleMatchesWithDetails = await Promise.all(
             sampleMatches.map(async (match) => {
-              console.log('🔍 MatchesScreen - Getting details for sample match:', match.id);
+              logger.debug('🔍 MatchesScreen - Getting details for sample match:', match.id);
               const details = await MatchingService.getMatchDetails(match.id);
-              console.log('🔍 MatchesScreen - Sample match details:', details);
+              logger.debug('🔍 MatchesScreen - Sample match details:', details);
               return details;
             })
           );
           
           const validSampleMatches = sampleMatchesWithDetails.filter(Boolean) as MatchWithDetails[];
-          console.log('🔍 MatchesScreen - Valid sample matches:', validSampleMatches.length);
+          logger.debug('🔍 MatchesScreen - Valid sample matches:', validSampleMatches.length);
           setMatches(validSampleMatches);
         } else {
           // Get detailed information for each match
           const matchesWithDetails = await Promise.all(
             userMatches.map(async (match) => {
-              console.log('🔍 MatchesScreen - Getting details for match:', match.id);
+              logger.debug('🔍 MatchesScreen - Getting details for match:', match.id);
               const details = await MatchingService.getMatchDetails(match.id);
-              console.log('🔍 MatchesScreen - Match details:', details);
+              logger.debug('🔍 MatchesScreen - Match details:', details);
               return details;
             })
           );
           
           const validMatches = matchesWithDetails.filter(Boolean) as MatchWithDetails[];
-          console.log('🔍 MatchesScreen - Valid matches:', validMatches.length);
+          logger.debug('🔍 MatchesScreen - Valid matches:', validMatches.length);
           setMatches(validMatches);
         }
       } catch (error) {
@@ -83,7 +85,7 @@ export default function MatchesScreen({ onNavigateBack }: MatchesScreenProps) {
         setLoading(false);
       }
     } else {
-      console.log('🔍 MatchesScreen - No user found');
+      logger.debug('🔍 MatchesScreen - No user found');
       setLoading(false);
     }
   };

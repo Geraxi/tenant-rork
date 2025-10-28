@@ -19,6 +19,8 @@ import { useNotifications } from '../src/hooks/useNotifications';
 import { Utente, Bolletta } from '../src/types';
 import { FadeIn, ScaleIn, GradientCard, Shimmer } from '../components/AnimatedComponents';
 
+import { logger } from '../src/utils/logger';
+
 const { width } = Dimensions.get('window');
 
 interface HomeScreenProps {
@@ -41,12 +43,7 @@ export default function HomeScreen({
   onNavigateToContractSignature,
 }: HomeScreenProps) {
   const { user } = useSupabaseAuth();
-  console.log('HomeScreen - User data:', user);
-  console.log('HomeScreen - User name:', user?.nome);
-  console.log('HomeScreen - User role:', user?.ruolo);
-  console.log('HomeScreen - User email:', user?.email);
-  console.log('HomeScreen - User ID:', user?.id);
-  console.log('HomeScreen - User type:', typeof user?.nome);
+  logger.debug('HomeScreen - User data:', user);
   const { 
     getUpcomingBills, 
     getOverdueBills, 
@@ -267,7 +264,7 @@ export default function HomeScreen({
                     <>
                       <TouchableOpacity style={styles.billCard}>
                         <View style={styles.billIconContainer}>
-                          <MaterialIcons name="water-drop" size={18} color="#00BCD4" />
+                          <MaterialIcons name="water-drop" size={18} color="#2196F3" />
                         </View>
                         <View style={styles.billInfo}>
                           <Text style={styles.billTitle}>Acqua</Text>
@@ -367,7 +364,7 @@ export default function HomeScreen({
         <FadeIn delay={1600} from="bottom">
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
+              <Text style={styles.sectionTitle} numberOfLines={2}>
                 {user?.ruolo === 'tenant' ? 'Contratti Condivisi' : 'I Miei Contratti'}
               </Text>
               <View style={styles.sectionHeaderActions}>
@@ -379,7 +376,7 @@ export default function HomeScreen({
                   <Text style={styles.signContractText}>Firma</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={onNavigateToContracts}>
-                  <Text style={styles.sectionLink}>Vedi tutti</Text>
+                  <Text style={styles.sectionLink} numberOfLines={1}>Vedi tutti</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -392,9 +389,9 @@ export default function HomeScreen({
                       <MaterialIcons name="description" size={20} color="#4CAF50" />
                     </View>
                     <View style={styles.contractInfo}>
-                      <Text style={styles.contractTitle}>Contratto di Affitto</Text>
-                      <Text style={styles.contractProperty}>Via Roma 123, Milano</Text>
-                      <Text style={styles.contractOwner}>Proprietario: Mario Rossi</Text>
+                      <Text style={styles.contractTitle} numberOfLines={1}>Contratto di Affitto</Text>
+                      <Text style={styles.contractProperty} numberOfLines={1}>Via Roma 123, Milano</Text>
+                      <Text style={styles.contractOwner} numberOfLines={1}>Proprietario: Mario Rossi</Text>
                     </View>
                     <View style={styles.contractStatus}>
                       <Text style={styles.contractStatusText}>Attivo</Text>
@@ -406,9 +403,9 @@ export default function HomeScreen({
                       <MaterialIcons name="description" size={20} color="#FF9800" />
                     </View>
                     <View style={styles.contractInfo}>
-                      <Text style={styles.contractTitle}>Contratto di Rinnovo</Text>
-                      <Text style={styles.contractProperty}>Via Garibaldi 45, Milano</Text>
-                      <Text style={styles.contractOwner}>Proprietario: Anna Bianchi</Text>
+                      <Text style={styles.contractTitle} numberOfLines={1}>Contratto di Rinnovo</Text>
+                      <Text style={styles.contractProperty} numberOfLines={1}>Via Garibaldi 45, Milano</Text>
+                      <Text style={styles.contractOwner} numberOfLines={1}>Proprietario: Anna Bianchi</Text>
                     </View>
                     <View style={styles.contractStatus}>
                       <Text style={styles.contractStatusText}>In Revisione</Text>
@@ -423,9 +420,9 @@ export default function HomeScreen({
                       <MaterialIcons name="description" size={20} color="#4CAF50" />
                     </View>
                     <View style={styles.contractInfo}>
-                      <Text style={styles.contractTitle}>Contratto Appartamento A</Text>
-                      <Text style={styles.contractProperty}>Via Roma 123, Milano</Text>
-                      <Text style={styles.contractOwner}>Inquilino: Mario Rossi</Text>
+                      <Text style={styles.contractTitle} numberOfLines={1}>Contratto Appartamento A</Text>
+                      <Text style={styles.contractProperty} numberOfLines={1}>Via Roma 123, Milano</Text>
+                      <Text style={styles.contractOwner} numberOfLines={1}>Inquilino: Mario Rossi</Text>
                     </View>
                     <View style={styles.contractStatus}>
                       <Text style={styles.contractStatusText}>Attivo</Text>
@@ -437,9 +434,9 @@ export default function HomeScreen({
                       <MaterialIcons name="description" size={20} color="#FF9800" />
                     </View>
                     <View style={styles.contractInfo}>
-                      <Text style={styles.contractTitle}>Contratto Appartamento B</Text>
-                      <Text style={styles.contractProperty}>Via Garibaldi 45, Milano</Text>
-                      <Text style={styles.contractOwner}>Inquilino: Anna Bianchi</Text>
+                      <Text style={styles.contractTitle} numberOfLines={1}>Contratto Appartamento B</Text>
+                      <Text style={styles.contractProperty} numberOfLines={1}>Via Garibaldi 45, Milano</Text>
+                      <Text style={styles.contractOwner} numberOfLines={1}>Inquilino: Anna Bianchi</Text>
                     </View>
                     <View style={styles.contractStatus}>
                       <Text style={styles.contractStatusText}>In Revisione</Text>
@@ -451,9 +448,9 @@ export default function HomeScreen({
                       <MaterialIcons name="description" size={20} color="#2196F3" />
                     </View>
                     <View style={styles.contractInfo}>
-                      <Text style={styles.contractTitle}>Contratto Ufficio</Text>
-                      <Text style={styles.contractProperty}>Via Dante 78, Milano</Text>
-                      <Text style={styles.contractOwner}>Inquilino: Luca Verdi</Text>
+                      <Text style={styles.contractTitle} numberOfLines={1}>Contratto Ufficio</Text>
+                      <Text style={styles.contractProperty} numberOfLines={1}>Via Dante 78, Milano</Text>
+                      <Text style={styles.contractOwner} numberOfLines={1}>Inquilino: Luca Verdi</Text>
                     </View>
                     <View style={styles.contractStatus}>
                       <Text style={styles.contractStatusText}>Firmato</Text>
@@ -706,21 +703,29 @@ const styles = StyleSheet.create({
   },
   contractInfo: {
     flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   contractTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    flexShrink: 1,
+    numberOfLines: 1,
   },
   contractProperty: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
+    flexShrink: 1,
+    numberOfLines: 1,
   },
   contractOwner: {
     fontSize: 12,
     color: '#999',
     marginTop: 2,
+    flexShrink: 1,
+    numberOfLines: 1,
   },
   contractStatus: {
     backgroundColor: '#e8f5e8',
@@ -739,11 +744,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     marginBottom: 16,
+    flex: 1,
   },
   sectionHeaderActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
+    flexShrink: 0,
+    marginLeft: 8,
   },
   signContractButton: {
     flexDirection: 'row',
@@ -775,11 +783,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+    flex: 1,
+    flexShrink: 1,
   },
   sectionLink: {
     fontSize: 16,
     color: '#2196F3',
     fontWeight: '500',
+    flexShrink: 1,
+    numberOfLines: 1,
   },
   emptyState: {
     alignItems: 'center',
@@ -846,5 +858,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginTop: 2,
+  },
+  blueHighlightCard: {
+    backgroundColor: '#E3F2FD',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196F3',
+    shadowColor: '#2196F3',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  blueHighlightIcon: {
+    backgroundColor: '#2196F3',
   },
 });

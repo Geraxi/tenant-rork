@@ -20,10 +20,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface SettingsScreenProps {
   onNavigateBack: () => void;
   onLogout: () => void;
+  onEditProfile: () => void;
+  onChangePassword: () => void;
+  onManageEmail: () => void;
+  onVerifyIdentity: () => void;
+  onOpenHelpCenter: () => void;
 }
 
-export default function SettingsScreen({ onNavigateBack, onLogout }: SettingsScreenProps) {
-  const { user, signOut } = useSupabaseAuth();
+export default function SettingsScreen({
+  onNavigateBack,
+  onLogout,
+  onEditProfile,
+  onChangePassword,
+  onManageEmail,
+  onVerifyIdentity,
+  onOpenHelpCenter,
+}: SettingsScreenProps) {
+  const { user } = useSupabaseAuth();
   const [settings, setSettings] = useState({
     notifications: true,
     darkMode: false,
@@ -285,7 +298,10 @@ export default function SettingsScreen({ onNavigateBack, onLogout }: SettingsScr
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.contentScroll}
+        contentContainerStyle={styles.contentScrollContent}
+      >
         {/* Account Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
@@ -294,21 +310,45 @@ export default function SettingsScreen({ onNavigateBack, onLogout }: SettingsScr
             icon="person"
             title="Modifica Profilo"
             subtitle="Aggiorna le tue informazioni"
-            onPress={() => Alert.alert('Info', 'Funzionalità in arrivo')}
+            onPress={onEditProfile}
           />
           
           <SettingItem
             icon="lock"
             title="Cambia Password"
             subtitle="Aggiorna la tua password"
-            onPress={() => Alert.alert('Info', 'Funzionalità in arrivo')}
+            onPress={onChangePassword}
           />
           
           <SettingItem
             icon="email"
             title="Gestisci Email"
             subtitle="Modifica indirizzo email"
-            onPress={() => Alert.alert('Info', 'Funzionalità in arrivo')}
+            onPress={onManageEmail}
+          />
+
+          <SettingItem
+            icon="verified-user"
+            title="Verifica Identità"
+            subtitle="Carica documento e selfie"
+            onPress={() => {
+              if (!user?.id) {
+                Alert.alert('Errore', 'Nessun utente collegato');
+                return;
+              }
+
+              if (user.verificato) {
+                Alert.alert('Identità Verificata', 'La tua identità è già stata verificata.');
+                return;
+              }
+
+              if (user.verification_pending) {
+                Alert.alert('Verifica in corso', 'Abbiamo già ricevuto i tuoi documenti. Riceverai una notifica quando la verifica sarà completata.');
+                return;
+              }
+
+              onVerifyIdentity();
+            }}
           />
         </View>
 
@@ -442,7 +482,7 @@ export default function SettingsScreen({ onNavigateBack, onLogout }: SettingsScr
             icon="help"
             title="Centro Assistenza"
             subtitle="Domande frequenti e guide"
-            onPress={() => Alert.alert('Info', 'Centro assistenza in arrivo')}
+            onPress={onOpenHelpCenter}
           />
           
           <SettingItem
@@ -549,8 +589,11 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 40,
   },
-  scrollView: {
+  contentScroll: {
     flex: 1,
+  },
+  contentScrollContent: {
+    paddingBottom: 32,
   },
   section: {
     backgroundColor: '#fff',

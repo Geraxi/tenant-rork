@@ -1,75 +1,76 @@
 {
   "expo": {
-    "name": "Tenant",
-    "slug": "tenant",
+    "name": "MyTenant",
+    "slug": "mytenant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "userInterfaceStyle": "light",
     "scheme": "tenant",
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#007AFF"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.umbertogeraci.tenant",
-      "buildNumber": "1.0.0",
+      "bundleIdentifier": "com.mytenant.tenantapp",
+      "buildNumber": "1",
+      "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Tenant uses your camera to upload property photos",
-        "NSLocationWhenInUseUsageDescription": "Tenant uses your location to find nearby listings",
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload profile pictures and property photos.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSCameraUsageDescription": "Questa app richiede l'accesso alla fotocamera per scansionare documenti e caricare foto profilo.",
+        "NSFaceIDUsageDescription": "Face ID viene utilizzato per l'accesso sicuro.",
+        "NSPhotoLibraryUsageDescription": "La libreria foto è necessaria per caricare immagini dell'immobile.",
+        "NSUserTrackingUsageDescription": "I dati vengono utilizzati per migliorare l'esperienza utente."
+      },
+      "associatedDomains": [],
+      "usesAppleSignIn": false,
+      "config": {
+        "usesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": ["Default"],
+        "com.apple.developer.in-app-payments": ["merchant.com.mytenant.tenantapp"]
       }
     },
     "android": {
-      "package": "com.umbertogeraci.tenant",
-      "versionCode": 1,
+      "package": "com.mytenant.tenantapp",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.RECORD_AUDIO"
-      ]
+      }
     },
     "web": {
       "bundler": "metro",
-      "output": "single",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-font",
-      "expo-web-browser",
-      "expo-mail-composer",
       [
-        "expo-image-picker",
+        "expo-camera",
         {
-          "photosPermission": "The app accesses your photos to let you share them.",
-          "cameraPermission": "The app accesses your camera to let you take photos."
+          "cameraPermission": "Questa app richiede l'accesso alla fotocamera per scansionare bollette e codici QR."
         }
       ],
       [
-        "@react-native-google-signin/google-signin",
+        "@stripe/stripe-react-native",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.YOUR_WEB_CLIENT_ID"
+          "merchantIdentifier": "merchant.com.mytenant.tenantapp",
+          "enableGooglePay": false
         }
-      ],
-      "expo-apple-authentication"
+      ]
     ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
     "extra": {
-      "env": "production",
       "eas": {
-        "projectId": "0d14fc7b-5ff6-43f9-baa0-1b14500757cc"
+        "projectId": "your-project-id"
       }
     }
   }

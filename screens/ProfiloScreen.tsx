@@ -20,6 +20,8 @@ import { FadeIn, ScaleIn, GradientCard, Shimmer } from '../components/AnimatedCo
 import RoleSwitchModal from '../components/RoleSwitchModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '../src/utils/logger';
+
 const { width } = Dimensions.get('window');
 
 interface ProfiloScreenProps {
@@ -50,6 +52,16 @@ export default function ProfiloScreen({
   useEffect(() => {
     loadSettings();
   }, []);
+
+  // Debug user data changes
+  useEffect(() => {
+    logger.debug('ProfiloScreen - User data changed:', {
+      hasUser: !!user,
+      userFoto: user?.foto,
+      userName: user?.nome,
+      userEmail: user?.email
+    });
+  }, [user]);
 
   const loadSettings = async () => {
     try {
@@ -146,7 +158,7 @@ export default function ProfiloScreen({
   const handleRoleSwitch = async (newRole: 'tenant' | 'landlord') => {
     try {
       setLoading(true);
-      console.log('🔄 ProfiloScreen - Calling App handleRoleSwitch with:', newRole);
+      logger.debug('🔄 ProfiloScreen - Calling App handleRoleSwitch with:', newRole);
       
       if (onRoleSwitch) {
         onRoleSwitch(newRole);
@@ -188,11 +200,7 @@ export default function ProfiloScreen({
         [{ text: 'OK' }]
       );
     } else {
-      Alert.alert(
-        'Info',
-        'Verifica identità in arrivo',
-        [{ text: 'OK', onPress: onNavigateToVerification }]
-      );
+      onNavigateToVerification();
     }
   };
 
@@ -238,7 +246,7 @@ export default function ProfiloScreen({
     } else {
       return {
         status: 'not_started',
-        text: 'Verifica identità in arrivo',
+        text: 'Verifica la tua identità',
         color: '#2196F3',
         icon: 'info',
       };
@@ -269,6 +277,7 @@ export default function ProfiloScreen({
             <ScaleIn delay={600}>
               <View style={styles.avatarContainer}>
                 <Image
+                  key={user?.foto || 'default'}
                   source={
                     user?.foto 
                       ? { uri: user.foto }

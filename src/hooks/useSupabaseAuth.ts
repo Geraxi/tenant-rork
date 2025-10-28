@@ -4,6 +4,8 @@ import { Utente } from '../types';
 import { Session } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logger } from '../utils/logger';
+
 export const useSupabaseAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<Utente | null>(null);
@@ -18,7 +20,7 @@ export const useSupabaseAuth = () => {
     loadCurrentUserFromStorage().then((loadedUser) => {
       if (loadedUser) {
         // User was loaded from storage, we're done
-        console.log('✅ User loaded from storage, skipping session check');
+        logger.debug('✅ User loaded from storage, skipping session check');
         return;
       }
       
@@ -36,7 +38,7 @@ export const useSupabaseAuth = () => {
     // Listen for auth changes - disabled for local storage auth
     // const { data: { subscription } } = supabase.auth.onAuthStateChange(
     //   async (event, session) => {
-    //     console.log('Auth state change:', { event, hasSession: !!session, isAppleSignIn, currentUser: !!user });
+    //     logger.debug('Auth state change:', { event, hasSession: !!session, isAppleSignIn, currentUser: !!user });
     //     setSession(session);
     //     if (session?.user) {
     //       await fetchUserProfile(session.user.id, session.user.email);
@@ -45,14 +47,14 @@ export const useSupabaseAuth = () => {
     //       // Also check if we have a user in local storage before resetting
     //       const hasLocalUser = await checkIfUserExists('any@email.com'); // This will check if any users exist
     //       if (!hasLocalUser) {
-    //         console.log('Resetting user state (no local users found)');
+    //         logger.debug('Resetting user state (no local users found)');
     //         setUser(null);
     //       } else {
-    //         console.log('Keeping user state (local users exist)');
+    //         logger.debug('Keeping user state (local users exist)');
     //       }
     //       setLoading(false);
     //     } else {
-    //       console.log('Skipping user reset (Apple Sign In in progress, initial session, or sign out)');
+    //       logger.debug('Skipping user reset (Apple Sign In in progress, initial session, or sign out)');
     //     }
     //   }
     // );
@@ -63,7 +65,7 @@ export const useSupabaseAuth = () => {
   // Debug user state changes
   useEffect(() => {
     const userRole = user?.userType || user?.ruolo;
-    console.log('useSupabaseAuth - User state changed:', { 
+    logger.debug('useSupabaseAuth - User state changed:', { 
       user: !!user, 
       userData: user,
       userType: user?.userType,
@@ -77,7 +79,7 @@ export const useSupabaseAuth = () => {
     
     // Force update the role in the user object if it's missing
     if (user && user.userType && !user.ruolo) {
-      console.log('🔧 Fixing user role - adding ruolo field');
+      logger.debug('🔧 Fixing user role - adding ruolo field');
       const updatedUser = { ...user, ruolo: user.userType };
       setUser(updatedUser);
       // Also save to storage
@@ -86,7 +88,7 @@ export const useSupabaseAuth = () => {
     
     // Also ensure userType is set if only ruolo exists
     if (user && user.ruolo && !user.userType) {
-      console.log('🔧 Fixing user type - adding userType field');
+      logger.debug('🔧 Fixing user type - adding userType field');
       const updatedUser = { 
         ...user, 
         userType: user.ruolo === 'landlord' ? 'homeowner' : user.ruolo 
@@ -100,7 +102,7 @@ export const useSupabaseAuth = () => {
   const fetchUserProfile = async (userId: string, userEmail?: string) => {
     try {
       // Don't use stored role preference here - use default tenant role
-      console.log('🔍 fetchUserProfile called - not using stored role preference');
+      logger.debug('🔍 fetchUserProfile called - not using stored role preference');
 
       // Try to fetch from utenti table, but handle case when it doesn't exist
       const { data, error } = await supabase
@@ -110,7 +112,7 @@ export const useSupabaseAuth = () => {
         .single();
 
       if (error) {
-        console.log('utenti table not found, creating mock user profile');
+        logger.debug('utenti table not found, creating mock user profile');
         // Create a mock user profile for now - use tenant as default
         const email = userEmail || session?.user?.email || '';
         const mockUser: Utente = {
@@ -128,7 +130,7 @@ export const useSupabaseAuth = () => {
       }
 
       // Use database role, don't override with stored preference
-      console.log('🔍 Using database role:', data.ruolo);
+      logger.debug('🔍 Using database role:', data.ruolo);
       setUser(data);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -171,7 +173,7 @@ export const useSupabaseAuth = () => {
         return { success: false, error: 'Il nome deve essere di almeno 2 caratteri' };
       }
       
-      console.log('Attempting to sign up with:', { email: email.trim().toLowerCase(), nome, ruolo });
+      logger.debug('Attempting to sign up with:', { email: email.trim().toLowerCase(), nome, ruolo });
       
       // Check if user already exists
       const existingUser = await checkIfUserExists(email.trim().toLowerCase());
@@ -185,6 +187,7 @@ export const useSupabaseAuth = () => {
         ruolo,
         nome,
         email: email.trim().toLowerCase(),
+        password,
         verificato: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -193,11 +196,9 @@ export const useSupabaseAuth = () => {
       // Save user to local storage
       await saveRegularUser(newUser);
       
-      // Set user and sign them in immediately
-      setUser(newUser);
-      // Save current user to storage for persistence
-      await AsyncStorage.setItem('current_user', JSON.stringify(newUser));
-      console.log('New user created and signed in:', newUser);
+      // Persist user session
+      await persistUserData(newUser);
+      logger.debug('New user created and signed in:', newUser);
       
       return { success: true, user: newUser };
     } catch (error: any) {
@@ -214,7 +215,7 @@ export const useSupabaseAuth = () => {
       
       // Clear any stored role preference to use the user's actual role
       await AsyncStorage.removeItem('user_role_preference');
-      console.log('🔍 Cleared stored role preference');
+      logger.debug('🔍 Cleared stored role preference');
       
       // Validate input
       if (!email || !password) {
@@ -229,32 +230,39 @@ export const useSupabaseAuth = () => {
         return { success: false, error: 'La password deve essere di almeno 6 caratteri' };
       }
       
-      console.log('Attempting to sign in with:', { email: email.trim().toLowerCase() });
+      logger.debug('Attempting to sign in with:', { email: email.trim().toLowerCase() });
       
       // First, try to find user in our local storage
       const existingUser = await checkIfUserExists(email.trim().toLowerCase());
-      console.log('Checking for existing user:', email.trim().toLowerCase());
-      console.log('Found user:', existingUser);
+      logger.debug('Checking for existing user:', email.trim().toLowerCase());
+      logger.debug('Found user:', existingUser);
       
       if (existingUser) {
-        console.log('Found existing user in local storage:', existingUser);
-        console.log('🔍 User role from storage:', existingUser.ruolo);
-        console.log('🔍 User role type:', typeof existingUser.ruolo);
-        console.log('🔍 User role === "tenant":', existingUser.ruolo === 'tenant');
-        console.log('🔍 User role === "landlord":', existingUser.ruolo === 'landlord');
+        logger.debug('Found existing user in local storage:', existingUser);
+        logger.debug('🔍 User role from storage:', existingUser.ruolo);
+        logger.debug('🔍 User role type:', typeof existingUser.ruolo);
+        logger.debug('🔍 User role === "tenant":', existingUser.ruolo === 'tenant');
+        logger.debug('🔍 User role === "landlord":', existingUser.ruolo === 'landlord');
         
         // Use the user's actual role from storage, don't override with stored preference
-        console.log('🔍 Using user role from storage:', existingUser.ruolo);
-        
-        setUser(existingUser);
-        // Save current user to storage for persistence
-        await AsyncStorage.setItem('current_user', JSON.stringify(existingUser));
+        logger.debug('🔍 Using user role from storage:', existingUser.ruolo);
+
+        if (existingUser.password && existingUser.password !== password) {
+          setLoading(false);
+          return { success: false, error: 'Password non corretta' };
+        }
+
+        const userWithPassword = existingUser.password
+          ? existingUser
+          : { ...existingUser, password };
+
+        await persistUserData(userWithPassword);
         setLoading(false);
-        return { success: true, user: existingUser };
+        return { success: true, user: userWithPassword };
       }
       
       // If not found locally, return error (user needs to sign up first)
-      console.log('No existing user found, need to sign up first');
+      logger.debug('No existing user found, need to sign up first');
       return { success: false, error: 'Utente non trovato. Crea un account prima di accedere.' };
     } catch (error: any) {
       console.error('Signin error:', error);
@@ -284,7 +292,7 @@ export const useSupabaseAuth = () => {
       await AsyncStorage.removeItem('tenant_onboarding_completed');
       await AsyncStorage.removeItem('landlord_onboarding_completed');
       
-      console.log('User logged out successfully');
+      logger.debug('User logged out successfully');
     } catch (error) {
       console.error('Signout error:', error);
       throw error; // Re-throw to handle in calling function
@@ -292,6 +300,28 @@ export const useSupabaseAuth = () => {
       setLoading(false);
     }
   };
+
+  async function updateUserInStorageList(key: string, updatedUser: Utente, previousEmail?: string) {
+    try {
+      const stored = await AsyncStorage.getItem(key);
+      if (!stored) return;
+      const users = JSON.parse(stored);
+      const index = users.findIndex((u: any) => u.id === updatedUser.id || u.email === previousEmail || u.email === updatedUser.email);
+      if (index >= 0) {
+        users[index] = { ...users[index], ...updatedUser };
+        await AsyncStorage.setItem(key, JSON.stringify(users));
+      }
+    } catch (error) {
+      console.error(`Error updating ${key}:`, error);
+    }
+  }
+
+  async function persistUserData(updatedUser: Utente, previousEmail?: string) {
+    setUser(updatedUser);
+    await AsyncStorage.setItem('current_user', JSON.stringify(updatedUser));
+    await updateUserInStorageList('regular_users', updatedUser, previousEmail);
+    await updateUserInStorageList('apple_users', updatedUser, previousEmail);
+  }
 
   const updateProfile = async (updates: Partial<Utente>) => {
     try {
@@ -306,22 +336,69 @@ export const useSupabaseAuth = () => {
 
         if (error) throw error;
       } catch (dbError) {
-        console.log('Could not update user profile in database, table may not exist');
+        logger.debug('Could not update user profile in database, table may not exist');
       }
 
       // Update local state
       const updatedUser = user ? { ...user, ...updates } : null;
-      setUser(updatedUser);
       
-      // Save updated user to AsyncStorage for persistence
       if (updatedUser) {
-        await AsyncStorage.setItem('current_user', JSON.stringify(updatedUser));
-        console.log('✅ Profile updated and saved to storage:', updatedUser);
+        await persistUserData(updatedUser, user.email);
+        logger.debug('✅ Profile updated and saved to storage:', updatedUser);
       }
       
       return { success: true };
     } catch (error: any) {
       console.error('Update profile error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      if (!user) {
+        return { success: false, error: 'Nessun utente collegato' };
+      }
+
+      if (newPassword.length < 6) {
+        return { success: false, error: 'La nuova password deve avere almeno 6 caratteri' };
+      }
+
+      const storedUser = await checkIfUserExists(user.email);
+      if (storedUser?.password && storedUser.password !== currentPassword) {
+        return { success: false, error: 'La password attuale non è corretta' };
+      }
+
+      const updatedUser = { ...user, password: newPassword };
+      await persistUserData(updatedUser, user.email);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateEmailAddress = async (newEmail: string) => {
+    try {
+      if (!user) {
+        return { success: false, error: 'Nessun utente collegato' };
+      }
+
+      const formattedEmail = newEmail.trim().toLowerCase();
+      if (!formattedEmail || !formattedEmail.includes('@')) {
+        return { success: false, error: 'Inserisci un indirizzo email valido' };
+      }
+
+      const existing = await checkIfUserExists(formattedEmail);
+      if (existing && existing.id !== user.id) {
+        return { success: false, error: 'Questa email è già registrata' };
+      }
+
+      const updatedUser = { ...user, email: formattedEmail };
+      await persistUserData(updatedUser, user.email);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Update email error:', error);
       return { success: false, error: error.message };
     }
   };
@@ -339,7 +416,7 @@ export const useSupabaseAuth = () => {
       
       // Save updated user to AsyncStorage for persistence
       await AsyncStorage.setItem('current_user', JSON.stringify(updatedUser));
-      console.log('✅ Profile photo updated and saved to storage');
+      logger.debug('✅ Profile photo updated and saved to storage');
 
       // Try to update in database
       try {
@@ -348,7 +425,7 @@ export const useSupabaseAuth = () => {
           .update({ foto: photoUrl })
           .eq('id', user.id);
       } catch (dbError) {
-        console.log('Could not update photo in database, table may not exist');
+        logger.debug('Could not update photo in database, table may not exist');
       }
 
       return { success: true, url: photoUrl };
@@ -360,21 +437,35 @@ export const useSupabaseAuth = () => {
 
   const switchRole = async (newRole: 'tenant' | 'landlord') => {
     try {
-      console.log('🔄 switchRole called with newRole:', newRole);
+      logger.debug('🔄 switchRole called with newRole:', newRole);
       
-      if (!user) {
-        console.log('❌ No user logged in');
+      // Get current user from storage as fallback
+      let currentUser = user;
+      if (!currentUser) {
+        try {
+          const storedUser = await AsyncStorage.getItem('current_user');
+          if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+            logger.debug('🔄 Retrieved user from storage for role switch');
+          }
+        } catch (error) {
+          logger.debug('Could not retrieve user from storage');
+        }
+      }
+      
+      if (!currentUser) {
+        logger.debug('❌ No user logged in');
         return { success: false, error: 'No user logged in' };
       }
 
-      console.log('🔄 Switching role from', user.ruolo, 'to', newRole);
+      logger.debug('🔄 Switching role from', currentUser.ruolo, 'to', newRole);
 
       // Check if this is the first time switching to this role
-      const isFirstTimeSwitch = !user[`${newRole}_onboarding_completed`];
+      const isFirstTimeSwitch = !currentUser[`${newRole}_onboarding_completed`];
 
       // Update local user state immediately
       const updatedUser = { 
-        ...user, 
+        ...currentUser, 
         ruolo: newRole,
         userType: newRole === 'tenant' ? 'tenant' as const : 'homeowner' as const
       };
@@ -404,16 +495,16 @@ export const useSupabaseAuth = () => {
         setUser(updatedUser);
       }, 100);
       
-      console.log('✅ Role switched successfully to:', newRole);
+      logger.debug('✅ Role switched successfully to:', newRole);
 
       // Try to update in database, but don't fail if table doesn't exist
       try {
         await supabase
           .from('utenti')
           .update({ ruolo: newRole })
-          .eq('id', user.id);
+          .eq('id', currentUser.id);
       } catch (dbError) {
-        console.log('Could not update role in database, table may not exist');
+        logger.debug('Could not update role in database, table may not exist');
       }
 
       return { 
@@ -431,7 +522,7 @@ export const useSupabaseAuth = () => {
   const getStoredRolePreference = async (): Promise<'tenant' | 'landlord'> => {
     try {
       const storedRole = await AsyncStorage.getItem('user_role_preference');
-      console.log('🔍 Stored role preference:', storedRole);
+      logger.debug('🔍 Stored role preference:', storedRole);
       return (storedRole as 'tenant' | 'landlord') || 'tenant';
     } catch (error) {
       console.error('Error getting stored role preference:', error);
@@ -450,7 +541,7 @@ export const useSupabaseAuth = () => {
       // Store in AsyncStorage
       await AsyncStorage.setItem(onboardingKey, 'true');
       await AsyncStorage.setItem('current_user', JSON.stringify(updatedUser));
-      console.log('✅ Onboarding completed and user saved to storage');
+      logger.debug('✅ Onboarding completed and user saved to storage');
 
       // Try to update in database, but don't fail if table doesn't exist
       try {
@@ -459,10 +550,10 @@ export const useSupabaseAuth = () => {
           .update({ [onboardingKey]: true })
           .eq('id', user.id);
       } catch (dbError) {
-        console.log('Could not update onboarding status in database, table may not exist');
+        logger.debug('Could not update onboarding status in database, table may not exist');
       }
 
-      console.log(`${role} onboarding completed`);
+      logger.debug(`${role} onboarding completed`);
       return { success: true, user: updatedUser };
     } catch (error: any) {
       console.error('Complete onboarding error:', error);
@@ -472,13 +563,13 @@ export const useSupabaseAuth = () => {
 
   const checkExistingUsers = async () => {
     try {
-      console.log('Checking existing users...');
+      logger.debug('Checking existing users...');
       // Note: This requires admin privileges, so it might not work in client-side code
       // For now, we'll just log that we're checking
-      console.log('Note: Checking users requires admin access');
+      logger.debug('Note: Checking users requires admin access');
       return [];
     } catch (error) {
-      console.log('Error checking users:', error);
+      logger.debug('Error checking users:', error);
       return [];
     }
   };
@@ -487,14 +578,14 @@ export const useSupabaseAuth = () => {
     try {
       setLoading(true);
       setIsAppleSignIn(true);
-      console.log('Signing in with Apple:', { identityToken, user });
+      logger.debug('Signing in with Apple:', { identityToken, user });
       
       // Check if user already exists in our system
       const existingUser = await checkIfUserExists(user.email || `${user.id}@privaterelay.appleid.com`);
       
       if (existingUser) {
         // User exists, sign them in
-        console.log('Existing Apple user found:', existingUser);
+        logger.debug('Existing Apple user found:', existingUser);
         setUser(existingUser);
         // Save current user to storage for persistence
         await AsyncStorage.setItem('current_user', JSON.stringify(existingUser));
@@ -508,7 +599,7 @@ export const useSupabaseAuth = () => {
         return { success: true, user: existingUser, isNewUser: false };
       } else {
         // New user, create account and trigger onboarding
-        console.log('New Apple user, creating account...');
+        logger.debug('New Apple user, creating account...');
         const newUser: Utente = {
           id: user.id,
           ruolo: 'tenant', // Default role
@@ -528,7 +619,7 @@ export const useSupabaseAuth = () => {
         setUser(newUser);
         // Save current user to storage for persistence
         await AsyncStorage.setItem('current_user', JSON.stringify(newUser));
-        console.log('Apple user created:', newUser);
+        logger.debug('Apple user created:', newUser);
         setLoading(false);
         
         // Reset the Apple Sign In flag after a delay to ensure state is properly set
@@ -583,7 +674,7 @@ export const useSupabaseAuth = () => {
       }
       
       await AsyncStorage.setItem('apple_users', JSON.stringify(users));
-      console.log('Apple user saved to AsyncStorage');
+      logger.debug('Apple user saved to AsyncStorage');
     } catch (error) {
       console.error('Error saving Apple user:', error);
     }
@@ -603,7 +694,7 @@ export const useSupabaseAuth = () => {
       }
       
       await AsyncStorage.setItem('regular_users', JSON.stringify(users));
-      console.log('Regular user saved to AsyncStorage');
+      logger.debug('Regular user saved to AsyncStorage');
     } catch (error) {
       console.error('Error saving regular user:', error);
     }
@@ -611,36 +702,36 @@ export const useSupabaseAuth = () => {
 
   const loadCurrentUserFromStorage = async () => {
     try {
-      console.log('🔄 Loading current user from storage...');
+      logger.debug('🔄 Loading current user from storage...');
       const currentUser = await AsyncStorage.getItem('current_user');
       if (currentUser) {
         const userData = JSON.parse(currentUser);
-        console.log('🔄 Found user in storage:', userData);
-        console.log('🔄 User userType from storage:', userData.userType);
-        console.log('🔄 User ruolo from storage:', userData.ruolo);
-        console.log('🔄 Final role (userType || ruolo):', userData.userType || userData.ruolo);
-        console.log('🔄 User name from storage:', userData.name || userData.nome);
+        logger.debug('🔄 Found user in storage:', userData);
+        logger.debug('🔄 User userType from storage:', userData.userType);
+        logger.debug('🔄 User ruolo from storage:', userData.ruolo);
+        logger.debug('🔄 Final role (userType || ruolo):', userData.userType || userData.ruolo);
+        logger.debug('🔄 User name from storage:', userData.name || userData.nome);
         
         // ALWAYS ensure both fields are set
         let needsUpdate = false;
         
         // Fix the role if userType exists but ruolo doesn't
         if (userData.userType && !userData.ruolo) {
-          console.log('🔧 Fixing stored user role - adding ruolo field');
+          logger.debug('🔧 Fixing stored user role - adding ruolo field');
           userData.ruolo = userData.userType;
           needsUpdate = true;
         }
         
         // Also ensure userType is set if only ruolo exists
         if (userData.ruolo && !userData.userType) {
-          console.log('🔧 Fixing stored user type - adding userType field');
+          logger.debug('🔧 Fixing stored user type - adding userType field');
           userData.userType = userData.ruolo === 'landlord' ? 'homeowner' : userData.ruolo;
           needsUpdate = true;
         }
         
         // If neither field exists, set both to tenant
         if (!userData.userType && !userData.ruolo) {
-          console.log('🔧 No role fields found - setting both to tenant');
+          logger.debug('🔧 No role fields found - setting both to tenant');
           userData.userType = 'tenant';
           userData.ruolo = 'tenant';
           needsUpdate = true;
@@ -649,14 +740,14 @@ export const useSupabaseAuth = () => {
         // Save the fixed user back to storage if needed
         if (needsUpdate) {
           await AsyncStorage.setItem('current_user', JSON.stringify(userData));
-          console.log('🔧 User data updated and saved to storage');
+          logger.debug('🔧 User data updated and saved to storage');
         }
         
         setUser(userData);
         setLoading(false);
         return userData; // Return the user data
       } else {
-        console.log('🔄 No user found in storage');
+        logger.debug('🔄 No user found in storage');
         setLoading(false);
         return null;
       }
@@ -674,7 +765,7 @@ export const useSupabaseAuth = () => {
       if (existingUsers) {
         const users = JSON.parse(existingUsers);
         if (users.length > 0) {
-          console.log('Test users already exist, skipping...');
+          logger.debug('Test users already exist, skipping...');
           return;
         }
       }
@@ -686,6 +777,7 @@ export const useSupabaseAuth = () => {
           ruolo: 'tenant',
           nome: 'Test User',
           email: 'test@example.com',
+          password: 'password123',
           verificato: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -695,6 +787,7 @@ export const useSupabaseAuth = () => {
           ruolo: 'landlord',
           nome: 'Test Landlord',
           email: 'landlord@example.com',
+          password: 'password123',
           verificato: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -702,7 +795,7 @@ export const useSupabaseAuth = () => {
       ];
 
       await AsyncStorage.setItem('regular_users', JSON.stringify(testUsers));
-      console.log('Test users created successfully');
+      logger.debug('Test users created successfully');
     } catch (error) {
       console.error('Error creating test users:', error);
     }
@@ -711,7 +804,7 @@ export const useSupabaseAuth = () => {
   // const signInWithGoogle = async (user: any) => {
   //   try {
   //     setLoading(true);
-  //     console.log('Signing in with Google:', user);
+  //     logger.debug('Signing in with Google:', user);
       
   //     // For now, we'll create a mock user since Supabase Google auth requires backend configuration
   //     const mockUser: Utente = {
@@ -725,7 +818,7 @@ export const useSupabaseAuth = () => {
   //     };
       
   //     setUser(mockUser);
-  //     console.log('Google user created:', mockUser);
+  //     logger.debug('Google user created:', mockUser);
       
   //     return { success: true, user: mockUser };
   //   } catch (error: any) {
@@ -745,6 +838,8 @@ export const useSupabaseAuth = () => {
     signOut,
     updateProfile,
     uploadProfilePhoto,
+    changePassword,
+    updateEmail: updateEmailAddress,
     switchRole,
     completeOnboarding,
     getStoredRolePreference,

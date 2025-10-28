@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../../utils/src/supabaseClient';
+import { supabase } from '../../utils/supabaseClient';
 import { Bolletta, Pagamento, Cashback, FiltroBollette, FiltroPagamenti } from '../types';
+
+import { logger } from '../utils/logger';
 
 export const usePayments = (userId: string) => {
   const [bollette, setBollette] = useState<Bolletta[]>([]);
@@ -54,17 +56,23 @@ export const usePayments = (userId: string) => {
   ];
 
   useEffect(() => {
+    logger.debug('🔍 usePayments - useEffect called with userId:', userId);
     if (userId) {
+      logger.debug('🔍 usePayments - Calling loadData for userId:', userId);
       loadData();
+    } else {
+      logger.debug('🔍 usePayments - No userId provided, skipping loadData');
     }
   }, [userId]);
 
   const loadData = async () => {
     try {
+      logger.debug('🔍 usePayments - loadData called');
       setLoading(true);
       setError(null);
 
       // For now, use mock data
+      logger.debug('🔍 usePayments - Setting mock bollette:', mockBollette);
       setBollette(mockBollette);
       setPagamenti(mockPagamenti);
       setCashback(17.10); // 2% of 1200 + 1% of 85.50
@@ -99,7 +107,7 @@ export const usePayments = (userId: string) => {
           setCashback(cashbackData.amount || 0);
         }
       } catch (dbError) {
-        console.log('Database tables may not exist yet, using mock data');
+        logger.debug('Database tables may not exist yet, using mock data');
       }
     } catch (error) {
       console.error('Error loading payment data:', error);
@@ -136,7 +144,7 @@ export const usePayments = (userId: string) => {
           .update({ stato: 'pagato' })
           .eq('id', billId);
       } catch (dbError) {
-        console.log('Could not save to database, using local state only');
+        logger.debug('Could not save to database, using local state only');
       }
 
       // Update local state
@@ -174,7 +182,7 @@ export const usePayments = (userId: string) => {
           .update({ stato: status })
           .eq('id', billId);
       } catch (dbError) {
-        console.log('Could not update database, using local state only');
+        logger.debug('Could not update database, using local state only');
       }
 
       // Update local state
@@ -292,6 +300,10 @@ export const usePayments = (userId: string) => {
     return cashback;
   };
 
+  const addBill = (newBill: Bolletta) => {
+    setBollette(prev => [newBill, ...prev]);
+  };
+
   return {
     bollette,
     pagamenti,
@@ -308,5 +320,6 @@ export const usePayments = (userId: string) => {
     getOverdueBills,
     getMonthlyStats,
     getTotalCashback,
+    addBill,
   };
 };

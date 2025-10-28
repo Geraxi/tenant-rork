@@ -10,6 +10,8 @@ import { User, Property } from '../types';
 import { MatchingService } from '../src/services/matchingService';
 import { useSupabaseAuth } from '../src/hooks/useSupabaseAuth';
 
+import { logger } from '../src/utils/logger';
+
 interface LandlordSwipeScreenProps {
   onNavigateToMatches: () => void;
   onNavigateToProfile: () => void;
@@ -20,7 +22,9 @@ interface LandlordSwipeScreenProps {
   onRoleSwitch?: (newRole: 'tenant' | 'landlord') => void;
 }
 
-// Mock Data for Tenants
+// PRODUCTION NOTE: Replace with real tenant data from Supabase
+// This mock data is for development/demo only
+// TODO: Connect to Supabase to fetch real tenants
 const MOCK_TENANTS: User[] = [
   {
     id: 'tenant1',
@@ -160,7 +164,9 @@ const MOCK_TENANTS: User[] = [
   },
 ];
 
-// Mock Properties for the landlord
+// PRODUCTION NOTE: Replace with real property data from Supabase
+// This mock data is for development/demo only
+// TODO: Connect to Supabase to fetch real properties
 const MOCK_PROPERTIES: Property[] = [
   {
     id: 'prop1',
@@ -190,11 +196,11 @@ const MOCK_PROPERTIES: Property[] = [
 ];
 
 export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToProfile, onNavigateToPreferences, onNavigateToFilters, onNavigateToOnboarding, onNavigateToDiscover, onRoleSwitch }: LandlordSwipeScreenProps) {
-  console.log('👥 LandlordSwipeScreen - COMPONENT RENDERED!');
-  console.log('👥 LandlordSwipeScreen - Props received:', { onNavigateToMatches: !!onNavigateToMatches, onNavigateToProfile: !!onNavigateToProfile, onRoleSwitch: !!onRoleSwitch });
+  logger.debug('👥 LandlordSwipeScreen - COMPONENT RENDERED!');
+  logger.debug('👥 LandlordSwipeScreen - Props received:', { onNavigateToMatches: !!onNavigateToMatches, onNavigateToProfile: !!onNavigateToProfile, onRoleSwitch: !!onRoleSwitch });
   const { user, switchRole } = useSupabaseAuth();
-  console.log('👥 LandlordSwipeScreen - Component rendered');
-  console.log('👥 LandlordSwipeScreen - User role:', user?.ruolo);
+  logger.debug('👥 LandlordSwipeScreen - Component rendered');
+  logger.debug('👥 LandlordSwipeScreen - User role:', user?.ruolo);
   const [tenants, setTenants] = useState<User[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -204,9 +210,9 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
   const [roleSwitchLoading, setRoleSwitchLoading] = useState(false);
 
   useEffect(() => {
-    console.log('👥 LandlordSwipeScreen - Loading tenants for user:', user?.id);
-    console.log('👥 LandlordSwipeScreen - User role:', user?.ruolo);
-    console.log('👥 LandlordSwipeScreen - Mock tenants:', MOCK_TENANTS);
+    logger.debug('👥 LandlordSwipeScreen - Loading tenants for user:', user?.id);
+    logger.debug('👥 LandlordSwipeScreen - User role:', user?.ruolo);
+    logger.debug('👥 LandlordSwipeScreen - Mock tenants:', MOCK_TENANTS);
     setLoading(true);
     
     // Simulate API call with role-based filtering
@@ -214,7 +220,7 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
       setTenants(MOCK_TENANTS);
       setCurrentIndex(0);
       setLoading(false);
-      console.log('👥 LandlordSwipeScreen - Tenants loaded:', MOCK_TENANTS.length);
+      logger.debug('👥 LandlordSwipeScreen - Tenants loaded:', MOCK_TENANTS.length);
     }, 1000);
   }, [user?.id, user?.ruolo]); // Re-fetch when user or role changes
 
@@ -272,8 +278,8 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
     
     const currentRole = user.userType || user.ruolo;
     const newRole = currentRole === 'tenant' ? 'landlord' : 'tenant';
-    console.log('🔄 LandlordSwipeScreen - Current role:', currentRole);
-    console.log('🔄 LandlordSwipeScreen - Switching to:', newRole);
+    logger.debug('🔄 LandlordSwipeScreen - Current role:', currentRole);
+    logger.debug('🔄 LandlordSwipeScreen - Switching to:', newRole);
     
     if (onRoleSwitch) {
       onRoleSwitch(newRole);
@@ -283,7 +289,7 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
   };
 
   if (loading) {
-    console.log('👥 LandlordSwipeScreen - Showing loading screen');
+    logger.debug('👥 LandlordSwipeScreen - Showing loading screen');
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#2196F3" />
@@ -335,12 +341,12 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
     );
   }
 
-  console.log('👥 LandlordSwipeScreen - RENDERED!');
-  console.log('👥 LandlordSwipeScreen - Current tenant:', tenants[currentIndex]);
-  console.log('👥 LandlordSwipeScreen - Tenants count:', tenants.length);
-  console.log('👥 LandlordSwipeScreen - Current index:', currentIndex);
-  console.log('👥 LandlordSwipeScreen - Loading state:', loading);
-  console.log('👥 LandlordSwipeScreen - About to return main render');
+  logger.debug('👥 LandlordSwipeScreen - RENDERED!');
+  logger.debug('👥 LandlordSwipeScreen - Current tenant:', tenants[currentIndex]);
+  logger.debug('👥 LandlordSwipeScreen - Tenants count:', tenants.length);
+  logger.debug('👥 LandlordSwipeScreen - Current index:', currentIndex);
+  logger.debug('👥 LandlordSwipeScreen - Loading state:', loading);
+  logger.debug('👥 LandlordSwipeScreen - About to return main render');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -361,7 +367,7 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
       </View>
 
       <View style={styles.cardStack}>
-        {console.log('👥 LandlordSwipeScreen - Card stack render:', { 
+        {logger.debug('👥 LandlordSwipeScreen - Card stack render:', { 
           tenantsLength: tenants.length, 
           currentIndex, 
           currentTenant: currentTenant?.name, 
@@ -380,7 +386,7 @@ export default function LandlordSwipeScreen({ onNavigateToMatches, onNavigateToP
         )}
         {currentTenant ? (
           <>
-            {console.log('👥 LandlordSwipeScreen - Rendering current tenant card:', currentTenant.name, 'isPropertyView: false')}
+            {logger.debug('👥 LandlordSwipeScreen - Rendering current tenant card:', currentTenant.name, 'isPropertyView: false')}
             <SwipeCard
               key={currentTenant.id}
               item={currentTenant}

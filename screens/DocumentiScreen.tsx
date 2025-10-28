@@ -375,6 +375,7 @@ export default function DocumentiScreen({ onBack }: DocumentiScreenProps) {
       {/* Documents List */}
       <ScrollView
         style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -456,21 +457,21 @@ export default function DocumentiScreen({ onBack }: DocumentiScreenProps) {
                     style={styles.downloadButton}
                     onPress={() => handleDownload(documento.url, documento.nome_file)}
                   >
-                    <MaterialIcons name="download" size={20} color="#2196F3" />
+                    <MaterialIcons name="download" size={18} color="#2196F3" />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
                     style={styles.editDocumentButton}
                     onPress={() => handleEditDocument(documento)}
                   >
-                    <MaterialIcons name="edit" size={16} color="#2196F3" />
+                    <MaterialIcons name="edit" size={18} color="#2196F3" />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
                     style={styles.deleteDocumentButton}
                     onPress={() => handleDeleteDocument(documento)}
                   >
-                    <MaterialIcons name="delete" size={16} color="#F44336" />
+                    <MaterialIcons name="delete" size={18} color="#F44336" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -554,35 +555,47 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     backgroundColor: '#fff',
-    paddingVertical: 8,
+    paddingVertical: 0,
+    marginBottom: 0,
+    paddingBottom: 0,
   },
   categoryContent: {
     paddingHorizontal: 20,
-    gap: 8,
+    paddingBottom: 0,
+    marginBottom: 0,
   },
   categoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 2,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    paddingVertical: 6,
+    marginRight: 6,
+    borderRadius: 16,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    height: 32,
   },
   categoryButtonActive: {
     backgroundColor: '#2196F3',
+    borderColor: '#2196F3',
   },
   categoryButtonText: {
-    marginLeft: 3,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: '#374151',
-    lineHeight: 18,
+    marginLeft: 4,
   },
   categoryButtonTextActive: {
     color: '#fff',
   },
   scrollView: {
     flex: 1,
+    paddingTop: 0,
+  },
+  scrollContent: {
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   loadingContainer: {
     flex: 1,
@@ -639,7 +652,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    margin: 16,
+    marginHorizontal: 16,
+    marginTop: 0,
     marginBottom: 8,
     padding: 16,
     borderRadius: 12,
@@ -702,7 +716,13 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   downloadButton: {
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 16,
+    minWidth: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   documentActionButtons: {
     flexDirection: 'row',
@@ -710,14 +730,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   editDocumentButton: {
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     backgroundColor: '#E3F2FD',
-    borderRadius: 6,
+    borderRadius: 16,
+    minWidth: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deleteDocumentButton: {
-    padding: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     backgroundColor: '#FFEBEE',
-    borderRadius: 6,
+    borderRadius: 16,
+    minWidth: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,

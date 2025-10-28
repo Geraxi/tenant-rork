@@ -1,6 +1,30 @@
 import { supabase } from './src/supabaseClient';
 import { uploadImageFromGallery, uploadImageFromCamera, UploadResult } from './supabaseUpload';
 
+// Network connectivity check
+const isNetworkAvailable = async (): Promise<boolean> => {
+  try {
+    const response = await fetch('https://www.google.com', { 
+      method: 'HEAD',
+      mode: 'no-cors',
+      cache: 'no-cache'
+    });
+    return true;
+  } catch (error) {
+    console.warn('Network connectivity check failed:', error);
+    return false;
+  }
+};
+
+// Flag to disable Supabase calls when network is consistently failing
+let supabaseDisabled = false;
+
+// Function to reset Supabase disabled flag (useful for testing or when network is restored)
+export const resetSupabaseConnection = () => {
+  supabaseDisabled = false;
+  console.log('Supabase connection reset - will attempt to reconnect');
+};
+
 export interface PropertyData {
   title: string;
   description: string;
@@ -78,21 +102,58 @@ export async function getPropertyById(propertyId: string): Promise<PropertyWithO
 
 // Get user's properties
 export async function getUserProperties(userId: string): Promise<Property[]> {
+  // Reset disabled flag to allow retry
+  supabaseDisabled = false;
+  
+  // If Supabase is disabled due to repeated failures, return empty array immediately
+  if (supabaseDisabled) {
+    return [];
+  }
+
   try {
-    const { data, error } = await supabase
+    // Check network connectivity first
+    const networkAvailable = await isNetworkAvailable();
+    if (!networkAvailable) {
+      console.warn('Network not available, returning empty array');
+      return [];
+    }
+
+    // Add timeout to prevent hanging requests
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 10000);
+    });
+
+    const fetchPromise = supabase
       .from('properties')
       .select('*')
       .eq('owner_id', userId)
       .order('created_at', { ascending: false });
 
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
     if (error) {
-      console.error('Error fetching user properties:', error);
+      // Suppress network errors to prevent console spam
+      if (error.message && error.message.includes('Network request failed')) {
+        console.warn('Network request failed, using fallback data');
+        // Disable Supabase for subsequent calls to prevent repeated failures
+        supabaseDisabled = true;
+      } else {
+        console.error('Error fetching user properties:', error);
+      }
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('Get user properties error:', error);
+    // Suppress network errors to prevent console spam
+    if (error instanceof Error && error.message.includes('Network request failed')) {
+      console.warn('Network request failed, using fallback data');
+      // Disable Supabase for subsequent calls to prevent repeated failures
+      supabaseDisabled = true;
+    } else {
+      console.error('Get user properties error:', error);
+    }
+    // Return empty array on any error to prevent app crashes
     return [];
   }
 }

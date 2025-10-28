@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-type NavScreen = 'home' | 'discover' | 'matches' | 'bollette' | 'immobili' | 'profilo';
+import { logger } from '../src/utils/logger';
+
+type NavScreen = 'home' | 'discover' | 'matches' | 'bollette' | 'immobili' | 'profilo' | 'messages';
 
 interface BottomNavigationProps {
   currentScreen: NavScreen;
@@ -17,29 +19,40 @@ export default function BottomNavigation({
   showContracts,
   userRole = 'tenant'
 }: BottomNavigationProps) {
-  console.log('🔵 BottomNavigation - Rendering with:', { currentScreen, showContracts, userRole });
-  console.log('🔵 BottomNavigation - Component is being rendered!');
-  const navItems: { screen: NavScreen; icon: string; label: string }[] = [
-    { screen: 'home', icon: 'home', label: 'Home' },
-    { 
-      screen: 'discover', 
-      icon: userRole === 'tenant' ? 'search' : 'people', 
-      label: userRole === 'tenant' ? 'Scopri' : 'Inquilini' 
-    },
-    { 
-      screen: 'matches', 
-      icon: 'favorite', 
-      label: 'Match' 
-    },
-    { 
-      screen: 'bollette', 
-      icon: 'receipt', 
-      label: userRole === 'tenant' ? 'Bollette' : 'Entrate' 
-    },
-    // Only show Immobili tab for landlords
-    ...(userRole === 'landlord' ? [{ screen: 'immobili' as NavScreen, icon: 'business', label: 'Immobili' }] : []),
-    { screen: 'profilo', icon: 'person', label: 'Profilo' },
-  ];
+  logger.debug('🔵 BottomNavigation - Rendering with:', { currentScreen, showContracts, userRole });
+  logger.debug('🔵 BottomNavigation - Component is being rendered!');
+  const navItems: { screen: NavScreen; icon: string; label: string }[] = userRole === 'landlord' 
+    ? [
+        { screen: 'home', icon: 'home', label: 'Home' },
+        { screen: 'discover', icon: 'search', label: 'Browse' },
+        { screen: 'matches', icon: 'favorite', label: 'Matches' },
+        { screen: 'messages', icon: 'message', label: 'Messages' },
+        { screen: 'profilo', icon: 'person', label: 'Profile' },
+      ]
+    : [
+        { screen: 'home', icon: 'home', label: 'Home' },
+        { 
+          screen: 'discover', 
+          icon: 'search', 
+          label: 'Scopri' 
+        },
+        { 
+          screen: 'matches', 
+          icon: 'favorite', 
+          label: 'Match' 
+        },
+        { 
+          screen: 'messages', 
+          icon: 'message', 
+          label: 'Messaggi' 
+        },
+        { 
+          screen: 'bollette', 
+          icon: 'receipt', 
+          label: 'Bollette' 
+        },
+        { screen: 'profilo', icon: 'person', label: 'Profilo' },
+      ];
 
   return (
     <View style={styles.container}>
@@ -50,14 +63,14 @@ export default function BottomNavigation({
             key={item.screen}
             style={styles.navItem}
             onPress={() => {
-              console.log('🔘 BottomNavigation - Button pressed:', item.screen);
-              console.log('🔘 BottomNavigation - Calling onNavigate with:', item.screen);
-              console.log('🔘 BottomNavigation - onNavigate function exists:', !!onNavigate);
+              logger.debug('🔘 BottomNavigation - Button pressed:', item.screen);
+              logger.debug('🔘 BottomNavigation - Calling onNavigate with:', item.screen);
+              logger.debug('🔘 BottomNavigation - onNavigate function exists:', !!onNavigate);
               if (onNavigate) {
                 onNavigate(item.screen);
-                console.log('🔘 BottomNavigation - onNavigate called successfully');
+                logger.debug('🔘 BottomNavigation - onNavigate called successfully');
               } else {
-                console.log('🔘 BottomNavigation - onNavigate is null/undefined');
+                logger.debug('🔘 BottomNavigation - onNavigate is null/undefined');
               }
             }}
           >

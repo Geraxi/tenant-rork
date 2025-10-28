@@ -179,6 +179,7 @@ export default function EditProfileScreen({ onNavigateBack }: EditProfileScreenP
         <View style={styles.photoSection}>
           <View style={styles.avatarContainer}>
             <Image
+              key={user?.foto || 'default'}
               source={
                 user?.foto 
                   ? { uri: user.foto }

@@ -3,25 +3,31 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler'; // Temporarily disabled
 import { View, StyleSheet, Alert, AppState, ActivityIndicator, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import { BackHandler } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import 'react-native-reanimated'; // Temporarily disabled
+import 'react-native-reanimated';
 import './global.css';
 import { useSupabaseAuth } from './src/hooks/useSupabaseAuth';
 import { Utente } from './src/types';
+import { initializeStripe } from './src/config/stripe';
+import { logger } from './src/utils/logger';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
 import OnboardingFlowScreen from './screens/OnboardingFlowScreen';
 import RoleSwitchOnboardingScreen from './screens/RoleSwitchOnboardingScreen';
 import HomeScreen from './screens/HomeScreen';
+import LandlordHomeScreen from './screens/LandlordHomeScreen';
 import PropertySwipeScreen from './screens/PropertySwipeScreen';
 
 // Test if PropertySwipeScreen is imported correctly
 console.log('🔍 App.tsx - PropertySwipeScreen imported:', typeof PropertySwipeScreen);
 import LandlordSwipeScreen from './screens/LandlordSwipeScreen';
 import MatchesScreen from './screens/MatchesScreen';
+import MessagesScreen from './screens/MessagesScreen';
 import LeMieBolletteScreen from './screens/LeMieBolletteScreen';
 import PagamentoScreen from './screens/PagamentoScreen';
 import GestioneImmobiliScreen from './screens/GestioneImmobiliScreen';
@@ -302,6 +308,9 @@ export default function App() {
       case 'matches':
         setCurrentScreen('matches');
         break;
+      case 'messages':
+        setCurrentScreen('messages');
+        break;
       case 'bollette':
         setCurrentScreen('bollette');
         break;
@@ -325,6 +334,8 @@ export default function App() {
         return 'discover';
       case 'matches':
         return 'matches';
+      case 'messages':
+        return 'messages';
       case 'bollette':
       case 'pagamento':
         return 'bollette';
@@ -399,11 +410,21 @@ export default function App() {
         return (
           <LoginScreen
             onLoginSuccess={async () => {
-              console.log('Login success - navigating to home');
+              console.log('Login success - checking onboarding status');
               setForceNavbar(true);
+              // Check if user has completed onboarding
+              const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+              const hasCompleted = onboardingCompleted === 'true';
+              
               // Small delay to ensure user state is set
               setTimeout(() => {
-                setCurrentScreen('home');
+                if (hasCompleted) {
+                  console.log('Onboarding completed, navigating to home');
+                  setCurrentScreen('home');
+                } else {
+                  console.log('Onboarding not completed, navigating to onboarding');
+                  setCurrentScreen('onboarding');
+                }
               }, 100);
             }}
             onNavigateToSignup={() => Alert.alert('Info', 'Registrazione sarà disponibile presto')}
@@ -452,12 +473,22 @@ export default function App() {
           )
         ) : (
           <LoginScreen
-            onLoginSuccess={() => {
-              console.log('Login success - navigating to home');
+            onLoginSuccess={async () => {
+              console.log('Login success - checking onboarding status');
               setForceNavbar(true);
+              // Check if user has completed onboarding
+              const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+              const hasCompleted = onboardingCompleted === 'true';
+              
               // Small delay to ensure user state is set
               setTimeout(() => {
-                setCurrentScreen('home');
+                if (hasCompleted) {
+                  console.log('Onboarding completed, navigating to home');
+                  setCurrentScreen('home');
+                } else {
+                  console.log('Onboarding not completed, navigating to onboarding');
+                  setCurrentScreen('onboarding');
+                }
               }, 100);
             }}
             onNavigateToSignup={() => Alert.alert('Info', 'Registrazione sarà disponibile presto')}
@@ -477,23 +508,45 @@ export default function App() {
         ) : null;
 
       case 'home':
-        return (
-          <View style={{ flex: 1 }}>
-            <HomeScreen
-              onNavigateToBills={() => setCurrentScreen('bollette')}
-              onNavigateToPayments={() => setCurrentScreen('bollette')}
-              onNavigateToProfile={() => setCurrentScreen('profilo')}
-              onNavigateToNotifications={() => {
-                // TODO: Implement notifications screen
-                Alert.alert('Info', 'Schermata notifiche in arrivo');
-              }}
-              onNavigateToHelp={() => setCurrentScreen('help')}
-              onNavigateToContracts={() => setCurrentScreen('documenti')}
-              onNavigateToContractSignature={() => setCurrentScreen('contractSignature')}
-            />
-            
-          </View>
-        );
+        // Use LandlordHomeScreen for landlords, HomeScreen for tenants
+        if (currentRole === 'landlord' || currentRole === 'homeowner') {
+          return (
+            <View style={{ flex: 1 }}>
+              <LandlordHomeScreen
+                onNavigateToBills={() => setCurrentScreen('bollette')}
+                onNavigateToPayments={() => setCurrentScreen('bollette')}
+                onNavigateToProfile={() => setCurrentScreen('profilo')}
+                onNavigateToNotifications={() => {
+                  // TODO: Implement notifications screen
+                  Alert.alert('Info', 'Schermata notifiche in arrivo');
+                }}
+                onNavigateToHelp={() => setCurrentScreen('help')}
+                onNavigateToContracts={() => setCurrentScreen('documenti')}
+                onNavigateToContractSignature={() => setCurrentScreen('contractSignature')}
+                onNavigateToProperties={() => setCurrentScreen('properties')}
+                onNavigateToTenants={() => setCurrentScreen('tenants')}
+                onNavigateToIncome={() => setCurrentScreen('income')}
+              />
+            </View>
+          );
+        } else {
+          return (
+            <View style={{ flex: 1 }}>
+              <HomeScreen
+                onNavigateToBills={() => setCurrentScreen('bollette')}
+                onNavigateToPayments={() => setCurrentScreen('bollette')}
+                onNavigateToProfile={() => setCurrentScreen('profilo')}
+                onNavigateToNotifications={() => {
+                  // TODO: Implement notifications screen
+                  Alert.alert('Info', 'Schermata notifiche in arrivo');
+                }}
+                onNavigateToHelp={() => setCurrentScreen('help')}
+                onNavigateToContracts={() => setCurrentScreen('documenti')}
+                onNavigateToContractSignature={() => setCurrentScreen('contractSignature')}
+              />
+            </View>
+          );
+        }
 
       case 'discover':
         console.log('🔍 DISCOVER CASE - About to render discover screen');
@@ -581,6 +634,13 @@ export default function App() {
         return (
           <MatchesScreen
             onNavigateBack={() => setCurrentScreen('discover')}
+          />
+        );
+
+      case 'messages':
+        return (
+          <MessagesScreen
+            onNavigateBack={() => setCurrentScreen('home')}
           />
         );
 
@@ -706,15 +766,88 @@ export default function App() {
           />
         );
 
+      case 'properties':
+        return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+            <MaterialIcons name="business" size={64} color="#2196F3" />
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#333', marginTop: 20 }}>
+              Gestione Proprietà
+            </Text>
+            <Text style={{ fontSize: 16, color: '#666', marginTop: 10, textAlign: 'center', paddingHorizontal: 20 }}>
+              Questa schermata sarà disponibile presto per gestire le tue proprietà.
+            </Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8, marginTop: 30 }}
+              onPress={() => setCurrentScreen('home')}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                Torna alla Home
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'tenants':
+        return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+            <MaterialIcons name="people" size={64} color="#2196F3" />
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#333', marginTop: 20 }}>
+              Gestione Inquilini
+            </Text>
+            <Text style={{ fontSize: 16, color: '#666', marginTop: 10, textAlign: 'center', paddingHorizontal: 20 }}>
+              Questa schermata sarà disponibile presto per gestire i tuoi inquilini.
+            </Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8, marginTop: 30 }}
+              onPress={() => setCurrentScreen('home')}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                Torna alla Home
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case 'income':
+        return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+            <MaterialIcons name="receipt" size={64} color="#2196F3" />
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#333', marginTop: 20 }}>
+              Gestione Entrate
+            </Text>
+            <Text style={{ fontSize: 16, color: '#666', marginTop: 10, textAlign: 'center', paddingHorizontal: 20 }}>
+              Questa schermata sarà disponibile presto per visualizzare le tue entrate.
+            </Text>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#2196F3', padding: 15, borderRadius: 8, marginTop: 30 }}
+              onPress={() => setCurrentScreen('home')}
+            >
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+                Torna alla Home
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
       default:
         return (
           <LoginScreen
-            onLoginSuccess={() => {
-              console.log('Login success - navigating to home');
+            onLoginSuccess={async () => {
+              console.log('Login success - checking onboarding status');
               setForceNavbar(true);
+              // Check if user has completed onboarding
+              const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+              const hasCompleted = onboardingCompleted === 'true';
+              
               // Small delay to ensure user state is set
               setTimeout(() => {
-                setCurrentScreen('home');
+                if (hasCompleted) {
+                  console.log('Onboarding completed, navigating to home');
+                  setCurrentScreen('home');
+                } else {
+                  console.log('Onboarding not completed, navigating to onboarding');
+                  setCurrentScreen('onboarding');
+                }
               }, 100);
             }}
             onNavigateToSignup={() => Alert.alert('Info', 'Registrazione sarà disponibile presto')}
@@ -724,34 +857,40 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider key={`app-${appRefreshKey}`}>
-      <View style={styles.container} key={`container-${appRefreshKey}`}>
-        {showHomeownerOnboarding ? (
-          <HomeownerOnboardingScreen
-            user={user!}
-            onComplete={handleHomeownerOnboardingComplete}
-            onBack={() => {
-              setShowHomeownerOnboarding(false);
-              setCurrentScreen('home');
-            }}
-          />
-        ) : (
-          <>
-            {renderScreen()}
-            {shouldShowNavbar && (
-              <BottomNavigation
-                key={`navbar-${currentRole}-${refreshKey}`}
-                currentScreen={getCurrentNavScreen()}
-                onNavigate={handleNavigation}
-                showContracts={currentRole === 'landlord'}
-                userRole={currentRole || 'tenant'}
-              />
-            )}
-          </>
-        )}
-      </View>
-      <StatusBar style="dark" />
-    </SafeAreaProvider>
+    <StripeProvider
+      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+      merchantIdentifier="merchant.com.mytenant.tenantapp"
+      urlScheme="tenant"
+    >
+      <SafeAreaProvider key={`app-${appRefreshKey}`}>
+        <View style={styles.container} key={`container-${appRefreshKey}`}>
+          {showHomeownerOnboarding ? (
+            <HomeownerOnboardingScreen
+              user={user!}
+              onComplete={handleHomeownerOnboardingComplete}
+              onBack={() => {
+                setShowHomeownerOnboarding(false);
+                setCurrentScreen('home');
+              }}
+            />
+          ) : (
+            <>
+              {renderScreen()}
+              {shouldShowNavbar && (
+                <BottomNavigation
+                  key={`navbar-${currentRole}-${refreshKey}`}
+                  currentScreen={getCurrentNavScreen()}
+                  onNavigate={handleNavigation}
+                  showContracts={currentRole === 'landlord'}
+                  userRole={currentRole || 'tenant'}
+                />
+              )}
+            </>
+          )}
+        </View>
+        <StatusBar style="dark" />
+      </SafeAreaProvider>
+    </StripeProvider>
   );
 }
 

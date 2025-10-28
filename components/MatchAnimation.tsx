@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions, Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
+import { logger } from '../src/utils/logger';
+
 const { width, height } = Dimensions.get('window');
 
 interface Particle {
@@ -48,7 +50,7 @@ export default function MatchAnimation({ onComplete }: MatchAnimationProps) {
 
     particles.current = newParticles;
     if (__DEV__) {
-      console.log('Created', newParticles.length, 'house particles for match animation');
+      logger.debug('Created', newParticles.length, 'house particles for match animation');
     }
 
     // Create multiple waves of animation for more dynamic effect
@@ -86,7 +88,7 @@ export default function MatchAnimation({ onComplete }: MatchAnimationProps) {
     const allAnimations = createWave(0, Array.from({ length: particleCount }, (_, i) => i));
     
     if (__DEV__) {
-      console.log('Created', newParticles.length, 'house particles for match animation');
+      logger.debug('Created', newParticles.length, 'house particles for match animation');
     }
 
     // Animate MATCH text
@@ -115,7 +117,7 @@ export default function MatchAnimation({ onComplete }: MatchAnimationProps) {
 
     Animated.parallel(allAnimations).start(() => {
       if (__DEV__) {
-        console.log('House animation completed');
+        logger.debug('House animation completed');
       }
       if (onComplete) {
         setTimeout(onComplete, 500);
@@ -130,7 +132,7 @@ export default function MatchAnimation({ onComplete }: MatchAnimationProps) {
     };
     
     if (__DEV__) {
-      console.log('Rendering house:', particle.type, 'size:', particle.size, 'color:', particle.color);
+      logger.debug('Rendering house:', particle.type, 'size:', particle.size, 'color:', particle.color);
     }
 
     switch (particle.type) {

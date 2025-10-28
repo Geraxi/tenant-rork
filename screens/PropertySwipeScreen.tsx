@@ -18,6 +18,8 @@ import { Property, User } from '../types';
 import { MatchingService } from '../src/services/matchingService';
 import { useSupabaseAuth } from '../src/hooks/useSupabaseAuth';
 
+import { logger } from '../src/utils/logger';
+
 const { width, height } = Dimensions.get('window');
 
 interface PropertySwipeScreenProps {
@@ -31,8 +33,8 @@ interface PropertySwipeScreenProps {
 }
 
 export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToProfile, onNavigateToPreferences, onNavigateToFilters, onNavigateToOnboarding, onNavigateToDiscover, onRoleSwitch }: PropertySwipeScreenProps) {
-  console.log('🏠 PropertySwipeScreen - Component rendered');
-  console.log('🏠 PropertySwipeScreen - Props received:', { 
+  logger.debug('🏠 PropertySwipeScreen - Component rendered');
+  logger.debug('🏠 PropertySwipeScreen - Props received:', { 
     onNavigateToMatches: !!onNavigateToMatches, 
     onNavigateToProfile: !!onNavigateToProfile,
     onNavigateToDiscover: !!onNavigateToDiscover,
@@ -46,7 +48,9 @@ export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToP
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [likedProperties, setLikedProperties] = useState<Property[]>([]);
 
-  // Mock properties data
+  // PRODUCTION NOTE: Replace with real data from Supabase
+  // This mock data is for development/demo only
+  // TODO: Remove mock data or switch to Supabase properties
   const MOCK_PROPERTIES: Property[] = [
     {
       id: '1',
@@ -112,8 +116,8 @@ export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToP
 
   // Load properties when component mounts or user changes
   useEffect(() => {
-    console.log('🏠 PropertySwipeScreen - Loading properties for user:', user?.id);
-    console.log('🏠 PropertySwipeScreen - User role:', user?.ruolo || user?.userType);
+    logger.debug('🏠 PropertySwipeScreen - Loading properties for user:', user?.id);
+    logger.debug('🏠 PropertySwipeScreen - User role:', user?.ruolo || user?.userType);
     setLoading(true);
     
     // Simulate API call with role-based filtering
@@ -121,19 +125,19 @@ export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToP
       setProperties(MOCK_PROPERTIES);
       setCurrentIndex(0);
       setLoading(false);
-      console.log('🏠 PropertySwipeScreen - Properties loaded:', MOCK_PROPERTIES.length);
+      logger.debug('🏠 PropertySwipeScreen - Properties loaded:', MOCK_PROPERTIES.length);
     }, 1000);
   }, [user?.id, user?.ruolo, user?.userType]); // Re-fetch when user or role changes
 
   const handleSwipeLeft = () => {
-    console.log('🏠 PropertySwipeScreen - Swiped left on property:', properties[currentIndex]?.title);
+    logger.debug('🏠 PropertySwipeScreen - Swiped left on property:', properties[currentIndex]?.title);
     if (currentIndex < properties.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handleSwipeRight = () => {
-    console.log('🏠 PropertySwipeScreen - Swiped right on property:', properties[currentIndex]?.title);
+    logger.debug('🏠 PropertySwipeScreen - Swiped right on property:', properties[currentIndex]?.title);
     const currentProperty = properties[currentIndex];
     if (currentProperty) {
       setLikedProperties([...likedProperties, currentProperty]);
@@ -144,7 +148,7 @@ export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToP
   };
 
   const handleCardPress = () => {
-    console.log('🏠 PropertySwipeScreen - Card pressed:', properties[currentIndex]?.title);
+    logger.debug('🏠 PropertySwipeScreen - Card pressed:', properties[currentIndex]?.title);
     setSelectedProperty(properties[currentIndex]);
   };
 
@@ -156,8 +160,8 @@ export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToP
     
     const currentRole = user.userType || user.ruolo;
     const newRole = currentRole === 'tenant' ? 'landlord' : 'tenant';
-    console.log('🔄 PropertySwipeScreen - Current role:', currentRole);
-    console.log('🔄 PropertySwipeScreen - Switching to:', newRole);
+    logger.debug('🔄 PropertySwipeScreen - Current role:', currentRole);
+    logger.debug('🔄 PropertySwipeScreen - Switching to:', newRole);
     
     if (onRoleSwitch) {
       onRoleSwitch(newRole);
@@ -195,6 +199,8 @@ export default function PropertySwipeScreen({ onNavigateToMatches, onNavigateToP
           setCurrentIndex(0);
           setLikedProperties([]);
         }}
+        onPreferences={() => onNavigateToPreferences()}
+        onFilters={() => onNavigateToFilters()}
       />
     );
   }

@@ -16,6 +16,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Utente } from '../src/types';
 import { Property } from '../types';
 
+import { logger } from '../src/utils/logger';
+
 interface ExpandableCardModalProps {
   visible: boolean;
   item: Utente | Property;
@@ -40,9 +42,9 @@ export default function ExpandableCardModal({
   const opacity = useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    console.log('ExpandableCardModal visible changed to:', visible);
+    logger.debug('ExpandableCardModal visible changed to:', visible);
     if (visible) {
-      console.log('Starting modal open animation');
+      logger.debug('Starting modal open animation');
       // Reset values first
       translateY.setValue(screenHeight);
       opacity.setValue(0);
@@ -60,7 +62,7 @@ export default function ExpandableCardModal({
         }),
       ]).start();
     } else {
-      console.log('Starting modal close animation');
+      logger.debug('Starting modal close animation');
       Animated.parallel([
         Animated.timing(translateY, {
           toValue: screenHeight,
@@ -173,7 +175,7 @@ export default function ExpandableCardModal({
 
   const renderPropertyContent = () => {
     const property = item as Property;
-    console.log('ExpandableCardModal - Property data:', property);
+    logger.debug('ExpandableCardModal - Property data:', property);
     return (
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>

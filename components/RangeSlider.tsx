@@ -1,6 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  LayoutChangeEvent,
+  PanResponder,
+  GestureResponderEvent,
+  PanResponderGestureState,
+  Pressable,
+} from 'react-native';
 
 interface RangeSliderProps {
   label: string;
@@ -14,6 +22,9 @@ interface RangeSliderProps {
   onMaxChange: (value: number) => void;
 }
 
+const RANGE_HANDLE_SIZE = 32;
+const PRIMARY_COLOR = '#1e88e5';
+
 export default function RangeSlider({
   label,
   minValue,
@@ -25,137 +36,268 @@ export default function RangeSlider({
   onMinChange,
   onMaxChange,
 }: RangeSliderProps) {
-  const [pressedButton, setPressedButton] = useState<string | null>(null);
-  const handleMinIncrease = () => {
-    console.log('Min increase clicked, currentMin:', currentMin, 'currentMax:', currentMax);
-    if (currentMin < currentMax - step) {
-      const newValue = Math.min(currentMin + step, currentMax - step);
-      console.log('Setting min to:', newValue);
-      onMinChange(newValue);
+  const roundToStep = (val: number) => {
+    if (maxValue <= minValue) {
+      return minValue;
+    }
+    const clamped = Math.max(minValue, Math.min(maxValue, val));
+    const steps = Math.round((clamped - minValue) / step);
+    const stepped = minValue + steps * step;
+    return Math.max(minValue, Math.min(maxValue, stepped));
+  };
+
+  const [trackWidth, setTrackWidth] = useState(0);
+  const trackWidthRef = useRef(0);
+
+  const [minSelected, setMinSelected] = useState(() => roundToStep(currentMin));
+  const minSelectedRef = useRef(minSelected);
+
+  const [maxSelected, setMaxSelected] = useState(() => roundToStep(currentMax));
+  const maxSelectedRef = useRef(maxSelected);
+
+  const [minHandlePosition, setMinHandlePosition] = useState(0);
+  const minHandlePositionRef = useRef(0);
+
+  const [maxHandlePosition, setMaxHandlePosition] = useState(0);
+  const maxHandlePositionRef = useRef(0);
+
+  const isMinDragging = useRef(false);
+  const isMaxDragging = useRef(false);
+  const minPanStart = useRef(0);
+  const maxPanStart = useRef(0);
+
+  const range = maxValue - minValue;
+
+  const valueToPosition = (val: number, width = trackWidthRef.current) => {
+    if (width <= 0 || range === 0) {
+      return 0;
+    }
+    const ratio = (val - minValue) / range;
+    const boundedRatio = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
+    return boundedRatio * width;
+  };
+
+  const syncMinHandle = (val: number, width = trackWidthRef.current) => {
+    const position = valueToPosition(val, width);
+    minHandlePositionRef.current = position;
+    setMinHandlePosition(position);
+  };
+
+  const syncMaxHandle = (val: number, width = trackWidthRef.current) => {
+    const position = valueToPosition(val, width);
+    maxHandlePositionRef.current = position;
+    setMaxHandlePosition(position);
+  };
+
+  const setMinValue = (val: number, emitChange: boolean) => {
+    let finalValue = roundToStep(val);
+    finalValue = Math.min(finalValue, maxSelectedRef.current);
+    finalValue = Math.max(minValue, finalValue);
+
+    if (finalValue !== minSelectedRef.current) {
+      minSelectedRef.current = finalValue;
+      setMinSelected(finalValue);
+      if (emitChange) {
+        onMinChange(finalValue);
+      }
+    } else if (emitChange) {
+      onMinChange(finalValue);
+    }
+
+    syncMinHandle(finalValue);
+  };
+
+  const setMaxValue = (val: number, emitChange: boolean) => {
+    let finalValue = roundToStep(val);
+    finalValue = Math.max(finalValue, minSelectedRef.current);
+    finalValue = Math.min(maxValue, finalValue);
+
+    if (finalValue !== maxSelectedRef.current) {
+      maxSelectedRef.current = finalValue;
+      setMaxSelected(finalValue);
+      if (emitChange) {
+        onMaxChange(finalValue);
+      }
+    } else if (emitChange) {
+      onMaxChange(finalValue);
+    }
+
+    syncMaxHandle(finalValue);
+  };
+
+  useEffect(() => {
+    minSelectedRef.current = minSelected;
+  }, [minSelected]);
+
+  useEffect(() => {
+    maxSelectedRef.current = maxSelected;
+  }, [maxSelected]);
+
+  useEffect(() => {
+    setMinValue(currentMin, false);
+    setMaxValue(currentMax, false);
+  }, [currentMin, currentMax]);
+
+  useEffect(() => {
+    syncMinHandle(minSelectedRef.current);
+    syncMaxHandle(maxSelectedRef.current);
+  }, [trackWidth]);
+
+  const positionToValue = (position: number) => {
+    const width = trackWidthRef.current;
+    if (width <= 0 || range === 0) {
+      return minValue;
+    }
+    const boundedPosition = Math.max(0, Math.min(width, position));
+    const ratio = boundedPosition / width;
+    const rawValue = minValue + ratio * range;
+    return roundToStep(rawValue);
+  };
+
+  const updateMinFromPositionRef = useRef<(position: number, emit: boolean) => void>(() => {});
+  const updateMaxFromPositionRef = useRef<(position: number, emit: boolean) => void>(() => {});
+
+  const updateMinFromPosition = (position: number, emitChange: boolean) => {
+    const nextValue = positionToValue(position);
+    setMinValue(nextValue, emitChange);
+  };
+
+  const updateMaxFromPosition = (position: number, emitChange: boolean) => {
+    const nextValue = positionToValue(position);
+    setMaxValue(nextValue, emitChange);
+  };
+
+  updateMinFromPositionRef.current = updateMinFromPosition;
+  updateMaxFromPositionRef.current = updateMaxFromPosition;
+
+  const minPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_evt, gesture) =>
+        Math.abs(gesture.dx) > Math.abs(gesture.dy),
+      onPanResponderGrant: (_event: GestureResponderEvent) => {
+        isMinDragging.current = true;
+        minPanStart.current = minHandlePositionRef.current;
+      },
+      onPanResponderMove: (_event: GestureResponderEvent, gesture: PanResponderGestureState) => {
+        if (trackWidthRef.current <= 0) return;
+        updateMinFromPositionRef.current(minPanStart.current + gesture.dx, true);
+      },
+      onPanResponderRelease: () => {
+        isMinDragging.current = false;
+      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminate: () => {
+        isMinDragging.current = false;
+      },
+    }),
+  ).current;
+
+  const maxPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_evt, gesture) =>
+        Math.abs(gesture.dx) > Math.abs(gesture.dy),
+      onPanResponderGrant: (_event: GestureResponderEvent) => {
+        isMaxDragging.current = true;
+        maxPanStart.current = maxHandlePositionRef.current;
+      },
+      onPanResponderMove: (_event: GestureResponderEvent, gesture: PanResponderGestureState) => {
+        if (trackWidthRef.current <= 0) return;
+        updateMaxFromPositionRef.current(maxPanStart.current + gesture.dx, true);
+      },
+      onPanResponderRelease: () => {
+        isMaxDragging.current = false;
+      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderTerminate: () => {
+        isMaxDragging.current = false;
+      },
+    }),
+  ).current;
+
+  const handleTrackLayout = (event: LayoutChangeEvent) => {
+    const width = event.nativeEvent.layout.width;
+    if (width !== trackWidthRef.current) {
+      trackWidthRef.current = width;
+      setTrackWidth(width);
+      syncMinHandle(minSelectedRef.current, width);
+      syncMaxHandle(maxSelectedRef.current, width);
     }
   };
 
-  const handleMinDecrease = () => {
-    console.log('Min decrease clicked, currentMin:', currentMin, 'minValue:', minValue);
-    if (currentMin > minValue) {
-      const newValue = Math.max(currentMin - step, minValue);
-      console.log('Setting min to:', newValue);
-      onMinChange(newValue);
+  const handleTrackPress = (event: GestureResponderEvent) => {
+    if (trackWidthRef.current <= 0) return;
+    const locationX = Math.max(0, Math.min(trackWidthRef.current, event.nativeEvent.locationX));
+    const distanceToMin = Math.abs(locationX - minHandlePositionRef.current);
+    const distanceToMax = Math.abs(locationX - maxHandlePositionRef.current);
+
+    if (distanceToMin <= distanceToMax) {
+      updateMinFromPositionRef.current(locationX, true);
+    } else {
+      updateMaxFromPositionRef.current(locationX, true);
     }
   };
 
-  const handleMaxIncrease = () => {
-    console.log('Max increase clicked, currentMax:', currentMax, 'maxValue:', maxValue);
-    if (currentMax < maxValue) {
-      const newValue = Math.min(currentMax + step, maxValue);
-      console.log('Setting max to:', newValue);
-      onMaxChange(newValue);
+  const formatValue = (val: number) => {
+    if (!unit) return `${val}`;
+    if (unit.startsWith(' ')) {
+      return `${val}${unit}`;
     }
-  };
-
-  const handleMaxDecrease = () => {
-    console.log('Max decrease clicked, currentMax:', currentMax, 'currentMin:', currentMin);
-    if (currentMax > currentMin + step) {
-      const newValue = Math.max(currentMax - step, currentMin + step);
-      console.log('Setting max to:', newValue);
-      onMaxChange(newValue);
-    }
-  };
-
-  const getMinProgress = () => {
-    return ((currentMin - minValue) / (maxValue - minValue)) * 100;
-  };
-
-  const getMaxProgress = () => {
-    return ((currentMax - minValue) / (maxValue - minValue)) * 100;
+    return `${val} ${unit}`;
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.sliderContainer}>
-        {/* Min Value Controls */}
-        <View style={styles.rangeContainer}>
-          <Text style={styles.rangeLabel}>Da</Text>
-          <View style={styles.valueContainer}>
-            <TouchableOpacity
-              style={[styles.button, currentMin <= minValue && styles.buttonDisabled]}
-              onPress={handleMinDecrease}
-              disabled={currentMin <= minValue}
-            >
-              <MaterialIcons
-                name="remove-circle-outline"
-                size={28}
-                color={currentMin > minValue ? '#2196F3' : '#CCC'}
-              />
-            </TouchableOpacity>
-            <Text style={styles.value}>
-              {currentMin}{unit}
-            </Text>
-            <TouchableOpacity
-              style={[styles.button, currentMin >= currentMax - step && styles.buttonDisabled]}
-              onPress={handleMinIncrease}
-              disabled={currentMin >= currentMax - step}
-            >
-              <MaterialIcons
-                name="add-circle-outline"
-                size={28}
-                color={currentMin < currentMax - step ? '#2196F3' : '#CCC'}
-              />
-            </TouchableOpacity>
-          </View>
+      <View style={styles.card}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryValue}>
+            {formatValue(minSelected)} - {formatValue(maxSelected)}
+          </Text>
         </View>
 
-        {/* Progress Bar */}
-        <View style={styles.progressBarContainer}>
-          <View style={styles.progressBar}>
+        <Pressable onPressIn={handleTrackPress} style={styles.trackTapArea}>
+          <View style={styles.track} onLayout={handleTrackLayout}>
             <View
               style={[
-                styles.progressFill,
+                styles.rangeFill,
                 {
-                  left: `${getMinProgress()}%`,
-                  width: `${getMaxProgress() - getMinProgress()}%`,
+                  left: Math.min(minHandlePosition, maxHandlePosition),
+                  width: Math.max(
+                    0,
+                    Math.min(
+                      trackWidthRef.current,
+                      Math.abs(maxHandlePosition - minHandlePosition),
+                    ),
+                  ),
                 },
               ]}
             />
-          </View>
-          <View style={styles.progressLabels}>
-            <Text style={styles.progressLabel}>{minValue}{unit}</Text>
-            <Text style={styles.progressLabel}>{maxValue}{unit}</Text>
-          </View>
-        </View>
-
-        {/* Max Value Controls */}
-        <View style={styles.rangeContainer}>
-          <Text style={styles.rangeLabel}>A</Text>
-          <View style={styles.valueContainer}>
-            <TouchableOpacity
-              style={[styles.button, currentMax <= currentMin + step && styles.buttonDisabled]}
-              onPress={handleMaxDecrease}
-              disabled={currentMax <= currentMin + step}
+            <View
+              style={[
+                styles.handleWrapper,
+                { transform: [{ translateX: minHandlePositionRef.current - RANGE_HANDLE_SIZE / 2 }] },
+              ]}
+              {...minPanResponder.panHandlers}
             >
-              <MaterialIcons
-                name="remove-circle-outline"
-                size={28}
-                color={currentMax > currentMin + step ? '#2196F3' : '#CCC'}
-              />
-            </TouchableOpacity>
-            <Text style={styles.value}>
-              {currentMax}{unit}
-            </Text>
-            <TouchableOpacity
-              style={[styles.button, currentMax >= maxValue && styles.buttonDisabled]}
-              onPress={handleMaxIncrease}
-              disabled={currentMax >= maxValue}
+              <View style={styles.handleShadow}>
+                <View style={styles.handle} />
+              </View>
+            </View>
+            <View
+              style={[
+                styles.handleWrapper,
+                { transform: [{ translateX: maxHandlePositionRef.current - RANGE_HANDLE_SIZE / 2 }] },
+              ]}
+              {...maxPanResponder.panHandlers}
             >
-              <MaterialIcons
-                name="add-circle-outline"
-                size={28}
-                color={currentMax < maxValue ? '#2196F3' : '#CCC'}
-              />
-            </TouchableOpacity>
+              <View style={styles.handleShadow}>
+                <View style={styles.handle} />
+              </View>
+            </View>
           </View>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
@@ -166,78 +308,78 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   label: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
+    color: '#2d2d2d',
+    marginBottom: 10,
   },
-  sliderContainer: {
+  card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#e6e6e6',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 2,
   },
-  rangeContainer: {
+  summaryRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 18,
   },
-  rangeLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-    minWidth: 20,
+  summaryValue: {
+    fontSize: 21,
+    fontWeight: '700',
+    color: '#111',
   },
-  valueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  trackTapArea: {
+    paddingVertical: 12,
   },
-  button: {
-    padding: 8,
-    borderRadius: 20,
-    minWidth: 40,
-    minHeight: 40,
+  track: {
+    height: 6,
+    backgroundColor: '#ebebeb',
+    borderRadius: 3,
+    position: 'relative',
+  },
+  rangeFill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    backgroundColor: PRIMARY_COLOR,
+    borderRadius: 3,
+  },
+  handleWrapper: {
+    position: 'absolute',
+    top: -RANGE_HANDLE_SIZE / 2,
+    width: RANGE_HANDLE_SIZE,
+    height: RANGE_HANDLE_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonDisabled: {
-    opacity: 0.3,
+  handleShadow: {
+    width: RANGE_HANDLE_SIZE,
+    height: RANGE_HANDLE_SIZE,
+    borderRadius: RANGE_HANDLE_SIZE / 2,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  value: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2196F3',
-    minWidth: 60,
-    textAlign: 'center',
-  },
-  progressBarContainer: {
-    marginBottom: 16,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 3,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  progressFill: {
-    position: 'absolute',
-    top: 0,
-    height: '100%',
-    backgroundColor: '#2196F3',
-    borderRadius: 3,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  progressLabel: {
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '500',
+  handle: {
+    width: RANGE_HANDLE_SIZE - 10,
+    height: RANGE_HANDLE_SIZE - 10,
+    borderRadius: (RANGE_HANDLE_SIZE - 10) / 2,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: PRIMARY_COLOR,
   },
 });

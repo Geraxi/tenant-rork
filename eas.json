@@ -1,7 +1,6 @@
 {
   "cli": {
-    "version": ">= 5.9.0",
-    "appVersionSource": "remote"
+    "version": ">= 5.9.0"
   },
   "build": {
     "development": {
@@ -15,20 +14,28 @@
       }
     },
     "production": {
+      "releaseChannel": "production",
+      "distribution": "app-store",
       "ios": {
-        "autoIncrement": true
-      },
-      "android": {
-        "autoIncrement": true
+        "image": "latest",
+        "simulator": false,
+        "autoIncrement": true,
+        "buildConfiguration": "Release"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@example.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "your-apple-team-id",
+        "bundleIdentifier": "com.mytenant.tenantapp"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }
-
-
-
-
-

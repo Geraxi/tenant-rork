@@ -35,6 +35,8 @@ import { t } from '../utils/translations';
 import { LinearGradient } from 'expo-linear-gradient';
 import ExpandableCardModal from './ExpandableCardModal';
 
+import { logger } from '../src/utils/logger';
+
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.2;
 const SWIPE_OUT_DURATION = 200;
@@ -50,7 +52,7 @@ interface SwipeCardProps {
 }
 
 export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipeLeft, onSwipeRight, onPress, isFirst }: SwipeCardProps) {
-  console.log('🃏 SwipeCard - Rendering card with:', {
+  logger.debug('🃏 SwipeCard - Rendering card with:', {
     itemType: item ? (item as any).ruolo || (item as any).userType || 'property' : 'null',
     itemName: item ? (item as any).nome || (item as any).name || (item as any).title : 'null',
     isPropertyView,
@@ -67,9 +69,10 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
 
   // Reset pan values when component mounts or item changes
   useEffect(() => {
+    // Always reset when item changes to ensure clean state
     pan.setValue({ x: 0, y: 0 });
     pan.setOffset({ x: 0, y: 0 });
-  }, [item.id, pan]);
+  }, [item.id]);
   const rotate = pan.x.interpolate({
     inputRange: [-width / 2, 0, width / 2],
     outputRange: ['-15deg', '0deg', '15deg'],
@@ -104,24 +107,24 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
         // Always capture touch events for the first card
-        return true;
+        return isFirst;
       },
       onMoveShouldSetPanResponder: (_, gesture) => {
         // More sensitive to horizontal swipes, less sensitive to vertical
-        return Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 15;
+        // Always allow movement for the first card
+        return isFirst && (Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 15);
       },
       onPanResponderGrant: () => {
-        console.log('onPanResponderGrant called');
-        // Reset any existing offset before starting new gesture
-        pan.setOffset({ x: 0, y: 0 });
+        logger.debug('onPanResponderGrant called');
+        // Store current position as offset
+        pan.setOffset({ x: pan.x._value, y: pan.y._value });
+        // Reset value to 0 for clean gesture tracking
         pan.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
         useNativeDriver: false,
       }),
       onPanResponderRelease: (_, gesture) => {
-        pan.flattenOffset();
-        
         const { dx, dy, vx } = gesture;
         const isSwipeRight = dx > SWIPE_THRESHOLD || (dx > 0 && vx > 0.5);
         const isSwipeLeft = dx < -SWIPE_THRESHOLD || (dx < 0 && vx < -0.5);
@@ -129,52 +132,56 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
         if (isSwipeRight) {
           // Swipe right - like
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          // Flatten offset to get absolute position
+          pan.flattenOffset();
           Animated.timing(pan, {
             toValue: { x: width + 100, y: dy * 0.3 },
             duration: SWIPE_OUT_DURATION,
             useNativeDriver: true,
           }).start(() => {
-            // Call the callback immediately
             onSwipeRight();
           });
         } else if (isSwipeLeft) {
           // Swipe left - pass
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          // Flatten offset to get absolute position
+          pan.flattenOffset();
           Animated.timing(pan, {
             toValue: { x: -width - 100, y: dy * 0.3 },
             duration: SWIPE_OUT_DURATION,
             useNativeDriver: true,
           }).start(() => {
-            // Call the callback immediately
             onSwipeLeft();
           });
         } else {
-          // Return to center
+          // Return to center - use spring animation
           Animated.spring(pan, {
             toValue: { x: 0, y: 0 },
             tension: 120,
             friction: 8,
             useNativeDriver: true,
-          }).start();
+          }).start(() => {
+            // Reset to clean state after spring completes
+            pan.setValue({ x: 0, y: 0 });
+            pan.setOffset({ x: 0, y: 0 });
+          });
         }
       },
     })
   ).current;
 
   const handleCardPress = () => {
-    console.log('Card pressed! - TouchableOpacity triggered');
-    console.log('Current showModal state:', showModal);
-    // Reset pan values before opening modal to ensure clean state
-    pan.setValue({ x: 0, y: 0 });
+    logger.debug('Card pressed! - TouchableOpacity triggered');
+    logger.debug('Current showModal state:', showModal);
+    // Don't reset pan values here - let the gesture continue naturally
     setShowModal(true);
-    console.log('Setting showModal to true');
+    logger.debug('Setting showModal to true');
     onPress();
   };
 
   const handleModalClose = () => {
     setShowModal(false);
-    // Reset pan values to ensure swiping works after modal closes
-    pan.setValue({ x: 0, y: 0 });
+    // Don't reset pan values here - let the gesture continue naturally
   };
 
   const handleModalSwipeLeft = () => {
@@ -187,13 +194,14 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
     onSwipeRight();
   };
 
-  // Reset pan values when modal closes to ensure swiping works
+  // Reset pan values when modal closes
   React.useEffect(() => {
     if (!showModal) {
       // Small delay to ensure modal animation completes
       setTimeout(() => {
         pan.setValue({ x: 0, y: 0 });
-        console.log('Pan values reset after modal close');
+        pan.setOffset({ x: 0, y: 0 });
+        logger.debug('Pan values reset after modal close');
       }, 100);
     }
   }, [showModal]);
@@ -453,7 +461,7 @@ export default function SwipeCard({ item, isPropertyView, propertyOwner, onSwipe
         onSwipeLeft={handleModalSwipeLeft}
         onSwipeRight={handleModalSwipeRight}
       />
-      {console.log('Rendering modal with visible:', showModal)}
+      {logger.debug('Rendering modal with visible:', showModal)}
     </>
   );
 }

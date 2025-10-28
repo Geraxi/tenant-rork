@@ -6,6 +6,7 @@ export interface Utente {
   userType?: 'tenant' | 'homeowner'; // Alias for compatibility
   nome: string;
   email: string;
+  password?: string;
   foto?: string;
   photos?: string[]; // Multiple photos for Tinder-like carousel
   documento_id?: string;
