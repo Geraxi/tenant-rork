@@ -44,7 +44,7 @@ export default function SplashScreen({ onAnimationFinish }: SplashScreenProps) {
       >
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../assets/images/tenant-logo.png')} 
+            source={require('../assets/images/icon.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
