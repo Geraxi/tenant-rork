@@ -13,14 +13,7 @@ import { useSupabaseAuth } from './src/hooks/useSupabaseAuth';
 import { Utente } from './src/types';
 import { logger } from './src/utils/logger';
 
-// Conditionally import Stripe only on native platforms
-const StripeProvider = Platform.OS !== 'web' 
-  ? require('@stripe/stripe-react-native').StripeProvider 
-  : ({ children }: { children: React.ReactNode }) => <>{children}</>;
-
-const initializeStripe = Platform.OS !== 'web'
-  ? require('./src/config/stripe').initializeStripe
-  : async () => {};
+import { StripeProvider } from './stripe-provider';
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -894,20 +887,15 @@ export default function App() {
       </SafeAreaProvider>
   );
 
-  // Wrap with StripeProvider only on native platforms
-  if (Platform.OS !== 'web') {
-    return (
-      <StripeProvider
-        publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
-        merchantIdentifier="merchant.com.mytenant.tenantapp"
-        urlScheme="tenant"
-      >
-        <AppContent />
-      </StripeProvider>
-    );
-  }
-
-  return <AppContent />;
+  return (
+    <StripeProvider
+      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''}
+      merchantIdentifier="merchant.com.mytenant.tenantapp"
+      urlScheme="tenant"
+    >
+      <AppContent />
+    </StripeProvider>
+  );
 }
 
 const styles = StyleSheet.create({
