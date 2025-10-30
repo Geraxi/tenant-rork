@@ -13,6 +13,7 @@ import { useSupabaseAuth } from './src/hooks/useSupabaseAuth';
 import { Utente } from './src/types';
 import { logger } from './src/utils/logger';
 
+// Platform-specific Stripe imports - Metro automatically picks .web.tsx for web and .native.tsx for native
 import { StripeProvider } from './stripe-provider';
 
 // Import screens
