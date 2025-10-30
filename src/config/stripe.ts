@@ -1,17 +1,28 @@
-import { initStripe } from '@stripe/stripe-react-native';
+import { Platform } from 'react-native';
+
+const initStripe = Platform.OS !== 'web'
+  ? require('@stripe/stripe-react-native').initStripe
+  : null;
 
 // Stripe configuration
-export const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51234567890abcdef'; // Replace with your actual publishable key
+export const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51234567890abcdef';
 
 // Initialize Stripe
 export const initializeStripe = async () => {
+  if (Platform.OS === 'web') {
+    console.log('⚠️ Stripe is not available on web');
+    return;
+  }
+
   try {
-    await initStripe({
-      publishableKey: STRIPE_PUBLISHABLE_KEY,
-      merchantIdentifier: 'merchant.com.rentflow.app',
-      urlScheme: 'rentflow',
-    });
-    console.log('✅ Stripe initialized successfully');
+    if (initStripe) {
+      await initStripe({
+        publishableKey: STRIPE_PUBLISHABLE_KEY,
+        merchantIdentifier: 'merchant.com.rentflow.app',
+        urlScheme: 'rentflow',
+      });
+      console.log('✅ Stripe initialized successfully');
+    }
   } catch (error) {
     console.error('❌ Error initializing Stripe:', error);
   }

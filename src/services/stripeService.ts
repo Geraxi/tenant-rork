@@ -1,10 +1,21 @@
-import { 
-  useStripe, 
-  useApplePay, 
-  useGooglePay,
-  PaymentMethod,
-} from '@stripe/stripe-react-native';
-import { STRIPE_CONFIG, PAYMENT_METHOD_TYPES, PaymentMethodType } from '../config/stripe';
+import { Platform } from 'react-native';
+
+type StripePaymentMethod = any;
+
+let useStripe: any;
+let useApplePay: any;
+let useGooglePay: any;
+
+if (Platform.OS !== 'web') {
+  const stripe = require('@stripe/stripe-react-native');
+  useStripe = stripe.useStripe;
+  useApplePay = stripe.useApplePay;
+  useGooglePay = stripe.useGooglePay;
+} else {
+  useStripe = () => null;
+  useApplePay = () => ({ isApplePaySupported: async () => false });
+  useGooglePay = () => ({ isGooglePaySupported: async () => false });
+}
 
 export interface PaymentRequest {
   amount: number;
@@ -18,7 +29,7 @@ export interface PaymentResult {
   success: boolean;
   paymentIntentId?: string;
   error?: string;
-  paymentMethod?: PaymentMethod;
+  paymentMethod?: StripePaymentMethod;
 }
 
 // Hook-based service functions
@@ -224,7 +235,7 @@ export const useStripeService = () => {
   /**
    * Get available payment methods for the user
    */
-  const getPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
+  const getPaymentMethods = async (userId: string): Promise<StripePaymentMethod[]> => {
     try {
       if (!stripe) {
         throw new Error('Stripe not initialized');
