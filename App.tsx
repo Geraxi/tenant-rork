@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 // import { GestureHandlerRootView } from 'react-native-gesture-handler'; // Temporarily disabled
-import { View, StyleSheet, Alert, AppState, ActivityIndicator, Text, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Alert, AppState, ActivityIndicator, Text, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 import { BackHandler } from 'react-native';
@@ -11,9 +11,16 @@ import 'react-native-reanimated';
 import './global.css';
 import { useSupabaseAuth } from './src/hooks/useSupabaseAuth';
 import { Utente } from './src/types';
-import { initializeStripe } from './src/config/stripe';
 import { logger } from './src/utils/logger';
-import { StripeProvider } from '@stripe/stripe-react-native';
+
+// Conditionally import Stripe only on native platforms
+const StripeProvider = Platform.OS !== 'web' 
+  ? require('@stripe/stripe-react-native').StripeProvider 
+  : ({ children }: { children: React.ReactNode }) => <>{children}</>;
+
+const initializeStripe = Platform.OS !== 'web'
+  ? require('./src/config/stripe').initializeStripe
+  : async () => {};
 
 // Import screens
 import LoginScreen from './screens/LoginScreen';
@@ -856,13 +863,8 @@ export default function App() {
     }
   };
 
-  return (
-    <StripeProvider
-      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
-      merchantIdentifier="merchant.com.mytenant.tenantapp"
-      urlScheme="tenant"
-    >
-      <SafeAreaProvider key={`app-${appRefreshKey}`}>
+  const AppContent = () => (
+    <SafeAreaProvider key={`app-${appRefreshKey}`}>
         <View style={styles.container} key={`container-${appRefreshKey}`}>
           {showHomeownerOnboarding ? (
             <HomeownerOnboardingScreen
@@ -890,8 +892,22 @@ export default function App() {
         </View>
         <StatusBar style="dark" />
       </SafeAreaProvider>
-    </StripeProvider>
   );
+
+  // Wrap with StripeProvider only on native platforms
+  if (Platform.OS !== 'web') {
+    return (
+      <StripeProvider
+        publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+        merchantIdentifier="merchant.com.mytenant.tenantapp"
+        urlScheme="tenant"
+      >
+        <AppContent />
+      </StripeProvider>
+    );
+  }
+
+  return <AppContent />;
 }
 
 const styles = StyleSheet.create({
